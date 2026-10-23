@@ -39,7 +39,11 @@
 /* Sidebar */
 
 .pos-support-nav {
-  flex: 1 1 232px;
+  /* Fixed, not grown. flex: 1 1 232px reads like a 232px sidebar and is
+   * not one: the 232px is only a starting width, and the column then
+   * takes an equal share of whatever space is left, which on a wide
+   * screen is most of it. */
+  flex: 0 0 232px;
   box-sizing: border-box;
   padding: 14px 10px;
   background: var(--soft);
@@ -85,7 +89,7 @@
 
 /* Main column */
 
-.pos-support-main { flex: 1 1 700px; min-width: 0; display: flex; flex-direction: column; }
+.pos-support-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
 
 .pos-support-head {
   display: flex; align-items: center; gap: 16px;
