@@ -71,6 +71,15 @@ groups and counts. The page then loads, guards and renders, like theirs.
 
 ### 1.3 We publish no events
 
+**Done, 2026-10-23.** `ticket_created`, `message_received`,
+`ticket_reopened` and `ticket_assigned` are defined in `lib/events/` and
+published through `modules/core/commands/events/publish`. They land on the
+same activity stream as the user module's own events. Published after the
+transaction commits rather than inside it, because a consumer runs in the
+background and a rolled back write would wake one for a ticket that does
+not exist. No consumers yet, which is the point: Phase 4's notifications
+can be added as consumers without touching the write path.
+
 `user` publishes `user_created`, `user_deleted`, `password_created` and the
 rest through `modules/core/commands/events/publish`, with consumers in
 `lib/events/<name>.liquid`. Our `lib/events/` is empty.

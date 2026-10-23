@@ -1,0 +1,20 @@
+---
+metadata:
+  event:
+    - ticket_id
+    - assignee_id
+    - actor_id
+---
+{% doc %}
+  A ticket changed hands. assignee_id is blank when it was unassigned, and
+  actor_id is the agent who did it.
+
+  @param {object} event - The event payload
+{% enddoc %}
+{% liquid
+  assign c = { "errors": {}, "valid": true }
+
+  function c = 'modules/core/validations/presence', c: c, object: event, field_name: 'ticket_id', key: null
+
+  return c
+%}

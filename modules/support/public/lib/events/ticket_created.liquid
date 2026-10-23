@@ -1,0 +1,25 @@
+---
+metadata:
+  event:
+    - ticket_id
+    - number
+    - department_id
+    - contact_id
+    - priority
+---
+{% doc %}
+  A ticket was opened. Published after the writes commit, never from
+  inside the transaction that makes them, so a consumer can never be woken
+  for a ticket that was rolled back.
+
+  @param {object} event - The event payload
+{% enddoc %}
+{% liquid
+  assign c = { "errors": {}, "valid": true }
+
+  function c = 'modules/core/validations/presence', c: c, object: event, field_name: 'ticket_id', key: null
+  function c = 'modules/core/validations/presence', c: c, object: event, field_name: 'department_id', key: null
+  function c = 'modules/core/validations/presence', c: c, object: event, field_name: 'contact_id', key: null
+
+  return c
+%}

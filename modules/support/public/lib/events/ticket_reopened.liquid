@@ -1,0 +1,21 @@
+---
+metadata:
+  event:
+    - ticket_id
+    - from_status
+    - to_status
+---
+{% doc %}
+  A customer replied to a closed ticket and it came back into the queue.
+  Worth its own event rather than a status change: nobody decided this,
+  and whoever closed it probably wants to know.
+
+  @param {object} event - The event payload
+{% enddoc %}
+{% liquid
+  assign c = { "errors": {}, "valid": true }
+
+  function c = 'modules/core/validations/presence', c: c, object: event, field_name: 'ticket_id', key: null
+
+  return c
+%}

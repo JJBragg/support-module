@@ -193,11 +193,35 @@
       if status.kind == 'closed'
         function _ = 'modules/support/commands/tickets/reopen', ticket: ticket
         assign reopened = true
+        assign reopened_from = status.name
       endif
     endunless
 
     function _ = 'modules/support/commands/tickets/touch', ticket: ticket, direction: 'inbound', contact_email: contact.email
   endtransaction
+
+  comment
+    Published after the transaction commits, never from inside it. A
+    consumer runs in the background, and a background job woken by a write
+    that then rolled back would be chasing a ticket that does not exist.
+
+    There are no consumers yet. That is the point of publishing now: the
+    notifications Phase 4 needs can be added as consumers without anyone
+    touching the write path again.
+  endcomment
+  if is_new
+    assign created_payload = { "ticket_id": ticket.id, "number": ticket.number, "department_id": department.id, "contact_id": contact.id, "priority": ticket.priority }
+    function _ = 'modules/core/commands/events/publish', type: 'ticket_created', object: created_payload, delay: null, max_attempts: null
+  endif
+
+  assign received_payload = { "ticket_id": ticket.id, "message_id": message.id, "contact_id": contact.id, "new_ticket": is_new }
+  function _ = 'modules/core/commands/events/publish', type: 'message_received', object: received_payload, delay: null, max_attempts: null
+
+  if reopened
+    function reopen_target = 'modules/support/queries/statuses/flagged', flag: 'is_reopen_target'
+    assign reopened_payload = { "ticket_id": ticket.id, "from_status": reopened_from, "to_status": reopen_target.name }
+    function _ = 'modules/core/commands/events/publish', type: 'ticket_reopened', object: reopened_payload, delay: null, max_attempts: null
+  endif
 
   assign result = { "ok": true, "status": 200, "ticket_id": ticket.id, "ticket_number": ticket.number, "message_id": message.id, "new_ticket": is_new, "reopened": reopened, "matched_by": matched_by, "attachments": attachments_saved, "department": department.slug, "routed_by_address": routed }
   return result

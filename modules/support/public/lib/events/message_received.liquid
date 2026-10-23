@@ -1,0 +1,23 @@
+---
+metadata:
+  event:
+    - ticket_id
+    - message_id
+    - contact_id
+    - new_ticket
+---
+{% doc %}
+  A customer email landed on a ticket, whether it opened the ticket or
+  joined one. This is the one an auto responder, an SLA timer or a desk
+  notification would listen to.
+
+  @param {object} event - The event payload
+{% enddoc %}
+{% liquid
+  assign c = { "errors": {}, "valid": true }
+
+  function c = 'modules/core/validations/presence', c: c, object: event, field_name: 'ticket_id', key: null
+  function c = 'modules/core/validations/presence', c: c, object: event, field_name: 'message_id', key: null
+
+  return c
+%}
