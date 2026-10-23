@@ -116,65 +116,88 @@
     assign quoted = split.quoted_text
   endif
 
-  assign is_new = false
-  if ticket == blank
-    assign is_new = true
-    function ticket = 'modules/support/commands/tickets/create', subject: params.subject, department_id: department.id, contact_id: contact.id, contact_email: contact.email, settings: settings
-    unless ticket.valid
-      log ticket.errors, type: 'ERROR: modules/support/commands/inbound/receive could not open the ticket'
-      assign result = { "ok": false, "error": "ticket_invalid", "status": 422 }
-      return result
-    endunless
-  endif
-
-  assign incoming = { "ticket_id": ticket.id, "kind": "inbound", "contact_id": contact.id, "user_id": null, "from_address": sender.email, "to_addresses": to_addresses, "cc_addresses": cc_addresses, "subject": params.subject, "body_html": split.body_html, "body_text": split.body_text, "quoted_html": quoted, "message_id_header": headers.message_id, "in_reply_to": headers.in_reply_to, "references": headers.references, "provider_message_id": null, "delivery_status": null }
-  function message = 'modules/support/commands/messages/create', object: incoming
-  unless message.valid
-    log message.errors, type: 'ERROR: modules/support/commands/inbound/receive could not record the message'
-    assign result = { "ok": false, "error": "message_invalid", "status": 422 }
-    return result
-  endunless
-
   comment
-    Attachments arrive as attachment1 .. attachmentN, with their names and
-    types in the attachment-info JSON, and the count in attachments.
+    Everything from here writes, and the writes only make sense together.
+    A ticket with no message on it is a customer who wrote in and whose
+    email vanished, and nothing downstream would ever notice: it would sit
+    in the queue looking like an empty conversation. So they go in one
+    transaction, and anything that fails part way takes the rest with it.
+
+    The contact is deliberately outside it. Finding or creating one is
+    idempotent on the address, and a contact with no ticket yet is not a
+    broken state, it is just a contact.
+
+    rollback does not hand control back: it raises out of the whole
+    execution, so there is no code path after endtransaction that can turn
+    a rolled back write into a tidy 422. The endpoint answers 5xx and the
+    provider retries, which is the right answer to the only thing that can
+    get this far. Everything a malformed email can break, a missing
+    sender, an unroutable recipient, a contact that will not validate, is
+    refused above with a 4xx before a single write happens. A failure
+    inside this block means the install is wrong, most likely statuses
+    that were never seeded, and a retry after someone fixes it will work.
   endcomment
+  assign is_new = false
+  assign reopened = false
   assign attachments_saved = 0
-  assign attachment_count = params.attachments | default: 0 | plus: 0
-  if attachment_count > 0
-    assign info = params["attachment-info"] | default: ""
-    assign meta = null
-    if info != blank
-      assign meta = info | parse_json
+
+  transaction
+    if ticket == blank
+      assign is_new = true
+      function ticket = 'modules/support/commands/tickets/create', subject: params.subject, department_id: department.id, contact_id: contact.id, contact_email: contact.email, settings: settings
+      unless ticket.valid
+        log ticket.errors, type: 'ERROR: modules/support/commands/inbound/receive could not open the ticket'
+        rollback
+      endunless
     endif
+
+    assign incoming = { "ticket_id": ticket.id, "kind": "inbound", "contact_id": contact.id, "user_id": null, "from_address": sender.email, "to_addresses": to_addresses, "cc_addresses": cc_addresses, "subject": params.subject, "body_html": split.body_html, "body_text": split.body_text, "quoted_html": quoted, "message_id_header": headers.message_id, "in_reply_to": headers.in_reply_to, "references": headers.references, "provider_message_id": null, "delivery_status": null }
+    function message = 'modules/support/commands/messages/create', object: incoming
+    unless message.valid
+      log message.errors, type: 'ERROR: modules/support/commands/inbound/receive could not record the message'
+      rollback
+    endunless
 
     comment
+      Attachments arrive as attachment1 .. attachmentN, with their names
+      and types in the attachment-info JSON, and the count in
+      attachments.
+
       Only the metadata is read. The posted file itself is a Rails
-      UploadedFile with no Liquid representation: touching it in any way,
-      even comparing it to blank, raises "undefined method to_liquid". See
-      commands/attachments/create for what that costs and why.
+      UploadedFile with no Liquid representation: touching it in any
+      way, even comparing it to blank, raises "undefined method
+      to_liquid". See commands/attachments/create for what that costs
+      and why.
     endcomment
-    for index in (1..attachment_count)
-      assign key = "attachment" | append: index
-      assign details = meta[key]
-      assign attachment = { "message_id": message.id, "filename": details.filename, "content_type": details.type, "size": null }
-      function saved = 'modules/support/commands/attachments/create', object: attachment
-      if saved.valid
-        assign attachments_saved = attachments_saved | plus: 1
+    assign attachment_count = params.attachments | default: 0 | plus: 0
+    if attachment_count > 0
+      assign info = params["attachment-info"] | default: ""
+      assign meta = null
+      if info != blank
+        assign meta = info | parse_json
       endif
-    endfor
-  endif
 
-  assign reopened = false
-  unless is_new
-    function status = 'modules/support/queries/statuses/find', id: ticket.status_id
-    if status.kind == 'closed'
-      function _ = 'modules/support/commands/tickets/reopen', ticket: ticket
-      assign reopened = true
+      for index in (1..attachment_count)
+        assign key = "attachment" | append: index
+        assign details = meta[key]
+        assign attachment = { "message_id": message.id, "filename": details.filename, "content_type": details.type, "size": null }
+        function saved = 'modules/support/commands/attachments/create', object: attachment
+        if saved.valid
+          assign attachments_saved = attachments_saved | plus: 1
+        endif
+      endfor
     endif
-  endunless
 
-  function _ = 'modules/support/commands/tickets/touch', ticket: ticket, direction: 'inbound', contact_email: contact.email
+    unless is_new
+      function status = 'modules/support/queries/statuses/find', id: ticket.status_id
+      if status.kind == 'closed'
+        function _ = 'modules/support/commands/tickets/reopen', ticket: ticket
+        assign reopened = true
+      endif
+    endunless
+
+    function _ = 'modules/support/commands/tickets/touch', ticket: ticket, direction: 'inbound', contact_email: contact.email
+  endtransaction
 
   assign result = { "ok": true, "status": 200, "ticket_id": ticket.id, "ticket_number": ticket.number, "message_id": message.id, "new_ticket": is_new, "reopened": reopened, "matched_by": matched_by, "attachments": attachments_saved, "department": department.slug, "routed_by_address": routed }
   return result

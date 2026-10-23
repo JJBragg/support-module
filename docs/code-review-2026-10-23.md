@@ -189,6 +189,18 @@ all work with JavaScript off.
 
 ### 3.1 No transactions anywhere
 
+**Done for the inbound handler, 2026-10-23.** The ticket, message,
+attachment, reopen and touch writes are in one transaction, and a rollback
+was proved to leave nothing behind by forcing the message write to fail
+after the ticket had been created: no ticket, no message, ticket count
+unchanged. Worth knowing for the next one: `rollback` raises out of the
+whole execution rather than returning control after `endtransaction`, so
+there is no way to turn a rolled back write into a tidy 4xx. Everything a
+malformed email can break is therefore refused before the transaction
+opens. The remaining writes without one are the seed and the Phase 5
+Settings commands, which are single record and do not have the same
+problem.
+
 `modules/user/commands/user/create` wraps the user and profile writes in
 `transaction` with an explicit `rollback`, and the comment explains exactly
 what a half written user would break. Our inbound handler creates a ticket,
