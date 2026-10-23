@@ -1,0 +1,30 @@
+query (
+  $page: Int = 1
+  $limit: Int = 1
+) {
+  records(
+    page: $page
+    per_page: $limit
+    filter: {
+      table: { value: "modules/support/setting" }
+    }
+  ) {
+    total_entries
+    results {
+      id
+      type: table
+
+      provider: property(name: "provider")
+      webhook_secret: property(name: "webhook_secret")
+      next_number: property_int(name: "next_number")
+      default_priority: property_int(name: "default_priority")
+      new_ticket_placement: property(name: "new_ticket_placement")
+      p0_subject_keywords: property_array(name: "p0_subject_keywords")
+      theme_primary: property(name: "theme_primary")
+      theme_background: property(name: "theme_background")
+      theme_text: property(name: "theme_text")
+      theme_border: property(name: "theme_border")
+      brand_name: property(name: "brand_name")
+    }
+  }
+}

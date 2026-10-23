@@ -1,0 +1,9 @@
+{
+  "name": "support",
+  "version": "0.1.0",
+  "description": "Help desk and ticketing module for platformOS.",
+  "license": "MIT",
+  "peerDependencies": {
+    "yeoman-generator": "^7.0.0"
+  }
+}

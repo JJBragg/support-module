@@ -1,0 +1,33 @@
+query (
+  $page: Int = 1
+  $limit: Int = 50
+  $id: ID
+  $key: String
+  $kind: String
+) {
+  records(
+    page: $page
+    per_page: $limit
+    filter: {
+      id: { value: $id }
+      table: { value: "modules/support/status" }
+      properties: [
+        { name: "key", value: $key }
+        { name: "kind", value: $kind }
+      ]
+    }
+  ) {
+    total_entries
+    results {
+      id
+      type: table
+
+      name: property(name: "name")
+      key: property(name: "key")
+      kind: property(name: "kind")
+      position: property_int(name: "position")
+      is_new_default: property_boolean(name: "is_new_default")
+      is_reopen_target: property_boolean(name: "is_reopen_target")
+    }
+  }
+}

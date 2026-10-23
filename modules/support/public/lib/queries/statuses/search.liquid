@@ -1,0 +1,11 @@
+{% doc %}
+  Every status, in display order. Sorted here rather than in GraphQL: the
+  list is eight rows and this avoids a property sort in the query.
+
+  @param {string} [kind] - Limit to open, on_hold or closed
+{% enddoc %}
+{% liquid
+  graphql result = 'modules/support/statuses/search', kind: kind, key: null, id: null, limit: 50, page: 1
+  assign statuses = result.records.results | sort: 'position'
+  return statuses
+%}

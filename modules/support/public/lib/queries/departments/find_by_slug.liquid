@@ -1,0 +1,12 @@
+{% doc %}
+  @param {string} slug - The department slug, e.g. general
+{% enddoc %}
+{% liquid
+  if slug == blank
+    log 'ERROR: missing slug in modules/support/queries/departments/find_by_slug'
+    return nil
+  endif
+
+  graphql result = 'modules/support/departments/search', slug: slug, id: null, limit: 1, page: 1
+  return result.records.results.first
+%}

@@ -1,0 +1,32 @@
+query (
+  $page: Int = 1
+  $limit: Int = 50
+  $id: ID
+  $slug: String
+) {
+  records(
+    page: $page
+    per_page: $limit
+    filter: {
+      id: { value: $id }
+      table: { value: "modules/support/department" }
+      properties: [
+        { name: "slug", value: $slug }
+      ]
+    }
+  ) {
+    total_entries
+    results {
+      id
+      type: table
+
+      name: property(name: "name")
+      slug: property(name: "slug")
+      inbound_address: property(name: "inbound_address")
+      from_address: property(name: "from_address")
+      from_name: property(name: "from_name")
+      signature: property(name: "signature")
+      position: property_int(name: "position")
+    }
+  }
+}

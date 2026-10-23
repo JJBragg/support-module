@@ -1,0 +1,12 @@
+{% doc %}
+  @param {string} key - The stable status key, e.g. under_review
+{% enddoc %}
+{% liquid
+  if key == blank
+    log 'ERROR: missing key in modules/support/queries/statuses/find_by_key'
+    return nil
+  endif
+
+  graphql result = 'modules/support/statuses/search', key: key, kind: null, id: null, limit: 1, page: 1
+  return result.records.results.first
+%}

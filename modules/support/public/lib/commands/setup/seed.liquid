@@ -1,0 +1,74 @@
+{% doc %}
+  Creates the records a fresh install needs: the eight statuses, one
+  department, and the settings record.
+
+  Idempotent by design. It creates only what is missing and never updates
+  what is there, so it is safe to run on every deploy and safe to re-run
+  after an admin has edited any of it. Statuses are matched on key,
+  departments on slug.
+
+  This is a setup command with no business rules to enforce, so it writes
+  through the create queries directly rather than the build / check /
+  execute command pattern. The Settings screen in Phase 5 gets proper
+  commands with validations.
+
+  Returns the number of records created, for the migration to log.
+{% enddoc %}
+{% assign seed_statuses = [
+  { "key": "new",              "name": "New",                  "kind": "open",    "position": 1, "is_new_default": true,  "is_reopen_target": false },
+  { "key": "under_review",     "name": "Under Review",         "kind": "open",    "position": 2, "is_new_default": false, "is_reopen_target": true  },
+  { "key": "in_progress",      "name": "In Progress",          "kind": "open",    "position": 3, "is_new_default": false, "is_reopen_target": false },
+  { "key": "waiting_customer", "name": "Waiting on customer",  "kind": "open",    "position": 4, "is_new_default": false, "is_reopen_target": false },
+  { "key": "waiting_deploy",   "name": "Waiting on deploy",    "kind": "open",    "position": 5, "is_new_default": false, "is_reopen_target": false },
+  { "key": "confirmation",     "name": "Confirmation",         "kind": "open",    "position": 6, "is_new_default": false, "is_reopen_target": false },
+  { "key": "on_hold",          "name": "On Hold",              "kind": "on_hold", "position": 7, "is_new_default": false, "is_reopen_target": false },
+  { "key": "closed",           "name": "Closed",               "kind": "closed",  "position": 8, "is_new_default": false, "is_reopen_target": false }
+] %}
+{% liquid
+  assign statuses_created = 0
+  assign departments_created = 0
+  assign settings_created = 0
+
+  for s in seed_statuses
+    function existing = 'modules/support/queries/statuses/find_by_key', key: s.key
+    if existing == blank
+      # One mutation per status, by design: this runs once at install, for
+      # eight rows, and platformOS has no bulk record mutation to batch it
+      # into.
+      # platformos-check-disable NestedGraphQLQuery
+      graphql _ = 'modules/support/statuses/create', name: s.name, key: s.key, kind: s.kind, position: s.position, is_new_default: s.is_new_default, is_reopen_target: s.is_reopen_target
+      # platformos-check-enable NestedGraphQLQuery
+      assign statuses_created = statuses_created | plus: 1
+    endif
+  endfor
+
+  comment
+    One neutral queue. The real departments are data, created in Settings,
+    not something every install should inherit. Addresses are left blank on
+    purpose: Settings asks for them, and nothing can receive mail until the
+    provider is connected anyway.
+  endcomment
+  function department = 'modules/support/queries/departments/find_by_slug', slug: 'general'
+  if department == blank
+    graphql _ = 'modules/support/departments/create', name: 'General', slug: 'general', inbound_address: null, from_address: null, from_name: null, signature: null, position: 1
+    assign departments_created = 1
+  endif
+
+  function settings = 'modules/support/queries/settings/get'
+  if settings == blank
+    assign secret = 32 | random_string
+    assign keywords = 'P0,Urgent' | split: ','
+
+    comment
+      Ticket numbers start at 1. New inbound tickets land at the bottom of
+      P1 so arriving mail does not disturb a hand ranked queue, and the
+      keywords escalate the first email of a ticket to P0. The four theme
+      values are the defaults the designs were drawn against.
+    endcomment
+    graphql _ = 'modules/support/settings/create', provider: 'sendgrid', webhook_secret: secret, next_number: 1, default_priority: 1, new_ticket_placement: 'bottom', p0_subject_keywords: keywords, theme_primary: '#2B59C3', theme_background: '#FFFFFF', theme_text: '#1A1D23', theme_border: '#E3E5E9', brand_name: 'Support'
+    assign settings_created = 1
+  endif
+
+  assign result = { "statuses": statuses_created, "departments": departments_created, "settings": settings_created }
+  return result
+%}

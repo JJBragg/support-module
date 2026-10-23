@@ -1,0 +1,30 @@
+mutation (
+  $name: String!
+  $key: String!
+  $kind: String!
+  $position: Int
+  $is_new_default: Boolean
+  $is_reopen_target: Boolean
+) {
+  record: record_create(
+    record: {
+      table: "modules/support/status"
+      properties: [
+        { name: "name", value: $name }
+        { name: "key", value: $key }
+        { name: "kind", value: $kind }
+        { name: "position", value_int: $position }
+        { name: "is_new_default", value_boolean: $is_new_default }
+        { name: "is_reopen_target", value_boolean: $is_reopen_target }
+      ]
+    }
+  ) {
+    id
+    type: table
+
+    name: property(name: "name")
+    key: property(name: "key")
+    kind: property(name: "kind")
+    position: property_int(name: "position")
+  }
+}

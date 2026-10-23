@@ -1,0 +1,7 @@
+{% doc %}
+  The single settings record, or null before the seed has run.
+{% enddoc %}
+{% liquid
+  graphql result = 'modules/support/settings/search', limit: 1, page: 1
+  return result.records.results.first
+%}
