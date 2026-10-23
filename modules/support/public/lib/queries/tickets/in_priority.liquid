@@ -1,0 +1,25 @@
+{% doc %}
+  Every open ticket at one priority, in rank order. The neighbour list a
+  reorder is calculated against.
+
+  Not scoped to the mover's departments on purpose. Rank is one order
+  shared by the whole team, so a ticket has to be placed against every
+  ticket at that priority, including ones the mover cannot see. Admins are
+  the only ones who can rerank, and they see everything anyway.
+
+  @param {number} priority - 0 to 3
+  @param {array} statuses - Every status, to work out which ones are open
+{% enddoc %}
+{% liquid
+  assign open_status_ids = []
+  for status in statuses
+    unless status.kind == 'closed'
+      assign open_status_ids = open_status_ids | array_add: status.id
+    endunless
+  endfor
+
+  assign sort = { "properties": { "name": "rank", "order": "ASC" } }
+  graphql result = 'modules/support/tickets/search', priority: priority, status_ids: open_status_ids, sort: sort, limit: 500, page: 1, id: null, number: null, department_id: null, department_ids: null, status_id: null, contact_id: null, assignee_id: null, query: null
+
+  return result.records.results
+%}

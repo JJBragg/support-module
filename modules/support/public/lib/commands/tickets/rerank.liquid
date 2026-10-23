@@ -1,0 +1,147 @@
+{% doc %}
+  Moves a ticket within the shared work order, or into another priority.
+
+  Two ways in, because there are two ways to ask. Drag and drop names the
+  ticket it was dropped onto, and the row buttons name a direction. Both
+  end at the same place: a rank that sorts where the ticket now belongs.
+
+  Rank is stored, not derived, so every agent sees the result. Last write
+  wins if two admins move the same ticket at once, which at this scale is
+  a refresh, not a conflict.
+
+  @param {object} ticket - The ticket being moved
+  @param {array} statuses - Every status
+  @param {number} [priority] - Target priority; defaults to the current one
+  @param {string} [before_id] - Place it directly above this ticket
+  @param {string} [direction] - up or down, one place
+  @param {string} [actor_id] - The agent moving it, for the log
+{% enddoc %}
+{% liquid
+  assign target_priority = priority
+  if target_priority == blank
+    assign target_priority = ticket.priority
+  endif
+  assign target_priority = target_priority | plus: 0
+
+  function siblings = 'modules/support/queries/tickets/in_priority', priority: target_priority, statuses: statuses
+
+  assign others = []
+  for sibling in siblings
+    unless sibling.id == ticket.id
+      assign others = others | array_add: sibling
+    endunless
+  endfor
+
+  comment
+    Work out which two ranks the ticket has to land between.
+  endcomment
+  assign before_rank = ''
+  assign after_rank = ''
+
+  if direction != blank
+    assign current_index = -1
+    assign index = 0
+    for sibling in siblings
+      if sibling.id == ticket.id
+        assign current_index = index
+      endif
+      assign index = index | plus: 1
+    endfor
+
+    if current_index < 0
+      assign before_rank = siblings.last.rank
+    elsif direction == 'up'
+      if current_index == 0
+        return ticket
+      endif
+      assign target_index = current_index | minus: 1
+      assign target = siblings[target_index]
+      assign after_rank = target.rank
+      if target_index > 0
+        assign previous_index = target_index | minus: 1
+        assign previous = siblings[previous_index]
+        assign before_rank = previous.rank
+      endif
+    else
+      assign last_index = siblings.size | minus: 1
+      if current_index >= last_index
+        return ticket
+      endif
+      assign target_index = current_index | plus: 1
+      assign target = siblings[target_index]
+      assign before_rank = target.rank
+      assign next_index = target_index | plus: 1
+      if next_index < siblings.size
+        assign following = siblings[next_index]
+        assign after_rank = following.rank
+      endif
+    endif
+  elsif before_id != blank
+    assign index = 0
+    for other in others
+      if other.id == before_id
+        assign after_rank = other.rank
+        if index > 0
+          assign previous_index = index | minus: 1
+          assign previous = others[previous_index]
+          assign before_rank = previous.rank
+        endif
+      endif
+      assign index = index | plus: 1
+    endfor
+  else
+    comment
+      No neighbour named: the ticket goes to the top, which is what
+      changing a priority from the detail screen means.
+    endcomment
+    assign first = others.first
+    assign after_rank = first.rank
+  endif
+
+  function rank = 'modules/support/helpers/rank/between', before: before_rank, after: after_rank
+
+  if rank == blank
+    comment
+      No room between the neighbours. Spread the priority out and work the
+      placement out again against the new ranks.
+    endcomment
+    function _ = 'modules/support/commands/tickets/rebalance_priority', tickets: siblings, priority: target_priority
+    function siblings = 'modules/support/queries/tickets/in_priority', priority: target_priority, statuses: statuses
+
+    assign before_rank = ''
+    assign after_rank = ''
+    for sibling in siblings
+      if sibling.id == before_id
+        assign after_rank = sibling.rank
+      endif
+    endfor
+    if after_rank == blank
+      assign before_rank = siblings.last.rank
+    endif
+
+    function rank = 'modules/support/helpers/rank/between', before: before_rank, after: after_rank
+  endif
+
+  if rank == blank
+    log ticket.id, type: 'ERROR could not place ticket in modules/support/commands/tickets/rerank'
+    return ticket
+  endif
+
+  graphql updated = 'modules/support/tickets/set_priority_rank', id: ticket.id, priority: target_priority, rank: rank
+
+  assign moved_priority = false
+  assign old_priority = ticket.priority | plus: 0
+  if old_priority != target_priority
+    assign moved_priority = true
+  endif
+
+  if moved_priority
+    assign from_label = 'P' | append: old_priority
+    assign to_label = 'P' | append: target_priority
+    function _ = 'modules/support/commands/activities/log', ticket_id: ticket.id, actor_id: actor_id, action: 'priority_changed', from_value: from_label, to_value: to_label
+  else
+    function _ = 'modules/support/commands/activities/log', ticket_id: ticket.id, actor_id: actor_id, action: 'reranked', from_value: ticket.rank, to_value: rank
+  endif
+
+  return updated.record
+%}

@@ -1,31 +1,378 @@
 ---
 slug: support
+layout: modules/support/agent
 metadata:
   title: Support
 ---
 {%- comment -%}
-  Placeholder. Phase 3 replaces this with the ticket list. It exists now to
-  prove the agent guard, so it shows only who the viewer is.
+  The ticket list. A controller: it gathers everything and hands finished
+  arrays to the partials, which render and do not query.
+
+  Counting happens here, in Liquid, over one array of open tickets. The
+  sidebar alone wants a count per view, per status and per department, and
+  the tabs want one per priority. Asking the database for each would be
+  seventeen queries on every page load.
 {%- endcomment -%}
 {%- liquid
   # platformos-check-disable DeprecatedTag
   include 'modules/support/helpers/require_permission', do: 'support.access', entity: null
   # platformos-check-enable DeprecatedTag
 
+  function tokens = 'modules/support/helpers/ui/tokens'
+  function current_profile = 'modules/user/helpers/current_profile'
   function agent = 'modules/support/helpers/current_agent'
-  function can_manage_settings = 'modules/support/helpers/can', do: 'support.settings.manage', entity: null
   function can_rerank = 'modules/support/helpers/can', do: 'support.tickets.rerank', entity: null
+  function can_manage_settings = 'modules/support/helpers/can', do: 'support.settings.manage', entity: null
+  function settings = 'modules/support/queries/settings/get'
+  function statuses = 'modules/support/queries/statuses/search', kind: null
+  function all_agents = 'modules/support/queries/agents/all'
+
+  graphql department_result = 'modules/support/departments/search', limit: 50, page: 1, id: null, slug: null, inbound_address: null
+  assign departments = department_result.records.results
+
+  comment
+    A host superadmin with no agent record still gets in, by the same
+    break glass rule the guard uses, and sees every department.
+  endcomment
+  assign viewer = agent
+  if agent == blank
+    assign viewer = { "role": "admin", "department_ids": [] }
+  endif
+
+  function queue = 'modules/support/queries/tickets/queue', agent: viewer, statuses: statuses, limit: 500
+
+  assign contact_ids = []
+  for ticket in queue
+    assign contact_ids = contact_ids | array_add: ticket.contact_id
+  endfor
+  function contacts = 'modules/support/queries/contacts/by_ids', ids: contact_ids
+
+  assign status_by_id = {}
+  for status in statuses
+    assign token = tokens.statuses[status.key] | default: tokens.status_fallback
+    assign status.token = token
+    assign status_by_id[status.id] = status
+  endfor
+
+  assign department_by_id = {}
+  assign department_position = 0
+  for department in departments
+    assign palette_index = department_position | modulo: 6
+    assign department.palette = tokens.department_palette[palette_index]
+    assign department.letter = department.name | slice: 0, 1 | upcase
+    assign department_by_id[department.id] = department
+    assign department_position = department_position | plus: 1
+  endfor
+
+  assign agent_by_user = {}
+  assign agent_position = 0
+  for one_agent in all_agents
+    assign palette_index = agent_position | modulo: 6
+    assign one_agent.palette = tokens.agent_palette[palette_index]
+    assign agent_by_user[one_agent.user_id] = one_agent
+    assign agent_position = agent_position | plus: 1
+  endfor
+
+  assign rows = []
+  for ticket in queue
+    assign ticket.contact = contacts[ticket.contact_id]
+    assign ticket.status = status_by_id[ticket.status_id]
+    assign ticket.department = department_by_id[ticket.department_id]
+    assign ticket.assignee = agent_by_user[ticket.assignee_id]
+    assign ticket.priority_token = tokens.priorities[ticket.priority]
+    assign rows = rows | array_add: ticket
+  endfor
+
+  comment
+    The contacts who actually have something in the queue. A filter that
+    only offers names you could pick beats one listing every contact the
+    instance has ever heard from.
+  endcomment
+  assign contact_options = []
+  assign seen_contacts = {}
+  for ticket in rows
+    assign row_contact = ticket.contact
+    if row_contact != blank and seen_contacts[row_contact.id] == null
+      assign seen_contacts[row_contact.id] = true
+      assign contact_options = contact_options | array_add: row_contact
+    endif
+  endfor
+
+  assign view = context.params.view | default: 'all'
+  assign status_filter = context.params.status
+  assign department_filter = context.params.department
+  assign priority_filter = context.params.priority | default: 'all'
+  assign group_by = context.params.group | default: 'priority'
+  assign assignee_filter = context.params.assignee
+  assign contact_filter = context.params.contact
+  assign search_query = context.params.q | default: '' | strip | downcase
+  assign expanded = context.params.expand | default: '' | split: ','
+  assign collapsed_groups = context.params.collapsed | default: '' | split: ','
+
+  assign current_user_id = current_profile.user.id
+
+  comment
+    One pass, four verdicts per row. Each count then uses the verdicts it
+    cares about and ignores the rest, which is how a status count can
+    respect the department filter without counting itself.
+  endcomment
+  assign counted = []
+  for row in rows
+    assign passes_view = true
+    if view == 'mine' and row.assignee_id != current_user_id
+      assign passes_view = false
+    endif
+    if view == 'unassigned' and row.assignee_id != blank
+      assign passes_view = false
+    endif
+
+    assign passes_department = true
+    if department_filter != blank and row.department.slug != department_filter
+      assign passes_department = false
+    endif
+
+    assign passes_status = true
+    if status_filter != blank and row.status.key != status_filter
+      assign passes_status = false
+    endif
+
+    assign passes_priority = true
+    if priority_filter != 'all' and row.priority_token.key != priority_filter
+      assign passes_priority = false
+    endif
+
+    assign passes_assignee = true
+    if assignee_filter != blank and row.assignee_id != assignee_filter
+      assign passes_assignee = false
+    endif
+
+    assign passes_contact = true
+    if contact_filter != blank and row.contact_id != contact_filter
+      assign passes_contact = false
+    endif
+
+    assign passes_search = true
+    if search_query != blank
+      assign haystack = row.c__search | default: '' | downcase
+      unless haystack contains search_query
+        assign passes_search = false
+      endunless
+    endif
+
+    assign row.passes_view = passes_view
+    assign row.passes_department = passes_department
+    assign row.passes_status = passes_status
+    assign row.passes_priority = passes_priority
+    assign row.passes_assignee = passes_assignee
+    assign row.passes_contact = passes_contact
+    assign row.passes_search = passes_search
+    assign counted = counted | array_add: row
+  endfor
+
+  assign count_mine = 0
+  assign count_unassigned = 0
+  assign count_all = counted.size
+  assign status_counts = {}
+  assign department_counts = {}
+  assign priority_counts = {}
+  assign visible = []
+
+  for row in counted
+    if row.assignee_id == current_user_id and current_user_id != blank
+      assign count_mine = count_mine | plus: 1
+    endif
+    if row.assignee_id == blank
+      assign count_unassigned = count_unassigned | plus: 1
+    endif
+
+    assign department_key = row.department.slug
+    assign previous = department_counts[department_key] | default: 0
+    assign department_counts[department_key] = previous | plus: 1
+
+    if row.passes_view and row.passes_department and row.passes_priority and row.passes_assignee and row.passes_contact and row.passes_search
+      assign status_key = row.status.key
+      assign previous = status_counts[status_key] | default: 0
+      assign status_counts[status_key] = previous | plus: 1
+    endif
+
+    if row.passes_view and row.passes_department and row.passes_status and row.passes_assignee and row.passes_contact and row.passes_search
+      assign priority_key = row.priority_token.key
+      assign previous = priority_counts[priority_key] | default: 0
+      assign priority_counts[priority_key] = previous | plus: 1
+
+      if row.passes_priority
+        assign visible = visible | array_add: row
+      endif
+    endif
+  endfor
+
+  comment
+    Top three per group, but only in the view that shows everything at
+    once. Ask for one priority or one status and you asked to see them
+    all, so the cap lifts.
+  endcomment
+  assign limit_groups = false
+  if priority_filter == 'all' and status_filter == blank
+    assign limit_groups = true
+  endif
+
+  assign groups = []
+
+  if group_by == 'status'
+    for status in statuses
+      assign group_rows = []
+      for row in visible
+        if row.status_id == status.id
+          assign group_rows = group_rows | array_add: row
+        endif
+      endfor
+
+      if group_rows.size > 0
+        assign group = { "key": status.key, "label": status.name, "kind": "status", "status": status, "rows": group_rows, "total": group_rows.size }
+        assign groups = groups | array_add: group
+      endif
+    endfor
+  else
+    for priority_token in tokens.priorities
+      if priority_filter != 'all' and priority_token.key != priority_filter
+        continue
+      endif
+
+      assign group_rows = []
+      for row in visible
+        if row.priority_token.key == priority_token.key
+          assign group_rows = group_rows | array_add: row
+        endif
+      endfor
+
+      if group_rows.size > 0
+        assign group = { "key": priority_token.key, "label": priority_token.label, "kind": "priority", "priority": priority_token, "rows": group_rows, "total": group_rows.size }
+        assign groups = groups | array_add: group
+      endif
+    endfor
+  endif
+
+  assign prepared_groups = []
+  for group in groups
+    assign is_collapsed = false
+    if collapsed_groups contains group.key
+      assign is_collapsed = true
+    endif
+
+    assign is_expanded = false
+    if expanded contains group.key
+      assign is_expanded = true
+    endif
+
+    assign has_more = false
+    if limit_groups and group.total > 3
+      assign has_more = true
+    endif
+
+    assign shown_rows = group.rows
+    if is_collapsed
+      assign shown_rows = []
+    elsif has_more and is_expanded == false
+      assign shown_rows = group.rows | slice: 0, 3
+    endif
+
+    assign group.is_collapsed = is_collapsed
+    assign group.is_expanded = is_expanded
+    assign group.has_more = has_more
+    assign group.shown_rows = shown_rows
+    assign prepared_groups = prepared_groups | array_add: group
+  endfor
+
+  assign shown_total = 0
+  for group in prepared_groups
+    assign shown_total = shown_total | plus: group.total
+  endfor
+
+  assign view_label = 'All open'
+  if view == 'mine'
+    assign view_label = 'My tickets'
+  elsif view == 'unassigned'
+    assign view_label = 'Unassigned'
+  endif
+
+  assign heading = view_label
+  if status_filter != blank
+    assign filtered_status = null
+    for status in statuses
+      if status.key == status_filter
+        assign filtered_status = status
+      endif
+    endfor
+    assign heading = filtered_status.name
+  elsif department_filter != blank
+    for department in departments
+      if department.slug == department_filter
+        assign heading = department.name
+      endif
+    endfor
+  endif
+  if priority_filter != 'all'
+    assign heading = heading | append: ' · ' | append: priority_filter
+  endif
+
+  assign ticket_word = 'tickets'
+  if shown_total == 1
+    assign ticket_word = 'ticket'
+  endif
+  assign subtitle = shown_total | append: ' ' | append: ticket_word
+
+  assign brand = settings.brand_name | default: 'Support'
+
+  comment
+    Where the POST endpoints send the agent back to. A path, not a full
+    URL: modules/core/helpers/redirect_to treats anything that does not
+    start with a slash as an external redirect and sends it to / instead.
+  endcomment
+  function return_to = 'modules/support/helpers/ui/list_url', overrides: {}
 -%}
-<h1>Support</h1>
-<p>The agent guard passed.</p>
-<dl>
-  <dt>Agent record</dt>
-  <dd>{% if agent %}{{ agent.id }}, role {{ agent.role }}{% else %}none, admin by host superadmin role{% endif %}</dd>
-  <dt>Departments</dt>
-  <dd>{% if agent.department_ids %}{{ agent.department_ids | join: ', ' }}{% else %}all{% endif %}</dd>
-  <dt>Can manage settings</dt>
-  <dd>{{ can_manage_settings }}</dd>
-  <dt>Can rerank</dt>
-  <dd>{{ can_rerank }}</dd>
-</dl>
-{% if can_manage_settings %}<p><a href="/support/settings">Settings</a></p>{% endif %}
+{% render 'modules/support/list/sidebar',
+  brand: brand,
+  tokens: tokens,
+  statuses: statuses,
+  departments: departments,
+  status_counts: status_counts,
+  department_counts: department_counts,
+  count_mine: count_mine,
+  count_unassigned: count_unassigned,
+  count_all: count_all,
+  view: view,
+  status_filter: status_filter,
+  department_filter: department_filter,
+  can_manage_settings: can_manage_settings,
+  current_profile: current_profile
+%}
+<main class="pos-support-main">
+  {% render 'modules/support/list/header',
+    heading: heading,
+    subtitle: subtitle,
+    tokens: tokens,
+    search_query: context.params.q
+  %}
+  {% render 'modules/support/list/toolbar',
+    tokens: tokens,
+    priority_counts: priority_counts,
+    priority_filter: priority_filter,
+    group_by: group_by,
+    all_agents: all_agents,
+    assignee_filter: assignee_filter,
+    contact_options: contact_options,
+    contact_filter: contact_filter,
+    count_all: count_all,
+    can_rerank: can_rerank
+  %}
+  {% render 'modules/support/list/bulk', all_agents: all_agents, statuses: statuses, tokens: tokens, return_to: return_to %}
+  {% render 'modules/support/list/table',
+    groups: prepared_groups,
+    group_by: group_by,
+    tokens: tokens,
+    can_rerank: can_rerank,
+    shown_total: shown_total,
+    count_all: count_all,
+    return_to: return_to
+  %}
+</main>

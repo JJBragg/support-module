@@ -1,0 +1,15 @@
+<header class="pos-support-head">
+  <h1 class="pos-support-title">{{ heading }}<span class="pos-support-subtitle">{{ subtitle }}</span></h1>
+  <form class="pos-support-search" method="get" action="/support" role="search">
+    {%- assign carried = 'view,status,department,priority,group,assignee,contact' | split: ',' -%}
+    {%- for key in carried -%}
+      {%- assign value = context.params[key] -%}
+      {%- if value != blank -%}
+        <input type="hidden" name="{{ key }}" value="{{ value }}">
+      {%- endif -%}
+    {%- endfor -%}
+    <label class="pos-support-sr" for="pos-support-q">Search tickets</label>
+    {% render 'modules/support/ui/icon', path: tokens.icons.search, size: 15, stroke: 2 %}
+    <input id="pos-support-q" type="search" name="q" value="{{ search_query }}" placeholder="Search ticket #, subject or email">
+  </form>
+</header>

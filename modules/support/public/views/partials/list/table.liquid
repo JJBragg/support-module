@@ -1,0 +1,110 @@
+{%- liquid
+  assign grouping_by_priority = false
+  if group_by != 'status'
+    assign grouping_by_priority = true
+  endif
+
+  assign order_heading = 'Priority'
+  if grouping_by_priority
+    assign order_heading = 'Order'
+  endif
+-%}
+{%- if can_rerank -%}
+  <form method="post" action="/support/tickets/move" data-support-move-form hidden>
+    <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+    <input type="hidden" name="ticket_id" value="">
+    <input type="hidden" name="priority" value="">
+    <input type="hidden" name="before_id" value="">
+    <input type="hidden" name="return_to" value="{{ return_to }}">
+  </form>
+{%- endif -%}
+
+<div class="pos-support-table-wrap">
+  <table class="pos-support-table" data-support-list>
+    <thead>
+      <tr class="pos-support-colhead">
+        <th scope="col"><span class="pos-support-sr">Reorder</span></th>
+        <th scope="col"><span class="pos-support-sr">Select</span></th>
+        <th scope="col">{{ order_heading }}</th>
+        <th scope="col">Ticket</th>
+        <th scope="col">Department</th>
+        <th scope="col">Subject</th>
+        <th scope="col">Contact</th>
+        <th scope="col">Status</th>
+        <th scope="col">Assignee</th>
+      </tr>
+    </thead>
+
+    {%- for group in groups -%}
+      {%- liquid
+        assign collapsed_now = ''
+        unless group.is_collapsed
+          assign collapsed_now = group.key
+        endunless
+        function url_toggle = 'modules/support/helpers/ui/list_url', overrides: { "collapsed": collapsed_now }
+
+        assign expand_now = group.key
+        if group.is_expanded
+          assign expand_now = ''
+        endif
+        function url_more = 'modules/support/helpers/ui/list_url', overrides: { "expand": expand_now }
+
+        assign more_label = 'See all ' | append: group.total
+        if group.is_expanded
+          assign more_label = 'Show top 3'
+        endif
+      -%}
+      <tbody>
+        <tr class="pos-support-grouphead">
+          <th scope="colgroup" colspan="9">
+            <a class="pos-support-navitem" href="{{ url_toggle }}" aria-expanded="{% if group.is_collapsed %}false{% else %}true{% endif %}">
+              {% if group.is_collapsed %}
+                {% render 'modules/support/ui/icon', path: tokens.icons.chevron_down, size: 14, stroke: 2.2 %}
+              {% else %}
+                {% render 'modules/support/ui/icon', path: tokens.icons.chevron_up, size: 14, stroke: 2.2 %}
+              {% endif %}
+              {%- if group.kind == 'priority' -%}
+                {% render 'modules/support/tags/priority', priority: group.priority %}
+              {%- else -%}
+                <span style="color: {{ group.status.token.fg }}; display: flex">{% render 'modules/support/ui/icon', path: group.status.token.icon, size: 14, stroke: 2.2 %}</span>
+              {%- endif -%}
+              <span class="pos-support-navitem-label">{{ group.label }}</span>
+              <span class="pos-support-count">{{ group.total }}</span>
+            </a>
+          </th>
+        </tr>
+
+        {%- for row in group.shown_rows -%}
+          {% render 'modules/support/list/row',
+            row: row,
+            position: forloop.index,
+            grouping_by_priority: grouping_by_priority,
+            can_rerank: can_rerank,
+            tokens: tokens,
+            return_to: return_to
+          %}
+        {%- endfor -%}
+
+        {%- if group.has_more and group.is_collapsed == false -%}
+          <tr class="pos-support-more">
+            <td colspan="9">
+              <a class="pos-support-navitem" style="justify-content: center" href="{{ url_more }}" aria-expanded="{% if group.is_expanded %}true{% else %}false{% endif %}">{{ more_label }}</a>
+            </td>
+          </tr>
+        {%- endif -%}
+      </tbody>
+    {%- endfor -%}
+  </table>
+
+  {%- if shown_total == 0 -%}
+    <div class="pos-support-empty">
+      {%- if count_all == 0 -%}
+        <div class="pos-support-empty-title">All caught up</div>
+        <div class="pos-support-empty-body">No open tickets right now. New customer emails will land here as they arrive.</div>
+      {%- else -%}
+        <div class="pos-support-empty-title">Nothing in this view</div>
+        <div class="pos-support-empty-body">Try another priority or status.</div>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+</div>

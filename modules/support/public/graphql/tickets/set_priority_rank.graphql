@@ -1,0 +1,22 @@
+mutation (
+  $id: ID!
+  $priority: Int!
+  $rank: String!
+) {
+  record: record_update(
+    id: $id
+    record: {
+      table: "modules/support/ticket"
+      properties: [
+        { name: "priority", value_int: $priority }
+        { name: "rank", value: $rank }
+      ]
+    }
+  ) {
+    id
+    type: table
+
+    priority: property_int(name: "priority")
+    rank: property(name: "rank")
+  }
+}

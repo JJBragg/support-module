@@ -1,0 +1,11 @@
+{%- if assignee -%}
+  <span class="pos-support-assignee">
+    <span class="pos-support-avatar" aria-hidden="true" style="background: {{ assignee.palette.bg }}; color: {{ assignee.palette.fg }}">{{ assignee.initials }}</span>
+    <span>{{ assignee.name }}</span>
+  </span>
+{%- else -%}
+  <span class="pos-support-assignee">
+    <span class="pos-support-avatar is-unassigned" aria-hidden="true"></span>
+    <span style="color: var(--mut)">Unassigned</span>
+  </span>
+{%- endif -%}

@@ -1,0 +1,47 @@
+{%- liquid
+  assign draggable = 'false'
+  if can_rerank and grouping_by_priority
+    assign draggable = 'true'
+  endif
+-%}
+<tr class="pos-support-row" data-ticket-id="{{ row.id }}" data-priority="{{ row.priority_token.key }}" draggable="{{ draggable }}">
+  <td class="pos-support-handle">
+    {%- if draggable == 'true' -%}
+      {% render 'modules/support/ui/icon', path: tokens.icons.drag, size: 14, stroke: 2 %}
+    {%- endif -%}
+  </td>
+  <td>
+    <input type="checkbox" name="ticket_ids[]" value="{{ row.id }}" form="pos-support-bulk-form" aria-label="Select ticket {{ row.number }}">
+  </td>
+  <td>
+    <div class="pos-support-order">
+      {%- if grouping_by_priority -%}
+        <span>{{ position }}</span>
+        {%- if can_rerank -%}
+          <form class="pos-support-move" method="post" action="/support/tickets/move">
+            <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+            <input type="hidden" name="ticket_id" value="{{ row.id }}">
+            <input type="hidden" name="return_to" value="{{ return_to }}">
+            <button type="submit" name="direction" value="up" aria-label="Move ticket {{ row.number }} up">&uarr;</button>
+            <button type="submit" name="direction" value="down" aria-label="Move ticket {{ row.number }} down">&darr;</button>
+          </form>
+        {%- endif -%}
+      {%- else -%}
+        {% render 'modules/support/tags/priority', priority: row.priority_token %}
+      {%- endif -%}
+    </div>
+  </td>
+  <td class="pos-support-number">#{{ row.number }}</td>
+  <td>{% render 'modules/support/tags/department', department: row.department %}</td>
+  <td>
+    <a class="pos-support-subject" href="/support/tickets/{{ row.number }}" title="{{ row.subject }}">{{ row.subject }}</a>
+  </td>
+  <td>
+    <div class="pos-support-contact-name">{{ row.contact.name | default: row.contact.email }}</div>
+    {%- if row.contact.organization != blank -%}
+      <div class="pos-support-contact-org">{{ row.contact.organization }}</div>
+    {%- endif -%}
+  </td>
+  <td>{% render 'modules/support/tags/status', status: row.status %}</td>
+  <td>{% render 'modules/support/tags/assignee', assignee: row.assignee %}</td>
+</tr>

@@ -10,3 +10,6 @@ modules/core
 modules/user
 modules/common-styling
 modules/tests
+
+# Throwaway staging logins
+.dev-test-accounts.txt

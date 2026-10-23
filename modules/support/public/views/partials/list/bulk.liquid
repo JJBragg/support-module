@@ -1,0 +1,37 @@
+{%- comment -%}
+  Hidden until something is selected, and shown by the script. Without
+  JavaScript the checkboxes do nothing, which is the one place in this
+  screen that needs it: reordering, filtering and search all work without.
+{%- endcomment -%}
+<form class="pos-support-bulk" id="pos-support-bulk-form" method="post" action="/support/tickets/bulk" data-support-bulk hidden>
+  <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+  <input type="hidden" name="return_to" value="{{ return_to }}">
+  <span class="pos-support-bulk-count" data-support-bulk-count>0 selected</span>
+
+  <label class="pos-support-sr" for="pos-support-bulk-assignee">Assign to</label>
+  <select id="pos-support-bulk-assignee" name="assignee_id">
+    <option value="">Assign to…</option>
+    <option value="none">Unassigned</option>
+    {%- for one_agent in all_agents -%}
+      <option value="{{ one_agent.user_id }}">{{ one_agent.name }}</option>
+    {%- endfor -%}
+  </select>
+
+  <label class="pos-support-sr" for="pos-support-bulk-priority">Set priority</label>
+  <select id="pos-support-bulk-priority" name="priority">
+    <option value="">Set priority…</option>
+    {%- for priority in tokens.priorities -%}
+      <option value="{{ forloop.index0 }}">{{ priority.key }} {{ priority.label }}</option>
+    {%- endfor -%}
+  </select>
+
+  <label class="pos-support-sr" for="pos-support-bulk-status">Change status</label>
+  <select id="pos-support-bulk-status" name="status_id">
+    <option value="">Change status…</option>
+    {%- for status in statuses -%}
+      <option value="{{ status.id }}">{{ status.name }}</option>
+    {%- endfor -%}
+  </select>
+
+  <button type="submit">Apply</button>
+</form>

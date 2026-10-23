@@ -1,0 +1,19 @@
+{% doc %}
+  Contacts for a page of tickets, keyed by id, in one query rather than one
+  per row.
+
+  @param {array} ids - Contact record ids
+{% enddoc %}
+{% liquid
+  assign keyed = {}
+  if ids == blank
+    return keyed
+  endif
+
+  graphql result = 'modules/support/contacts/search', ids: ids, id: null, email: null, limit: 500, page: 1
+  for contact in result.records.results
+    assign keyed[contact.id] = contact
+  endfor
+
+  return keyed
+%}

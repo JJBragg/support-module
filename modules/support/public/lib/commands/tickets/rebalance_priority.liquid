@@ -1,0 +1,28 @@
+{% doc %}
+  Spreads a priority's ranks back out to 1000 apart, keeping the order
+  they are already in.
+
+  Only runs when an insert finds no room between two neighbours. One
+  mutation per ticket at that priority, which is the cost of not having a
+  bulk record mutation, and it happens rarely.
+
+  @param {array} tickets - Every ticket at the priority, in rank order
+  @param {number} priority - 0 to 3
+{% enddoc %}
+{% liquid
+  assign step = 1000
+  assign position = 1
+
+  for ticket in tickets
+    assign value = position | times: step
+    assign rank = value | advanced_format: '%010d'
+
+    # platformos-check-disable NestedGraphQLQuery
+    graphql _ = 'modules/support/tickets/set_priority_rank', id: ticket.id, priority: priority, rank: rank
+    # platformos-check-enable NestedGraphQLQuery
+
+    assign position = position | plus: 1
+  endfor
+
+  return tickets.size
+%}

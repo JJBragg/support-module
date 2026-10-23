@@ -1,0 +1,72 @@
+{%- liquid
+  function url_all_priorities = 'modules/support/helpers/ui/list_url', overrides: { "priority": "", "expand": "", "collapsed": "" }
+  function url_group_priority = 'modules/support/helpers/ui/list_url', overrides: { "group": "", "expand": "", "collapsed": "" }
+  function url_group_status = 'modules/support/helpers/ui/list_url', overrides: { "group": "status", "expand": "", "collapsed": "" }
+
+  assign grouping_by_priority = false
+  if group_by != 'status'
+    assign grouping_by_priority = true
+  endif
+-%}
+<div class="pos-support-toolbar">
+  <div class="pos-support-segment" role="group" aria-label="Priority">
+    <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_all_priorities }}" aria-pressed="{% if priority_filter == 'all' %}true{% else %}false{% endif %}">
+      <span>All priorities</span>
+      <span class="pos-support-count">{{ count_all }}</span>
+    </a>
+    {%- for priority in tokens.priorities -%}
+      {%- liquid
+        function url_priority = 'modules/support/helpers/ui/list_url', overrides: { "priority": priority.key, "expand": "", "collapsed": "" }
+        assign count = priority_counts[priority.key] | default: 0
+        assign is_on = false
+        if priority_filter == priority.key
+          assign is_on = true
+        endif
+      -%}
+      <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_priority }}" aria-pressed="{{ is_on }}">
+        <span class="pos-support-prio" style="background: {{ priority.bg }}; color: {{ priority.fg }}; border-color: {{ priority.bd }}">{{ priority.key }}</span>
+        <span>{{ priority.label }}</span>
+        <span class="pos-support-count">{{ count }}</span>
+      </a>
+    {%- endfor -%}
+  </div>
+
+  <span class="pos-support-divider" aria-hidden="true"></span>
+
+  <form method="get" action="/support" style="display: flex; align-items: center; gap: 8px">
+    {%- assign carried = 'view,status,department,priority,group,q' | split: ',' -%}
+    {%- for key in carried -%}
+      {%- assign value = context.params[key] -%}
+      {%- if value != blank -%}
+        <input type="hidden" name="{{ key }}" value="{{ value }}">
+      {%- endif -%}
+    {%- endfor -%}
+    <label class="pos-support-toolbar-label" for="pos-support-assignee">Assignee</label>
+    <select id="pos-support-assignee" name="assignee" style="height: 28px; border: 1px solid var(--bd); border-radius: 6px; background: var(--bg)">
+      <option value="">Anyone</option>
+      {%- for one_agent in all_agents -%}
+        <option value="{{ one_agent.user_id }}" {% if assignee_filter == one_agent.user_id %}selected{% endif %}>{{ one_agent.name }}</option>
+      {%- endfor -%}
+    </select>
+    <label class="pos-support-toolbar-label" for="pos-support-contact">Contact</label>
+    <select id="pos-support-contact" name="contact" style="height: 28px; border: 1px solid var(--bd); border-radius: 6px; background: var(--bg)">
+      <option value="">Anyone</option>
+      {%- for one_contact in contact_options -%}
+        <option value="{{ one_contact.id }}" {% if contact_filter == one_contact.id %}selected{% endif %}>{{ one_contact.name | default: one_contact.email }}</option>
+      {%- endfor -%}
+    </select>
+    <button type="submit" class="pos-support-navitem" style="height: 28px; width: auto; border: 1px solid var(--bd)">Apply</button>
+  </form>
+
+  <div class="pos-support-segment" role="group" aria-label="Group by" style="margin-left: auto">
+    <span class="pos-support-toolbar-label">Group by</span>
+    <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_group_priority }}" aria-pressed="{{ grouping_by_priority }}">Priority</a>
+    <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_group_status }}" aria-pressed="{% if group_by == 'status' %}true{% else %}false{% endif %}">Status</a>
+  </div>
+</div>
+{%- if can_rerank and grouping_by_priority -%}
+  <p class="pos-support-hint">
+    {% render 'modules/support/ui/icon', path: tokens.icons.drag, size: 14, stroke: 2 %}
+    Drag rows to set the team's work order. Drop into another priority to change it. Everyone sees the same order.
+  </p>
+{%- endif -%}

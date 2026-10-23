@@ -1,0 +1,96 @@
+{%- liquid
+  assign profile_name = current_profile.name | default: current_profile.email
+  assign first_initial = current_profile.first_name | slice: 0, 1
+  assign last_initial = current_profile.last_name | slice: 0, 1
+  assign viewer_initials = first_initial | append: last_initial | upcase
+  if viewer_initials == blank
+    assign viewer_initials = profile_name | slice: 0, 2 | upcase
+  endif
+
+  function url_mine = 'modules/support/helpers/ui/list_url', overrides: { "view": "mine", "status": "", "department": "", "expand": "", "collapsed": "" }
+  function url_unassigned = 'modules/support/helpers/ui/list_url', overrides: { "view": "unassigned", "status": "", "department": "", "expand": "", "collapsed": "" }
+  function url_all = 'modules/support/helpers/ui/list_url', overrides: { "view": "all", "status": "", "department": "", "expand": "", "collapsed": "" }
+-%}
+<nav class="pos-support-nav" aria-label="Queues">
+  <div class="pos-support-brand">
+    <div class="pos-support-brand-mark" aria-hidden="true">{{ brand | slice: 0, 1 | upcase }}</div>
+    <div class="pos-support-brand-name">{{ brand }}</div>
+    <div class="pos-support-avatar" role="img" aria-label="Signed in as {{ profile_name }}" style="background: #DBEAFE; color: #1E3A8A">{{ viewer_initials }}</div>
+  </div>
+
+  <div class="pos-support-group">
+    <div class="pos-support-group-label">Views</div>
+    <a class="pos-support-navitem" href="{{ url_mine }}" {% if view == 'mine' and status_filter == blank and department_filter == blank %}aria-current="true"{% endif %}>
+      {% render 'modules/support/ui/icon', path: tokens.icons.mine, size: 15, stroke: 2 %}
+      <span class="pos-support-navitem-label">My tickets</span>
+      <span class="pos-support-count">{{ count_mine }}</span>
+    </a>
+    <a class="pos-support-navitem" href="{{ url_unassigned }}" {% if view == 'unassigned' and status_filter == blank and department_filter == blank %}aria-current="true"{% endif %}>
+      {% render 'modules/support/ui/icon', path: tokens.icons.unassigned, size: 15, stroke: 2 %}
+      <span class="pos-support-navitem-label">Unassigned</span>
+      <span class="pos-support-count">{{ count_unassigned }}</span>
+    </a>
+    <a class="pos-support-navitem" href="{{ url_all }}" {% if view == 'all' and status_filter == blank and department_filter == blank %}aria-current="true"{% endif %}>
+      {% render 'modules/support/ui/icon', path: tokens.icons.all, size: 15, stroke: 2 %}
+      <span class="pos-support-navitem-label">All open</span>
+      <span class="pos-support-count">{{ count_all }}</span>
+    </a>
+  </div>
+
+  <div class="pos-support-group">
+    <div class="pos-support-group-label">Status</div>
+    {%- for status in statuses -%}
+      {%- liquid
+        assign is_on = false
+        if status_filter == status.key
+          assign is_on = true
+        endif
+
+        assign next_status = status.key
+        if is_on
+          assign next_status = ''
+        endif
+        function url_status = 'modules/support/helpers/ui/list_url', overrides: { "status": next_status, "expand": "", "collapsed": "" }
+        assign count = status_counts[status.key] | default: 0
+      -%}
+      <a class="pos-support-navitem" href="{{ url_status }}" {% if is_on %}aria-current="true"{% endif %}>
+        <span style="color: {{ status.token.fg }}; display: flex">{% render 'modules/support/ui/icon', path: status.token.icon, size: 15, stroke: 2.2 %}</span>
+        <span class="pos-support-navitem-label">{{ status.name }}</span>
+        <span class="pos-support-count">{{ count }}</span>
+      </a>
+    {%- endfor -%}
+  </div>
+
+  <div class="pos-support-group">
+    <div class="pos-support-group-label">Departments</div>
+    {%- for department in departments -%}
+      {%- liquid
+        assign is_on = false
+        if department_filter == department.slug
+          assign is_on = true
+        endif
+
+        assign next_department = department.slug
+        if is_on
+          assign next_department = ''
+        endif
+        function url_department = 'modules/support/helpers/ui/list_url', overrides: { "department": next_department, "view": "all", "expand": "", "collapsed": "" }
+        assign count = department_counts[department.slug] | default: 0
+      -%}
+      <a class="pos-support-navitem" href="{{ url_department }}" {% if is_on %}aria-current="true"{% endif %}>
+        <span class="pos-support-dept-letter" aria-hidden="true" style="color: {{ department.palette.fg }}">{{ department.letter }}</span>
+        <span class="pos-support-navitem-label">{{ department.name }}</span>
+        <span class="pos-support-count">{{ count }}</span>
+      </a>
+    {%- endfor -%}
+  </div>
+
+  {%- if can_manage_settings -%}
+    <div class="pos-support-nav-foot">
+      <a class="pos-support-navitem" href="/support/settings">
+        {% render 'modules/support/ui/icon', path: tokens.icons.settings, size: 15, stroke: 1.8 %}
+        <span class="pos-support-navitem-label">Settings</span>
+      </a>
+    </div>
+  {%- endif -%}
+</nav>

@@ -1,0 +1,45 @@
+{% doc %}
+  Every agent, with the name and initials from their platformOS profile.
+  Used for the assignee column, the assignee filter and the Agents screen.
+  Returned as an array; callers key it however they need.
+
+  One profile lookup per agent. That is a handful of queries for a support
+  team, run once per page rather than once per row, and the alternative is
+  copying names onto agent records and keeping them in step.
+{% enddoc %}
+{% liquid
+  graphql result = 'modules/support/agents/search', limit: 200, page: 1, id: null, ids: null, user_id: null, role: null
+
+  assign all_agents = []
+  for agent in result.records.results
+    # platformos-check-disable NestedGraphQLQuery
+    function profile = 'modules/user/queries/profiles/find', user_id: agent.user_id, id: null, uuid: null, first_name: null, last_name: null
+    # platformos-check-enable NestedGraphQLQuery
+
+    assign name = profile.name
+    if name == blank
+      assign name = profile.first_name
+    endif
+    if name == blank
+      assign name = profile.email
+    endif
+
+    comment
+      Built in two steps on purpose. Chained as one filter run, the second
+      slice would apply to the joined string and give a single letter.
+    endcomment
+    assign first_initial = profile.first_name | slice: 0, 1
+    assign last_initial = profile.last_name | slice: 0, 1
+    assign initials = first_initial | append: last_initial | upcase
+    if initials == blank
+      assign initials = name | slice: 0, 2 | upcase
+    endif
+
+    assign agent.name = name
+    assign agent.initials = initials
+    assign agent.email = profile.email
+    assign all_agents = all_agents | array_add: agent
+  endfor
+
+  return all_agents
+%}

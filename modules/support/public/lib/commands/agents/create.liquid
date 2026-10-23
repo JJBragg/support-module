@@ -1,0 +1,22 @@
+{% doc %}
+  Gives a platformOS user access to the support queue.
+
+  @param {string} user_id - The platformOS user
+  @param {string} role - admin or agent
+  @param {array} [department_ids] - Ignored for admins, who see everything
+  @param {string} [title] - Shown under the name on the Agents screen
+{% enddoc %}
+{% liquid
+  if user_id == blank or role == blank
+    log 'ERROR: missing user_id or role in modules/support/commands/agents/create'
+    return nil
+  endif
+
+  function existing = 'modules/support/queries/agents/find', user_id: user_id, id: null
+  if existing
+    return existing
+  endif
+
+  graphql created = 'modules/support/agents/create', user_id: user_id, role: role, department_ids: department_ids, title: title
+  return created.record
+%}

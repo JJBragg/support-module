@@ -1,0 +1,25 @@
+{%- liquid
+  function settings = 'modules/support/queries/settings/get'
+
+  assign brand = settings.brand_name | default: 'Support'
+  assign primary = settings.theme_primary | default: '#2B59C3'
+  assign background = settings.theme_background | default: '#FFFFFF'
+  assign text = settings.theme_text | default: '#1A1D23'
+  assign border = settings.theme_border | default: '#E3E5E9'
+
+  assign title = context.page.metadata.title | default: brand
+-%}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>{{ title }}</title>
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="{{ 'modules/support/style/support.css' | asset_url }}">
+  </head>
+  <body class="pos-support" style="--pri: {{ primary }}; --bg: {{ background }}; --tx: {{ text }}; --bd: {{ border }}">
+    {{ content_for_layout }}
+    <script src="{{ 'modules/support/js/support.js' | asset_url }}" defer></script>
+  </body>
+</html>

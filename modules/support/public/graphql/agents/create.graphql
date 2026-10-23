@@ -1,0 +1,26 @@
+mutation (
+  $user_id: String!
+  $role: String!
+  $department_ids: [String]
+  $title: String
+) {
+  record: record_create(
+    record: {
+      table: "modules/support/agent"
+      properties: [
+        { name: "user_id", value: $user_id }
+        { name: "role", value: $role }
+        { name: "department_ids", value_array: $department_ids }
+        { name: "title", value: $title }
+      ]
+    }
+  ) {
+    id
+    type: table
+
+    user_id: property(name: "user_id")
+    role: property(name: "role")
+    department_ids: property_array(name: "department_ids")
+    title: property(name: "title")
+  }
+}

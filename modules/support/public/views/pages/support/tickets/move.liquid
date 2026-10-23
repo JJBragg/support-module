@@ -1,0 +1,42 @@
+---
+slug: support/tickets/move
+method: post
+---
+{%- comment -%}
+  One endpoint for both ways of reordering. The row buttons post a
+  direction, drag and drop posts the ticket it landed on. Neither needs
+  JavaScript to reach here, which is why the buttons are a form rather
+  than a click handler.
+{%- endcomment -%}
+{%- liquid
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.tickets.rerank', entity: null
+  # platformos-check-enable DeprecatedTag
+
+  function current_profile = 'modules/user/helpers/current_profile'
+  function statuses = 'modules/support/queries/statuses/search', kind: null
+  function ticket = 'modules/support/queries/tickets/find', id: context.params.ticket_id, number: null
+
+  assign return_to = context.params.return_to | default: '/support'
+
+  if ticket == blank
+    # platformos-check-disable DeprecatedTag
+    include 'modules/core/helpers/redirect_to', url: return_to, default: null, error: null, format: null, info: null, notice: null, object: null
+    # platformos-check-enable DeprecatedTag
+  endif
+
+  comment
+    The list sends a priority as P0 to P3, which is what the rows are
+    keyed by. Blank means the ticket stays where it is.
+  endcomment
+  assign priority = null
+  if context.params.priority != blank
+    assign priority = context.params.priority | remove: 'P' | plus: 0
+  endif
+
+  function _ = 'modules/support/commands/tickets/rerank', ticket: ticket, statuses: statuses, priority: priority, before_id: context.params.before_id, direction: context.params.direction, actor_id: current_profile.user.id
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/core/helpers/redirect_to', url: return_to, default: null, error: null, format: null, info: null, notice: null, object: null
+  # platformos-check-enable DeprecatedTag
+-%}

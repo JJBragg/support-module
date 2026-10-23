@@ -1,0 +1,49 @@
+{% doc %}
+  A rank that sorts between two neighbours.
+
+  Ranks step by 1000 so there is room to insert without touching anything
+  else. When two neighbours end up adjacent, which takes ten inserts into
+  the same gap, there is no room left and the caller has to rebalance.
+  Returns blank to say so rather than inventing a duplicate.
+
+  @param {string} [before] - The rank above, blank at the top of the list
+  @param {string} [after] - The rank below, blank at the bottom
+{% enddoc %}
+{% liquid
+  assign step = 1000
+
+  if before == blank and after == blank
+    assign value = step
+    assign rank = value | advanced_format: '%010d'
+    return rank
+  endif
+
+  if before == blank
+    assign upper = after | plus: 0
+    if upper <= 1
+      return ''
+    endif
+    assign value = upper | divided_by: 2
+    assign rank = value | advanced_format: '%010d'
+    return rank
+  endif
+
+  if after == blank
+    assign lower = before | plus: 0
+    assign value = lower | plus: step
+    assign rank = value | advanced_format: '%010d'
+    return rank
+  endif
+
+  assign lower = before | plus: 0
+  assign upper = after | plus: 0
+  assign gap = upper | minus: lower
+  if gap <= 1
+    return ''
+  endif
+
+  assign half = gap | divided_by: 2
+  assign value = lower | plus: half
+  assign rank = value | advanced_format: '%010d'
+  return rank
+%}
