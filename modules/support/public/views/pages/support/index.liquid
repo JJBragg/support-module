@@ -277,11 +277,11 @@ metadata:
     assign shown_total = shown_total | plus: group.total
   endfor
 
-  assign view_label = 'All open'
+  assign view_label = 'modules/support/list.nav.all_open' | t
   if view == 'mine'
-    assign view_label = 'My tickets'
+    assign view_label = 'modules/support/list.nav.my_tickets' | t
   elsif view == 'unassigned'
-    assign view_label = 'Unassigned'
+    assign view_label = 'modules/support/list.nav.unassigned' | t
   endif
 
   assign heading = view_label
@@ -304,11 +304,12 @@ metadata:
     assign heading = heading | append: ' · ' | append: priority_filter
   endif
 
-  assign ticket_word = 'tickets'
-  if shown_total == 1
-    assign ticket_word = 'ticket'
-  endif
-  assign subtitle = shown_total | append: ' ' | append: ticket_word
+  comment
+    Counted in the translation rather than here, so a language that needs
+    more than two forms, or puts the number elsewhere in the sentence, can
+    have them without this page changing.
+  endcomment
+  assign subtitle = 'modules/support/list.count' | t: count: shown_total
 
   assign brand = settings.brand_name | default: 'Support'
 

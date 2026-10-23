@@ -9,9 +9,9 @@
   endif
 -%}
 <div class="pos-support-toolbar">
-  <div class="pos-support-segment" role="group" aria-label="Priority">
+  <div class="pos-support-segment" role="group" aria-label="{{ 'modules/support/list.toolbar.priority' | t }}">
     <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_all_priorities }}" aria-pressed="{% if priority_filter == 'all' %}true{% else %}false{% endif %}">
-      <span>All priorities</span>
+      <span>{{ 'modules/support/list.toolbar.all_priorities' | t }}</span>
       <span class="pos-support-count">{{ priority_total }}</span>
     </a>
     {%- for priority in tokens.priorities -%}
@@ -41,25 +41,25 @@
         <input type="hidden" name="{{ key }}" value="{{ value }}">
       {%- endif -%}
     {%- endfor -%}
-    <label class="pos-support-toolbar-label" for="pos-support-assignee">Assignee</label>
+    <label class="pos-support-toolbar-label" for="pos-support-assignee">{{ 'modules/support/list.toolbar.assignee' | t }}</label>
     <select id="pos-support-assignee" name="assignee" style="height: 28px; border: 1px solid var(--bd); border-radius: 6px; background: var(--bg)">
-      <option value="">Anyone</option>
+      <option value="">{{ 'modules/support/list.toolbar.anyone' | t }}</option>
       {%- for one_agent in all_agents -%}
         <option value="{{ one_agent.user_id }}" {% if assignee_filter == one_agent.user_id %}selected{% endif %}>{{ one_agent.name }}</option>
       {%- endfor -%}
     </select>
-    <button type="submit" class="pos-support-navitem" style="height: 28px; width: auto; border: 1px solid var(--bd)">Apply</button>
+    <button type="submit" class="pos-support-navitem" style="height: 28px; width: auto; border: 1px solid var(--bd)">{{ 'modules/support/list.toolbar.apply' | t }}</button>
   </form>
 
-  <div class="pos-support-segment" role="group" aria-label="Group by" style="margin-left: auto">
-    <span class="pos-support-toolbar-label">Group by</span>
-    <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_group_priority }}" aria-pressed="{{ grouping_by_priority }}">Priority</a>
-    <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_group_status }}" aria-pressed="{% if group_by == 'status' %}true{% else %}false{% endif %}">Status</a>
+  <div class="pos-support-segment" role="group" aria-label="{{ 'modules/support/list.toolbar.group_by' | t }}" style="margin-left: auto">
+    <span class="pos-support-toolbar-label">{{ 'modules/support/list.toolbar.group_by' | t }}</span>
+    <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_group_priority }}" aria-pressed="{{ grouping_by_priority }}">{{ 'modules/support/list.toolbar.group_by_priority' | t }}</a>
+    <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_group_status }}" aria-pressed="{% if group_by == 'status' %}true{% else %}false{% endif %}">{{ 'modules/support/list.toolbar.group_by_status' | t }}</a>
   </div>
 </div>
 {%- if can_rerank and grouping_by_priority -%}
   <p class="pos-support-hint">
     {% render 'modules/support/ui/icon', path: tokens.icons.drag, size: 14, stroke: 2 %}
-    Drag rows to set the team's work order. Drop into another priority to change it. Everyone sees the same order.
+    {{ 'modules/support/list.toolbar.drag_hint' | t }}
   </p>
 {%- endif -%}

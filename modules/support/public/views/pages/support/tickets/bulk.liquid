@@ -74,9 +74,15 @@ method: post
     assign changed = changed | plus: 1
   endfor
 
-  assign notice = changed | append: ' tickets updated'
+  comment
+    modules/user/helpers/flash runs t on what it is given, so this passes
+    the key and lets the helper translate it. Counted messages cannot go
+    through it, because it takes no interpolation arguments, so this one
+    is translated here and the helper is handed the finished string.
+  endcomment
+  assign notice = 'modules/support/list.bulk.updated_other' | t: count: changed
   if changed == 1
-    assign notice = '1 ticket updated'
+    assign notice = 'modules/support/list.bulk.updated_one' | t
   endif
   function _ = 'modules/user/helpers/flash', error: null, info: null, notice: notice, force_clear: null
 

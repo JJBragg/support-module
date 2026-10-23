@@ -20,7 +20,11 @@
     var count = selected().length;
     bulk.hidden = count === 0;
     if (countLabel) {
-      countLabel.textContent = count === 1 ? '1 selected' : count + ' selected';
+      // Wording comes from the translation file, with %count% as the slot,
+      // so this never builds a sentence out of English word order.
+      var one = countLabel.getAttribute('data-one');
+      var other = countLabel.getAttribute('data-other') || '%count%';
+      countLabel.textContent = count === 1 ? one : other.replace('%count%', count);
     }
     Array.prototype.forEach.call(list.querySelectorAll('tr[data-ticket-id]'), function (row) {
       var box = row.querySelector('input[name="ticket_ids[]"]');

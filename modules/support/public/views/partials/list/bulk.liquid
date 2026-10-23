@@ -3,35 +3,46 @@
   JavaScript the checkboxes do nothing, which is the one place in this
   screen that needs it: reordering, filtering and search all work without.
 {%- endcomment -%}
-<form class="pos-support-bulk" id="pos-support-bulk-form" method="post" action="/support/tickets/bulk" data-support-bulk hidden>
+<form class="pos-support-bulk" id="pos-support-bulk-form" method="post" action="/support/tickets/bulk" data-support-bulk aria-label="{{ 'modules/support/list.bulk.region' | t }}" hidden>
   <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
   <input type="hidden" name="return_to" value="{{ return_to }}">
-  <span class="pos-support-bulk-count" data-support-bulk-count>0 selected</span>
+  {%- comment -%}
+    The script rewrites this as the selection changes, so it needs the
+    translated strings rather than building one. %count% is a placeholder
+    it substitutes, which keeps the wording and the word order in the
+    translation file where a translator can reach them. Braces would be
+    the obvious choice and cannot be used: a { inside an output tag ends
+    the tag early.
+  {%- endcomment -%}
+  <span class="pos-support-bulk-count"
+        data-support-bulk-count
+        data-one="{{ 'modules/support/list.bulk.selected_one' | t }}"
+        data-other="{{ 'modules/support/list.bulk.selected_many' | t: n: '%count%' }}">{{ 'modules/support/list.bulk.selected_many' | t: n: 0 }}</span>
 
-  <label class="pos-support-sr" for="pos-support-bulk-assignee">Assign to</label>
+  <label class="pos-support-sr" for="pos-support-bulk-assignee">{{ 'modules/support/list.bulk.assign_to' | t }}</label>
   <select id="pos-support-bulk-assignee" name="assignee_id">
-    <option value="">Assign to…</option>
-    <option value="none">Unassigned</option>
+    <option value="">{{ 'modules/support/list.bulk.assign_to' | t }}</option>
+    <option value="none">{{ 'modules/support/list.bulk.unassigned' | t }}</option>
     {%- for one_agent in all_agents -%}
       <option value="{{ one_agent.user_id }}">{{ one_agent.name }}</option>
     {%- endfor -%}
   </select>
 
-  <label class="pos-support-sr" for="pos-support-bulk-priority">Set priority</label>
+  <label class="pos-support-sr" for="pos-support-bulk-priority">{{ 'modules/support/list.bulk.set_priority' | t }}</label>
   <select id="pos-support-bulk-priority" name="priority">
-    <option value="">Set priority…</option>
+    <option value="">{{ 'modules/support/list.bulk.set_priority' | t }}</option>
     {%- for priority in tokens.priorities -%}
       <option value="{{ forloop.index0 }}">{{ priority.key }} {{ priority.label }}</option>
     {%- endfor -%}
   </select>
 
-  <label class="pos-support-sr" for="pos-support-bulk-status">Change status</label>
+  <label class="pos-support-sr" for="pos-support-bulk-status">{{ 'modules/support/list.bulk.change_status' | t }}</label>
   <select id="pos-support-bulk-status" name="status_id">
-    <option value="">Change status…</option>
+    <option value="">{{ 'modules/support/list.bulk.change_status' | t }}</option>
     {%- for status in statuses -%}
       <option value="{{ status.id }}">{{ status.name }}</option>
     {%- endfor -%}
   </select>
 
-  <button type="submit">Apply</button>
+  <button type="submit">{{ 'modules/support/list.bulk.apply' | t }}</button>
 </form>

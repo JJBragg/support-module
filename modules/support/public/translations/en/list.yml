@@ -1,0 +1,71 @@
+en:
+  list:
+    nav:
+      queues: Queues
+      views: Views
+      my_tickets: My tickets
+      unassigned: Unassigned
+      all_open: All open
+      status: Status
+      departments: Departments
+      settings: Settings
+      signed_in_as: Signed in as %{name}
+    search:
+      label: Search tickets
+      placeholder: 'Search ticket #, subject or email'
+    toolbar:
+      priority: Priority
+      all_priorities: All priorities
+      assignee: Assignee
+      anyone: Anyone
+      apply: Apply
+      group_by: Group by
+      group_by_priority: Priority
+      group_by_status: Status
+      drag_hint: Drag rows to set the team's work order. Drop into another priority to change it. Everyone sees the same order.
+    columns:
+      reorder: Reorder
+      select: Select
+      order: Order
+      priority: Priority
+      ticket: Ticket
+      department: Department
+      subject: Subject
+      contact: Contact
+      status: Status
+      assignee: Assignee
+    row:
+      select_ticket: Select ticket %{number}
+      move_up: Move ticket %{number} up
+      move_down: Move ticket %{number} down
+      unassigned: Unassigned
+    group:
+      see_all: See all %{count}
+      show_top_three: Show top 3
+    bulk:
+      region: Bulk actions
+      # The script picks the form, so this one interpolates n rather than
+      # count: t reserves count for pluralisation and insists it be a
+      # number, which a placeholder is not.
+      selected_one: 1 selected
+      selected_many: '%{n} selected'
+      assign_to: Assign to…
+      unassigned: Unassigned
+      set_priority: Set priority…
+      change_status: Change status…
+      apply: Apply
+      updated_one: 1 ticket updated
+      updated_other: '%{count} tickets updated'
+    empty:
+      caught_up_title: All caught up
+      caught_up_body: No open tickets right now. New customer emails will land here as they arrive.
+      nothing_title: Nothing in this view
+      nothing_body: Try another priority or status.
+    count:
+      one: 1 ticket
+      other: '%{count} tickets'
+    priority:
+      critical: Critical
+      high: High
+      normal: Normal
+      low: Low

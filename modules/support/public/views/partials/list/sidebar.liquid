@@ -11,34 +11,34 @@
   function url_unassigned = 'modules/support/helpers/ui/list_url', overrides: { "view": "unassigned", "status": "", "department": "", "expand": "", "collapsed": "" }
   function url_all = 'modules/support/helpers/ui/list_url', overrides: { "view": "all", "status": "", "department": "", "expand": "", "collapsed": "" }
 -%}
-<nav class="pos-support-nav" aria-label="Queues">
+<nav class="pos-support-nav" aria-label="{{ 'modules/support/list.nav.queues' | t }}">
   <div class="pos-support-brand">
     <div class="pos-support-brand-mark" aria-hidden="true">{{ brand | slice: 0, 1 | upcase }}</div>
     <div class="pos-support-brand-name">{{ brand }}</div>
-    <div class="pos-support-avatar" role="img" aria-label="Signed in as {{ profile_name }}" style="background: #DBEAFE; color: #1E3A8A">{{ viewer_initials }}</div>
+    <div class="pos-support-avatar" role="img" aria-label="{{ 'modules/support/list.nav.signed_in_as' | t: name: profile_name }}" style="background: #DBEAFE; color: #1E3A8A">{{ viewer_initials }}</div>
   </div>
 
   <div class="pos-support-group">
-    <div class="pos-support-group-label">Views</div>
+    <div class="pos-support-group-label">{{ 'modules/support/list.nav.views' | t }}</div>
     <a class="pos-support-navitem" href="{{ url_mine }}" {% if view == 'mine' and status_filter == blank and department_filter == blank %}aria-current="true"{% endif %}>
       {% render 'modules/support/ui/icon', path: tokens.icons.mine, size: 15, stroke: 2 %}
-      <span class="pos-support-navitem-label">My tickets</span>
+      <span class="pos-support-navitem-label">{{ 'modules/support/list.nav.my_tickets' | t }}</span>
       <span class="pos-support-count">{{ count_mine }}</span>
     </a>
     <a class="pos-support-navitem" href="{{ url_unassigned }}" {% if view == 'unassigned' and status_filter == blank and department_filter == blank %}aria-current="true"{% endif %}>
       {% render 'modules/support/ui/icon', path: tokens.icons.unassigned, size: 15, stroke: 2 %}
-      <span class="pos-support-navitem-label">Unassigned</span>
+      <span class="pos-support-navitem-label">{{ 'modules/support/list.nav.unassigned' | t }}</span>
       <span class="pos-support-count">{{ count_unassigned }}</span>
     </a>
     <a class="pos-support-navitem" href="{{ url_all }}" {% if view == 'all' and status_filter == blank and department_filter == blank %}aria-current="true"{% endif %}>
       {% render 'modules/support/ui/icon', path: tokens.icons.all, size: 15, stroke: 2 %}
-      <span class="pos-support-navitem-label">All open</span>
+      <span class="pos-support-navitem-label">{{ 'modules/support/list.nav.all_open' | t }}</span>
       <span class="pos-support-count">{{ count_all }}</span>
     </a>
   </div>
 
   <div class="pos-support-group">
-    <div class="pos-support-group-label">Status</div>
+    <div class="pos-support-group-label">{{ 'modules/support/list.nav.status' | t }}</div>
     {%- for status in statuses -%}
       {%- liquid
         assign is_on = false
@@ -62,7 +62,7 @@
   </div>
 
   <div class="pos-support-group">
-    <div class="pos-support-group-label">Departments</div>
+    <div class="pos-support-group-label">{{ 'modules/support/list.nav.departments' | t }}</div>
     {%- for department in departments -%}
       {%- liquid
         assign is_on = false
@@ -89,7 +89,7 @@
     <div class="pos-support-nav-foot">
       <a class="pos-support-navitem" href="/support/settings">
         {% render 'modules/support/ui/icon', path: tokens.icons.settings, size: 15, stroke: 1.8 %}
-        <span class="pos-support-navitem-label">Settings</span>
+        <span class="pos-support-navitem-label">{{ 'modules/support/list.nav.settings' | t }}</span>
       </a>
     </div>
   {%- endif -%}

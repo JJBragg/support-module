@@ -29,11 +29,21 @@
   endcomment
   assign status_fallback = { "icon": "M21 12a9 9 0 1 1-18 0a9 9 0 0 1 18 0z", "bg": "#EFF0F2", "fg": "#374151" }
 
+  comment
+    Translated here, assigned first because a filter inside a JSON literal
+    is a parse error. The P numbers are not translated: they are the thing
+    agents say out loud, and a P0 is a P0 in every language.
+  endcomment
+  assign critical = 'modules/support/list.priority.critical' | t
+  assign high = 'modules/support/list.priority.high' | t
+  assign normal = 'modules/support/list.priority.normal' | t
+  assign low = 'modules/support/list.priority.low' | t
+
   assign priorities = [
-    { "key": "P0", "label": "Critical", "bg": "#9B1C24", "fg": "#FFFFFF", "bd": "#9B1C24" },
-    { "key": "P1", "label": "High", "bg": "#FDE8D7", "fg": "#8A3207", "bd": "#E9A877" },
-    { "key": "P2", "label": "Normal", "bg": "#E8EEF8", "fg": "#25427A", "bd": "#B9C8E3" },
-    { "key": "P3", "label": "Low", "bg": "#F1F2F4", "fg": "#4B5563", "bd": "#D3D6DB" }
+    { "key": "P0", "label": critical, "bg": "#9B1C24", "fg": "#FFFFFF", "bd": "#9B1C24" },
+    { "key": "P1", "label": high, "bg": "#FDE8D7", "fg": "#8A3207", "bd": "#E9A877" },
+    { "key": "P2", "label": normal, "bg": "#E8EEF8", "fg": "#25427A", "bd": "#B9C8E3" },
+    { "key": "P3", "label": low, "bg": "#F1F2F4", "fg": "#4B5563", "bd": "#D3D6DB" }
   ]
 
   assign department_palette = [

@@ -11,7 +11,7 @@
     {%- endif -%}
   </td>
   <td>
-    <input type="checkbox" name="ticket_ids[]" value="{{ row.id }}" form="pos-support-bulk-form" aria-label="Select ticket {{ row.number }}">
+    <input type="checkbox" name="ticket_ids[]" value="{{ row.id }}" form="pos-support-bulk-form" aria-label="{{ 'modules/support/list.row.select_ticket' | t: number: row.number }}">
   </td>
   <td>
     <div class="pos-support-order">
@@ -22,8 +22,8 @@
             <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
             <input type="hidden" name="ticket_id" value="{{ row.id }}">
             <input type="hidden" name="return_to" value="{{ return_to }}">
-            <button type="submit" name="direction" value="up" aria-label="Move ticket {{ row.number }} up">&uarr;</button>
-            <button type="submit" name="direction" value="down" aria-label="Move ticket {{ row.number }} down">&darr;</button>
+            <button type="submit" name="direction" value="up" aria-label="{{ 'modules/support/list.row.move_up' | t: number: row.number }}">&uarr;</button>
+            <button type="submit" name="direction" value="down" aria-label="{{ 'modules/support/list.row.move_down' | t: number: row.number }}">&darr;</button>
           </form>
         {%- endif -%}
       {%- else -%}

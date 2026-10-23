@@ -94,6 +94,14 @@ before Phase 4 needs them.
 
 ### 1.4 Every string in the interface is hardcoded English
 
+**Done, 2026-10-23.** The ticket list reads every string from
+`translations/en/list.yml`, including the aria labels, the counted ones and
+the priority names. Verified by rendering the page and finding no
+`translation missing` anywhere. Three things are deliberately still in
+English: the settings placeholder, which Phase 5 replaces wholesale; the
+example app, which is not distributed; and the seeded status and department
+names, which are data a partner edits rather than interface copy.
+
 `user` keeps 150 lines across ten translation files and reads them with `t`.
 We have one file, for two authorization messages. Everything else, "All caught
 up", "Drag rows to set the team's work order", every column heading, every

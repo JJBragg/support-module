@@ -8,8 +8,8 @@
         <input type="hidden" name="{{ key }}" value="{{ value }}">
       {%- endif -%}
     {%- endfor -%}
-    <label class="pos-support-sr" for="pos-support-q">Search tickets</label>
+    <label class="pos-support-sr" for="pos-support-q">{{ 'modules/support/list.search.label' | t }}</label>
     {% render 'modules/support/ui/icon', path: tokens.icons.search, size: 15, stroke: 2 %}
-    <input id="pos-support-q" type="search" name="q" value="{{ search_query }}" placeholder="Search ticket #, subject or email">
+    <input id="pos-support-q" type="search" name="q" value="{{ search_query }}" placeholder="{{ 'modules/support/list.search.placeholder' | t }}">
   </form>
 </header>

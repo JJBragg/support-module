@@ -4,9 +4,9 @@
     assign grouping_by_priority = true
   endif
 
-  assign order_heading = 'Priority'
+  assign order_heading = 'modules/support/list.columns.priority' | t
   if grouping_by_priority
-    assign order_heading = 'Order'
+    assign order_heading = 'modules/support/list.columns.order' | t
   endif
 -%}
 {%- if can_rerank -%}
@@ -23,15 +23,15 @@
   <table class="pos-support-table" data-support-list>
     <thead>
       <tr class="pos-support-colhead">
-        <th scope="col"><span class="pos-support-sr">Reorder</span></th>
-        <th scope="col"><span class="pos-support-sr">Select</span></th>
+        <th scope="col"><span class="pos-support-sr">{{ 'modules/support/list.columns.reorder' | t }}</span></th>
+        <th scope="col"><span class="pos-support-sr">{{ 'modules/support/list.columns.select' | t }}</span></th>
         <th scope="col">{{ order_heading }}</th>
-        <th scope="col">Ticket</th>
-        <th scope="col">Department</th>
-        <th scope="col">Subject</th>
-        <th scope="col">Contact</th>
-        <th scope="col">Status</th>
-        <th scope="col">Assignee</th>
+        <th scope="col">{{ 'modules/support/list.columns.ticket' | t }}</th>
+        <th scope="col">{{ 'modules/support/list.columns.department' | t }}</th>
+        <th scope="col">{{ 'modules/support/list.columns.subject' | t }}</th>
+        <th scope="col">{{ 'modules/support/list.columns.contact' | t }}</th>
+        <th scope="col">{{ 'modules/support/list.columns.status' | t }}</th>
+        <th scope="col">{{ 'modules/support/list.columns.assignee' | t }}</th>
       </tr>
     </thead>
 
@@ -49,9 +49,9 @@
         endif
         function url_more = 'modules/support/helpers/ui/list_url', overrides: { "expand": expand_now }
 
-        assign more_label = 'See all ' | append: group.total
+        assign more_label = 'modules/support/list.group.see_all' | t: count: group.total
         if group.is_expanded
-          assign more_label = 'Show top 3'
+          assign more_label = 'modules/support/list.group.show_top_three' | t
         endif
       -%}
       <tbody>
@@ -99,11 +99,11 @@
   {%- if shown_total == 0 -%}
     <div class="pos-support-empty">
       {%- if count_all == 0 -%}
-        <div class="pos-support-empty-title">All caught up</div>
-        <div class="pos-support-empty-body">No open tickets right now. New customer emails will land here as they arrive.</div>
+        <div class="pos-support-empty-title">{{ 'modules/support/list.empty.caught_up_title' | t }}</div>
+        <div class="pos-support-empty-body">{{ 'modules/support/list.empty.caught_up_body' | t }}</div>
       {%- else -%}
-        <div class="pos-support-empty-title">Nothing in this view</div>
-        <div class="pos-support-empty-body">Try another priority or status.</div>
+        <div class="pos-support-empty-title">{{ 'modules/support/list.empty.nothing_title' | t }}</div>
+        <div class="pos-support-empty-body">{{ 'modules/support/list.empty.nothing_body' | t }}</div>
       {%- endif -%}
     </div>
   {%- endif -%}
