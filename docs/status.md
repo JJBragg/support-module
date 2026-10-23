@@ -11,7 +11,10 @@ the ticket detail and composer, is next and has not been started. Four of the
 larger items from the internal review are closed; a second tier remains.
 
 Nothing is published to the module library, and nothing is pushed to any
-remote. The only copy of this work is this directory.
+remote. That is a decision, not an oversight: JJ is keeping this off GitHub
+for now. It does mean this directory is the only copy, so the staging
+instance, which holds the deployed module code but not the history, the docs
+or the example app, is the only other place any of it exists.
 
 ## Where everything is
 
