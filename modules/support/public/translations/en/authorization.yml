@@ -1,0 +1,5 @@
+en:
+  authorization:
+    redirect_anonymous_info: Please log in to reach the support queue.
+    forbidden_title: No access to support
+    forbidden_body: Your account does not have access to the support queue. Ask a support Admin to add you as an agent.

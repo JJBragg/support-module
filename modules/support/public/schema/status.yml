@@ -1,0 +1,25 @@
+name: status
+properties:
+  - name: name
+    type: string
+
+  # Stable slug, e.g. under_review. Code keys off this, never off name.
+  - name: key
+    type: string
+
+  # open, on_hold or closed. Named kind rather than type because every query
+  # in these modules already aliases the record's table as "type".
+  - name: kind
+    type: string
+
+  # Drives the sidebar order, Group by Status, and every status menu.
+  - name: position
+    type: integer
+
+  # The status a new inbound ticket gets.
+  - name: is_new_default
+    type: boolean
+
+  # The status a closed ticket reopens to when the customer replies.
+  - name: is_reopen_target
+    type: boolean

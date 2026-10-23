@@ -1,0 +1,22 @@
+name: department
+properties:
+  # A queue with its own inbound address, sending address and signature.
+  - name: name
+    type: string
+  - name: slug
+    type: string
+
+  # Customer mail sent here creates or updates tickets in this department.
+  - name: inbound_address
+    type: string
+
+  # Replies go out from here. Must be verified with the email provider.
+  - name: from_address
+    type: string
+  - name: from_name
+    type: string
+
+  - name: signature
+    type: text
+  - name: position
+    type: integer

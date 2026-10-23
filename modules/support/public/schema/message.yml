@@ -1,0 +1,46 @@
+name: message
+properties:
+  - name: ticket_id
+    type: string
+
+  # inbound, outbound or note. A note is never emailed.
+  - name: kind
+    type: string
+
+  # Author: contact_id for inbound, user_id for outbound and notes.
+  - name: contact_id
+    type: string
+  - name: user_id
+    type: string
+
+  - name: from_address
+    type: string
+  - name: to_addresses
+    type: array
+  - name: cc_addresses
+    type: array
+  - name: subject
+    type: string
+
+  - name: body_html
+    type: text
+  - name: body_text
+    type: text
+
+  # The quoted history, split off the new content and collapsed in the UI.
+  - name: quoted_html
+    type: text
+
+  # Threading. message_id_header is what inbound In-Reply-To is matched on.
+  - name: message_id_header
+    type: string
+  - name: in_reply_to
+    type: string
+  - name: references
+    type: array
+
+  # Outbound only.
+  - name: provider_message_id
+    type: string
+  - name: delivery_status
+    type: string

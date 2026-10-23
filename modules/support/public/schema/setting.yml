@@ -1,0 +1,40 @@
+name: setting
+properties:
+  # One record per instance.
+  - name: provider
+    type: string
+
+  # Verifies inbound requests. Never an API key: those are instance
+  # constants.
+  - name: webhook_secret
+    type: string
+
+  # Next ticket number to hand out.
+  - name: next_number
+    type: integer
+
+  # Priority a new inbound ticket gets, 0 to 3.
+  - name: default_priority
+    type: integer
+
+  # top or bottom of that priority.
+  - name: new_ticket_placement
+    type: string
+
+  # Subject words that escalate a new ticket to P0. Matched case
+  # insensitively, and only on the first email of a ticket.
+  - name: p0_subject_keywords
+    type: array
+
+  # The four theme variables the agent interface derives everything from.
+  - name: theme_primary
+    type: string
+  - name: theme_background
+    type: string
+  - name: theme_text
+    type: string
+  - name: theme_border
+    type: string
+
+  - name: brand_name
+    type: string

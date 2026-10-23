@@ -1,0 +1,39 @@
+{% doc %}
+  Page guard. Include it, do not call it as a function: it ends the response
+  with a redirect or a 403 and that only propagates through include.
+
+  Anonymous visitors are sent to log in and come back. A logged in user
+  without the permission gets a 403.
+
+  @param {string} do - The permission the page requires
+  @param {object} [entity] - The ticket the permission is checked against
+{% enddoc %}
+{% liquid
+  function current_profile = 'modules/user/helpers/current_profile'
+  function can = 'modules/support/helpers/can', do: do, entity: entity
+
+  unless can
+    if current_profile.user.id == null
+      session return_to = context.location.href
+
+      comment
+        Set the flash with the user module's helper, which writes the
+        {message, severity} shape its generated layout reads, and take the
+        plain redirect_to tag. modules/core/helpers/redirect_to would be the
+        obvious choice and is the wrong one here: it publishes the core
+        {error, notice, info} shape over the same session key, which that
+        layout reads as blank. The argument is a translation key, not a
+        translated string, because the helper runs t itself.
+      endcomment
+      function _ = 'modules/user/helpers/flash', error: null, info: 'modules/support/authorization.redirect_anonymous_info', notice: null, force_clear: null
+      redirect_to '/sessions/new'
+      break
+    else
+      response_status 403
+      # platformos-check-disable DeprecatedTag
+      include 'modules/support/authorization/forbidden'
+      # platformos-check-enable DeprecatedTag
+      break
+    endif
+  endunless
+%}

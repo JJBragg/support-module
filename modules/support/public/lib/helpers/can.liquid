@@ -1,0 +1,57 @@
+{% doc %}
+  The one authorization entry point. Keyed on the module's own agent records,
+  so the module works on a host instance that never edits the user module's
+  RBAC permissions file.
+
+  Permissions:
+    support.access            reach the agent interface at all
+    support.settings.manage   departments, statuses, agents, email provider
+    support.tickets.view      read a ticket
+    support.tickets.update    change status, assignee or priority
+    support.tickets.rerank    change the shared work order (Admins only)
+
+  @param {string} do - The permission being checked
+  @param {object} [entity] - The ticket the permission is checked against
+{% enddoc %}
+{% liquid
+  function current_profile = 'modules/user/helpers/current_profile'
+  function agent = 'modules/support/helpers/current_agent'
+
+  # Break glass. A host superadmin counts as a support Admin even with no
+  # agent record, so a fresh install can always reach its own settings.
+  assign is_superadmin = false
+  if current_profile.roles contains 'superadmin'
+    assign is_superadmin = true
+  endif
+
+  if agent == null and is_superadmin == false
+    return false
+  endif
+
+  assign is_admin = is_superadmin
+  if agent.role == 'admin'
+    assign is_admin = true
+  endif
+
+  assign allowed = false
+
+  if do == 'support.access'
+    assign allowed = true
+  elsif do == 'support.settings.manage' or do == 'support.tickets.rerank'
+    assign allowed = is_admin
+  elsif do == 'support.tickets.view' or do == 'support.tickets.update'
+    if is_admin
+      assign allowed = true
+    elsif entity == blank
+      # No ticket in hand: the agent may read some tickets, and every query
+      # filters by department anyway.
+      assign allowed = true
+    elsif agent.department_ids contains entity.department_id
+      assign allowed = true
+    endif
+  else
+    log do, type: 'WARNING: unknown permission in modules/support/helpers/can'
+  endif
+
+  return allowed
+%}

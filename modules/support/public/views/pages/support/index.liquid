@@ -4,8 +4,28 @@ metadata:
   title: Support
 ---
 {%- comment -%}
-  Placeholder. The ticket list is built in Phase 3 and replaces this page.
-  It exists now so a deploy can be verified end to end.
+  Placeholder. Phase 3 replaces this with the ticket list. It exists now to
+  prove the agent guard, so it shows only who the viewer is.
 {%- endcomment -%}
+{%- liquid
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.access', entity: null
+  # platformos-check-enable DeprecatedTag
+
+  function agent = 'modules/support/helpers/current_agent'
+  function can_manage_settings = 'modules/support/helpers/can', do: 'support.settings.manage', entity: null
+  function can_rerank = 'modules/support/helpers/can', do: 'support.tickets.rerank', entity: null
+-%}
 <h1>Support</h1>
-<p>The module is installed.</p>
+<p>The agent guard passed.</p>
+<dl>
+  <dt>Agent record</dt>
+  <dd>{% if agent %}{{ agent.id }}, role {{ agent.role }}{% else %}none, admin by host superadmin role{% endif %}</dd>
+  <dt>Departments</dt>
+  <dd>{% if agent.department_ids %}{{ agent.department_ids | join: ', ' }}{% else %}all{% endif %}</dd>
+  <dt>Can manage settings</dt>
+  <dd>{{ can_manage_settings }}</dd>
+  <dt>Can rerank</dt>
+  <dd>{{ can_rerank }}</dd>
+</dl>
+{% if can_manage_settings %}<p><a href="/support/settings">Settings</a></p>{% endif %}

@@ -1,0 +1,37 @@
+query (
+  $page: Int = 1
+  $limit: Int = 20
+  $id: ID
+  $ids: [ID!]
+  $user_id: String
+  $role: String
+  $sort: RecordsSortInput = { created_at: { order: ASC } }
+) {
+  records(
+    page: $page
+    per_page: $limit
+    filter: {
+      id: { value: $id, value_in: $ids }
+      table: { value: "modules/support/agent" }
+      properties: [
+        { name: "user_id", value: $user_id }
+        { name: "role", value: $role }
+      ]
+    }
+    sort: [$sort]
+  ) {
+    total_entries
+    total_pages
+    has_next_page
+    results {
+      id
+      created_at
+      type: table
+
+      user_id: property(name: "user_id")
+      role: property(name: "role")
+      department_ids: property_array(name: "department_ids")
+      title: property(name: "title")
+    }
+  }
+}

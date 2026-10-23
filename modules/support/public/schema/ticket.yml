@@ -1,0 +1,43 @@
+name: ticket
+properties:
+  # Sequential and customer facing, shown as #18022. Allocated from
+  # setting.next_number.
+  - name: number
+    type: integer
+  - name: subject
+    type: string
+
+  # Joined by string id. There are no foreign keys.
+  - name: department_id
+    type: string
+  - name: status_id
+    type: string
+  - name: contact_id
+    type: string
+
+  # Blank means Unassigned.
+  - name: assignee_id
+    type: string
+
+  # 0 to 3, matching P0 Critical through P3 Low.
+  - name: priority
+    type: integer
+
+  # Place in line within the priority, shared by the whole team. A string so
+  # a ticket can be inserted between two neighbours without renumbering the
+  # list. Sorted lexicographically.
+  - name: rank
+    type: string
+
+  - name: opened_at
+    type: datetime
+  - name: closed_at
+    type: datetime
+  - name: last_message_at
+    type: datetime
+  - name: last_message_direction
+    type: string
+
+  # Ticket number, subject and contact email, for the one search box.
+  - name: c__search
+    type: string

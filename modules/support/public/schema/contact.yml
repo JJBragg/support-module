@@ -1,0 +1,13 @@
+name: contact
+properties:
+  # Lowercased on write. This is the only identity a customer has.
+  - name: email
+    type: string
+  - name: name
+    type: string
+  - name: organization
+    type: string
+
+  # Tokenized name and organization, for contains search.
+  - name: c__names
+    type: string

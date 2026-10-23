@@ -1,0 +1,19 @@
+name: agent
+properties:
+  # The platformOS user behind this agent.
+  - name: user_id
+    type: string
+
+  # admin or agent. Support authorization keys on this, not on the host's
+  # RBAC roles, so the module works on an instance that never edits them.
+  - name: role
+    type: string
+
+  # Department ids this agent can see. Admins see every department and this
+  # is ignored for them.
+  - name: department_ids
+    type: array
+
+  # Shown under the name on the Agents screen, e.g. Support lead.
+  - name: title
+    type: string

@@ -1,0 +1,15 @@
+{% doc %}
+  At least one of id or user_id must be given.
+
+  @param {string} [id] - The agent record ID
+  @param {string} [user_id] - The platformOS user ID
+{% enddoc %}
+{% liquid
+  if id == blank and user_id == blank
+    log 'ERROR: missing ID argument in modules/support/queries/agents/find'
+    return nil
+  endif
+
+  graphql result = 'modules/support/agents/search', id: id, user_id: user_id, role: null, limit: 1, page: 1
+  return result.records.results.first
+%}

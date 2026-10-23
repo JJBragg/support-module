@@ -1,0 +1,14 @@
+name: activity
+properties:
+  - name: ticket_id
+    type: string
+  - name: actor_id
+    type: string
+
+  # status_changed, priority_changed, assigned, reranked or reopened.
+  - name: action
+    type: string
+  - name: from_value
+    type: string
+  - name: to_value
+    type: string

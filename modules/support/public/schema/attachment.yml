@@ -1,0 +1,15 @@
+name: attachment
+properties:
+  - name: message_id
+    type: string
+
+  # No image versions: attachments are arbitrary files, not photos.
+  - name: file
+    type: upload
+
+  - name: filename
+    type: string
+  - name: size
+    type: integer
+  - name: content_type
+    type: string

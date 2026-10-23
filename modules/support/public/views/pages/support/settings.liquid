@@ -1,0 +1,17 @@
+---
+slug: support/settings
+metadata:
+  title: Support settings
+---
+{%- comment -%}
+  Placeholder. Phase 5 builds departments, statuses, agents and the email
+  provider here. It exists now to prove the Admin guard.
+{%- endcomment -%}
+{%- liquid
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.settings.manage', entity: null
+  # platformos-check-enable DeprecatedTag
+-%}
+<h1>Support settings</h1>
+<p>The Admin guard passed.</p>
+<p><a href="/support">Back to tickets</a></p>

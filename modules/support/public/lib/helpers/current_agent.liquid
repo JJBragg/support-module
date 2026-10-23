@@ -1,0 +1,15 @@
+{% doc %}
+  The agent record for the logged in user, or null. Everything in the module
+  that asks "who is this" goes through here.
+{% enddoc %}
+{% liquid
+  function current_profile = 'modules/user/helpers/current_profile'
+
+  assign current_agent = null
+  if current_profile.user.id != null
+    function current_agent = 'modules/support/queries/agents/find', user_id: current_profile.user.id, id: null
+  endif
+
+  export current_agent
+  return current_agent
+%}
