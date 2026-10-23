@@ -68,7 +68,7 @@
               {%- else -%}
                 <span style="color: {{ group.status.token.fg }}; display: flex">{% render 'modules/support/ui/icon', path: group.status.token.icon, size: 14, stroke: 2.2 %}</span>
               {%- endif -%}
-              <span class="pos-support-navitem-label">{{ group.label }}</span>
+              <span>{{ group.label }}</span>
               <span class="pos-support-count">{{ group.total }}</span>
             </a>
           </th>
