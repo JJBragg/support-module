@@ -1,0 +1,7 @@
+{% doc %}
+  @param {object} object - The raw input
+{% enddoc %}
+{% liquid
+  assign data = { "ticket_id": object.ticket_id, "actor_id": object.actor_id, "action": object.action, "from_value": object.from_value, "to_value": object.to_value }
+  return data
+%}

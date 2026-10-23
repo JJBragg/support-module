@@ -138,9 +138,11 @@
   if moved_priority
     assign from_label = 'P' | append: old_priority
     assign to_label = 'P' | append: target_priority
-    function _ = 'modules/support/commands/activities/log', ticket_id: ticket.id, actor_id: actor_id, action: 'priority_changed', from_value: from_label, to_value: to_label
+    assign activity = { "ticket_id": ticket.id, "actor_id": actor_id, "action": "priority_changed", "from_value": from_label, "to_value": to_label }
+    function _ = 'modules/support/commands/activities/create', object: activity
   else
-    function _ = 'modules/support/commands/activities/log', ticket_id: ticket.id, actor_id: actor_id, action: 'reranked', from_value: ticket.rank, to_value: rank
+    assign activity = { "ticket_id": ticket.id, "actor_id": actor_id, "action": "reranked", "from_value": ticket.rank, "to_value": rank }
+    function _ = 'modules/support/commands/activities/create', object: activity
   endif
 
   return updated.record

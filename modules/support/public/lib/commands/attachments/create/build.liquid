@@ -1,0 +1,7 @@
+{% doc %}
+  @param {object} object - The raw input
+{% enddoc %}
+{% liquid
+  assign data = { "message_id": object.message_id, "filename": object.filename, "size": object.size, "content_type": object.content_type }
+  return data
+%}

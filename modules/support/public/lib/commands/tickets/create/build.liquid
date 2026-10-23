@@ -1,0 +1,16 @@
+{% doc %}
+  @param {object} object - The raw input
+{% enddoc %}
+{% liquid
+  assign now = 'now' | date: '%Y-%m-%d %H:%M:%S'
+  assign subject = object.subject | default: '(no subject)'
+
+  comment
+    The ticket number is prepended by the caller once it has been
+    allocated, which only happens if this object passes its checks.
+  endcomment
+  assign search = subject | append: ' ' | append: object.contact_email | downcase
+
+  assign data = { "subject": subject, "department_id": object.department_id, "status_id": object.status_id, "contact_id": object.contact_id, "assignee_id": null, "priority": object.priority, "rank": object.rank, "opened_at": now, "last_message_at": now, "last_message_direction": "inbound", "c__search": search }
+  return data
+%}

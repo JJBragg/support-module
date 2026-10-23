@@ -1,0 +1,12 @@
+{% doc %}
+  @param {object} object - The raw input
+{% enddoc %}
+{% liquid
+  assign department_ids = object.department_ids
+  if department_ids == blank
+    assign department_ids = []
+  endif
+
+  assign data = { "user_id": object.user_id, "role": object.role, "department_ids": department_ids, "title": object.title }
+  return data
+%}

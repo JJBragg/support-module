@@ -1,0 +1,16 @@
+{% doc %}
+  @param {object} object - The raw input
+{% enddoc %}
+{% liquid
+  assign email = object.email | default: '' | strip | downcase
+  assign name = object.name | default: ''
+  assign organization = object.organization | default: ''
+
+  comment
+    What the one search box matches a contact on.
+  endcomment
+  assign names = name | append: ' ' | append: organization | append: ' ' | append: email | downcase | strip
+
+  assign data = { "email": email, "name": object.name, "organization": object.organization, "c__names": names }
+  return data
+%}

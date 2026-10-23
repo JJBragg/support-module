@@ -1,0 +1,16 @@
+{% doc %}
+  Records something that happened to a ticket. actor_id is blank when the
+  customer caused it, as a reply to a closed ticket does.
+
+  @param {object} object - ticket_id, action, and optionally actor_id, from_value, to_value
+{% enddoc %}
+{% liquid
+  function object = 'modules/support/commands/activities/create/build', object: object
+  function object = 'modules/support/commands/activities/create/check', object: object
+
+  if object.valid
+    function object = 'modules/core/commands/execute', mutation_name: 'modules/support/activities/create', object: object, selection: null
+  endif
+
+  return object
+%}

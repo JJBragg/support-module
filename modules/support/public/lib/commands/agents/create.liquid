@@ -1,22 +1,23 @@
 {% doc %}
-  Gives a platformOS user access to the support queue.
+  Gives a platformOS user access to the support queue. Returns the existing
+  agent untouched if there is one, so this is safe to call from a seed or an
+  invite that was accepted twice.
 
-  @param {string} user_id - The platformOS user
-  @param {string} role - admin or agent
-  @param {array} [department_ids] - Ignored for admins, who see everything
-  @param {string} [title] - Shown under the name on the Agents screen
+  @param {object} object - user_id, role, and optionally department_ids and title
 {% enddoc %}
 {% liquid
-  if user_id == blank or role == blank
-    log 'ERROR: missing user_id or role in modules/support/commands/agents/create'
-    return nil
-  endif
-
-  function existing = 'modules/support/queries/agents/find', user_id: user_id, id: null
+  function existing = 'modules/support/queries/agents/find', user_id: object.user_id, id: null
   if existing
+    assign existing.valid = true
     return existing
   endif
 
-  graphql created = 'modules/support/agents/create', user_id: user_id, role: role, department_ids: department_ids, title: title
-  return created.record
+  function object = 'modules/support/commands/agents/create/build', object: object
+  function object = 'modules/support/commands/agents/create/check', object: object
+
+  if object.valid
+    function object = 'modules/core/commands/execute', mutation_name: 'modules/support/agents/create', object: object, selection: null
+  endif
+
+  return object
 %}

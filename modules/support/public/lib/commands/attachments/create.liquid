@@ -12,17 +12,15 @@
   again, which beats the email looking like it had nothing on it. A blank
   file is how the timeline knows to say so.
 
-  @param {string} message_id - The message the file arrived on
-  @param {string} [filename] - The name from attachment-info
-  @param {string} [content_type] - The type from attachment-info
-  @param {number} [size] - Bytes, when the provider reports them
+  @param {object} object - message_id, and optionally filename, content_type, size
 {% enddoc %}
 {% liquid
-  if message_id == blank
-    log 'ERROR: missing message_id in modules/support/commands/attachments/create'
-    return nil
+  function object = 'modules/support/commands/attachments/create/build', object: object
+  function object = 'modules/support/commands/attachments/create/check', object: object
+
+  if object.valid
+    function object = 'modules/core/commands/execute', mutation_name: 'modules/support/attachments/create', object: object, selection: null
   endif
 
-  graphql created = 'modules/support/attachments/create', message_id: message_id, filename: filename, size: size, content_type: content_type
-  return created.record
+  return object
 %}

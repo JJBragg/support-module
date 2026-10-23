@@ -20,7 +20,8 @@
   endcomment
   graphql updated = 'modules/support/tickets/set_status', id: ticket.id, status_id: target.id, closed_at: null
 
-  function _ = 'modules/support/commands/activities/log', ticket_id: ticket.id, actor_id: null, action: 'reopened', from_value: previous.name, to_value: target.name
+  assign activity = { "ticket_id": ticket.id, "actor_id": null, "action": "reopened", "from_value": previous.name, "to_value": target.name }
+  function _ = 'modules/support/commands/activities/create', object: activity
 
   return updated.record
 %}

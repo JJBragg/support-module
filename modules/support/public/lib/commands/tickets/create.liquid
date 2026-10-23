@@ -1,23 +1,34 @@
 {% doc %}
   Opens a ticket for the first email of a conversation.
 
+  The number is allocated after validation rather than before, so a
+  rejected ticket does not burn one and leave a gap in the sequence.
+
   @param {string} [subject] - The email subject
   @param {string} department_id - The routed department
   @param {string} contact_id - The sender
-  @param {string} contact_email - Kept for the search column
+  @param {string} [contact_email] - Kept for the search column
   @param {object} settings - The settings record
 {% enddoc %}
 {% liquid
   function status = 'modules/support/queries/statuses/flagged', flag: 'is_new_default'
   function priority = 'modules/support/helpers/email/priority_from_subject', subject: subject, settings: settings
   function rank = 'modules/support/helpers/rank/place', priority: priority, edge: settings.new_ticket_placement
-  function number = 'modules/support/commands/tickets/allocate_number', settings: settings
 
-  assign now = 'now' | date: '%Y-%m-%d %H:%M:%S'
-  assign subject = subject | default: '(no subject)'
-  assign search = number | append: ' ' | append: subject | append: ' ' | append: contact_email | downcase
+  assign input = { "subject": subject, "department_id": department_id, "contact_id": contact_id, "contact_email": contact_email, "status_id": status.id, "priority": priority, "rank": rank }
 
-  graphql created = 'modules/support/tickets/create', number: number, subject: subject, department_id: department_id, status_id: status.id, contact_id: contact_id, assignee_id: null, priority: priority, rank: rank, opened_at: now, last_message_at: now, last_message_direction: 'inbound', c__search: search
+  function object = 'modules/support/commands/tickets/create/build', object: input
+  function object = 'modules/support/commands/tickets/create/check', object: object
 
-  return created.record
+  if object.valid
+    function number = 'modules/support/commands/tickets/allocate_number', settings: settings
+    assign object.number = number
+
+    assign search = number | append: ' ' | append: object.c__search
+    assign object.c__search = search
+
+    function object = 'modules/core/commands/execute', mutation_name: 'modules/support/tickets/create', object: object, selection: null
+  endif
+
+  return object
 %}

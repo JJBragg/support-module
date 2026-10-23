@@ -1,0 +1,22 @@
+{% doc %}
+  @param {object} object - The built input
+{% enddoc %}
+{% liquid
+  assign c = { "errors": {}, "valid": true }
+
+  function c = 'modules/core/validations/presence', c: c, object: object, field_name: 'email', key: null
+
+  comment
+    Only worth asking the shape and uniqueness questions once there is
+    something to ask them about, or a blank address collects three errors
+    that all say the same thing.
+  endcomment
+  if object.email != blank
+    function c = 'modules/core/validations/email', c: c, object: object, field_name: 'email', key: null
+    function c = 'modules/core/validations/uniqueness', c: c, object: object, field_name: 'email', table: 'modules/support/contact', scope_name: null, exclude_name: null, key: null
+  endif
+
+  assign object.valid = c.valid
+  assign object.errors = c.errors
+  return object
+%}

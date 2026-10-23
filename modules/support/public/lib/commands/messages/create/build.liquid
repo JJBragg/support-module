@@ -1,0 +1,20 @@
+{% doc %}
+  @param {object} object - The raw input
+{% enddoc %}
+{% liquid
+  assign to_addresses = object.to_addresses
+  if to_addresses == blank
+    assign to_addresses = []
+  endif
+  assign cc_addresses = object.cc_addresses
+  if cc_addresses == blank
+    assign cc_addresses = []
+  endif
+  assign references = object.references
+  if references == blank
+    assign references = []
+  endif
+
+  assign data = { "ticket_id": object.ticket_id, "kind": object.kind, "contact_id": object.contact_id, "user_id": object.user_id, "from_address": object.from_address, "to_addresses": to_addresses, "cc_addresses": cc_addresses, "subject": object.subject, "body_html": object.body_html, "body_text": object.body_text, "quoted_html": object.quoted_html, "message_id_header": object.message_id_header, "in_reply_to": object.in_reply_to, "references": references, "provider_message_id": object.provider_message_id, "delivery_status": object.delivery_status }
+  return data
+%}

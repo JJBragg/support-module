@@ -63,6 +63,11 @@
   endif
 
   function contact = 'modules/support/commands/contacts/find_or_create', email: sender.email, name: sender.name, organization: null
+  unless contact.valid
+    log contact.errors, type: 'ERROR: modules/support/commands/inbound/receive could not record the contact'
+    assign result = { "ok": false, "error": "contact_invalid", "status": 422 }
+    return result
+  endunless
 
   function headers = 'modules/support/helpers/email/parse_headers', raw: params.headers
   comment
@@ -115,9 +120,20 @@
   if ticket == blank
     assign is_new = true
     function ticket = 'modules/support/commands/tickets/create', subject: params.subject, department_id: department.id, contact_id: contact.id, contact_email: contact.email, settings: settings
+    unless ticket.valid
+      log ticket.errors, type: 'ERROR: modules/support/commands/inbound/receive could not open the ticket'
+      assign result = { "ok": false, "error": "ticket_invalid", "status": 422 }
+      return result
+    endunless
   endif
 
-  function message = 'modules/support/commands/messages/create', ticket_id: ticket.id, kind: 'inbound', contact_id: contact.id, user_id: null, from_address: sender.email, to_addresses: to_addresses, cc_addresses: cc_addresses, subject: params.subject, body_html: split.body_html, body_text: split.body_text, quoted_html: quoted, message_id_header: headers.message_id, in_reply_to: headers.in_reply_to, references: headers.references, provider_message_id: null, delivery_status: null
+  assign incoming = { "ticket_id": ticket.id, "kind": "inbound", "contact_id": contact.id, "user_id": null, "from_address": sender.email, "to_addresses": to_addresses, "cc_addresses": cc_addresses, "subject": params.subject, "body_html": split.body_html, "body_text": split.body_text, "quoted_html": quoted, "message_id_header": headers.message_id, "in_reply_to": headers.in_reply_to, "references": headers.references, "provider_message_id": null, "delivery_status": null }
+  function message = 'modules/support/commands/messages/create', object: incoming
+  unless message.valid
+    log message.errors, type: 'ERROR: modules/support/commands/inbound/receive could not record the message'
+    assign result = { "ok": false, "error": "message_invalid", "status": 422 }
+    return result
+  endunless
 
   comment
     Attachments arrive as attachment1 .. attachmentN, with their names and
@@ -141,8 +157,9 @@
     for index in (1..attachment_count)
       assign key = "attachment" | append: index
       assign details = meta[key]
-      function saved = 'modules/support/commands/attachments/create', message_id: message.id, filename: details.filename, content_type: details.type, size: null
-      if saved
+      assign attachment = { "message_id": message.id, "filename": details.filename, "content_type": details.type, "size": null }
+      function saved = 'modules/support/commands/attachments/create', object: attachment
+      if saved.valid
         assign attachments_saved = attachments_saved | plus: 1
       endif
     endfor

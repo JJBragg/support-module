@@ -14,6 +14,14 @@ module is published.
 
 ### 1.1 Commands skip build, check and execute (the big one)
 
+**Done for the creates, 2026-10-23.** `contacts`, `tickets`, `messages`,
+`agents`, `attachments` and `activities` now build, check and execute, with
+validation from `core`, and every caller reads `valid` and stops on a bad
+write. Still outstanding: the update commands (`tickets/reopen`, `touch`,
+`rerank`) write through narrow mutations without a check, and the seed writes
+directly. Phase 5 brings the Settings writes in on the same pattern, and the
+updates should follow then, when there is a form to report errors into.
+
 Every command in `core` and `user` is three files:
 
 ```liquid
@@ -154,7 +162,19 @@ quietly wipes fields; miss the second and `modules/user/commands/profiles/
 update` looks like it strips a user's roles on every edit, which is what I
 thought until I tested it.
 
-### 2.4 Smaller things worth copying
+### 2.4 `modules/core/validations/included` has no translation to show
+
+It defaults to the key `modules/core/validation.not_included`, and core's
+`validation.yml` does not have one. It has `validation.array.not_included` and
+nothing at the top level. So every use of that validation puts
+`translation missing: en.modules/core/validation.not_included` in front of a
+user. Found it the moment the first `included` check fired here. Same class as
+the `too_short` bug already filed, and probably the same fix.
+
+Each call in this module now passes its own key, which also lets the message
+name the allowed values instead of saying "is not valid".
+
+### 2.5 Smaller things worth copying
 
 Per module CSS namespacing (`pos-support-`) rather than a shared `pos-` prefix,
 so a module cannot collide with a host that also loads common-styling. Keeping

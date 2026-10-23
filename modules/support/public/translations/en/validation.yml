@@ -1,0 +1,11 @@
+en:
+  validation:
+    # modules/core/validations/included defaults to the translation key
+    # modules/core/validation.not_included, which core does not ship: it has
+    # validation.array.not_included and nothing at the top level. Every use of
+    # that validation therefore renders "translation missing" at the person
+    # reading it. Until that is fixed upstream, each call here passes its own
+    # key, which also lets the message name the allowed values.
+    kind: must be an inbound email, an outbound email or a private note
+    role: must be admin or agent
+    action: is not something this module records

@@ -1,0 +1,39 @@
+{% doc %}
+  @param {object} object - The built input
+{% enddoc %}
+{% liquid
+  assign c = { "errors": {}, "valid": true }
+
+  function c = 'modules/core/validations/presence', c: c, object: object, field_name: 'department_id', key: null
+  function c = 'modules/core/validations/presence', c: c, object: object, field_name: 'status_id', key: null
+  function c = 'modules/core/validations/presence', c: c, object: object, field_name: 'contact_id', key: null
+  function c = 'modules/core/validations/presence', c: c, object: object, field_name: 'rank', key: null
+
+  comment
+    Priority is an integer on the record and P0 to P3 everywhere a person
+    sees it. Anything outside that range would sort into a group that is
+    never drawn, so the ticket would exist and be invisible.
+  endcomment
+  function c = 'modules/core/validations/number', c: c, object: object, field_name: 'priority', gte: 0, lte: 3, number: null, eq: null, gt: null, lt: null, ne: null, message: null, message_eq: null, message_gt: null, message_gte: null, message_lt: null, message_lte: null, message_ne: null
+
+  comment
+    A department or status id that does not resolve leaves a ticket the
+    list cannot group or colour. Worth the two queries at creation time.
+  endcomment
+  comment
+    exist_in_db counts records by id rather than reading a field off an
+    object, so each id goes in as a one element array.
+  endcomment
+  if object.department_id != blank
+    assign department_ids = object.department_id | split: ','
+    function c = 'modules/core/validations/exist_in_db', c: c, field_name: 'department_id', table: 'modules/support/department', ids: department_ids, not_ids: null, property_name: null, property_value: null, scope_name: null, scope_value: null, exclude_name: null, exclude_value: null, key: null
+  endif
+  if object.status_id != blank
+    assign status_ids = object.status_id | split: ','
+    function c = 'modules/core/validations/exist_in_db', c: c, field_name: 'status_id', table: 'modules/support/status', ids: status_ids, not_ids: null, property_name: null, property_value: null, scope_name: null, scope_value: null, exclude_name: null, exclude_value: null, key: null
+  endif
+
+  assign object.valid = c.valid
+  assign object.errors = c.errors
+  return object
+%}

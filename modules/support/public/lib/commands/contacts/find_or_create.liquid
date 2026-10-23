@@ -9,18 +9,15 @@
   @param {string} [organization] - Known only when an agent fills it in
 {% enddoc %}
 {% liquid
-  assign email = email | default: "" | strip | downcase
-  if email == blank
-    log "ERROR: missing email in modules/support/commands/contacts/find_or_create"
-    return nil
-  endif
+  assign email = email | default: '' | strip | downcase
 
   function existing = 'modules/support/queries/contacts/find_by_email', email: email
   if existing
+    assign existing.valid = true
     return existing
   endif
 
-  assign names = name | default: "" | append: " " | append: organization | append: " " | append: email | downcase | strip
-  graphql created = 'modules/support/contacts/create', email: email, name: name, organization: organization, c__names: names
-  return created.record
+  assign input = { "email": email, "name": name, "organization": organization }
+  function created = 'modules/support/commands/contacts/create', object: input
+  return created
 %}
