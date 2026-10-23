@@ -1,0 +1,13 @@
+{
+  "name": "pos-module-support",
+  "version": "0.1.0",
+  "description": "Help desk and ticketing module for platformOS",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "changelog": "auto-changelog -p"
+  },
+  "devDependencies": {
+    "auto-changelog": "^2.4.0"
+  }
+}

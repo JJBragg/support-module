@@ -1,0 +1,19 @@
+---
+# Mirrors the settings the core module's CRUD generator writes for a new app.
+escape_output_instead_of_sanitize: true
+graphql_argument_type_mismatch_mode: 'error'
+liquid_add_old_variables: false
+liquid_check_mode: 'error'
+liquid_raise_mode: true
+require_table_for_record_delete_mutation: true
+safe_translate: true
+slug_exact_match: true
+
+# Modules whose removed files should actually be deleted on deploy. Without
+# this, a file dropped from a module upgrade lingers on the instance and can
+# shadow its replacement.
+modules_that_allow_delete_on_deploy:
+  - core
+  - user
+  - support
+---

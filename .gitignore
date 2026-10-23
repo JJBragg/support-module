@@ -1,0 +1,12 @@
+.DS_Store
+node_modules
+tmp
+
+# Instance credentials and deploy tokens
+.pos
+
+# Module dependencies, restored with: pos-cli modules install
+modules/core
+modules/user
+modules/common-styling
+modules/tests
