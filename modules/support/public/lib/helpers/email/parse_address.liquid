@@ -1,0 +1,25 @@
+{% doc %}
+  Splits "Maria Lopez <maria@example.com>" into its name and address. A bare
+  address parses too, with a blank name. No regex: the angle brackets are
+  the only structure that matters here.
+
+  @param {string} [raw] - One address, as it appears in a header
+{% enddoc %}
+{% liquid
+  assign raw = raw | default: "" | strip
+  if raw == blank
+    assign parsed = { "name": "", "email": "" }
+    return parsed
+  endif
+
+  if raw contains "<"
+    assign email = raw | split: "<" | last | split: ">" | first | strip | downcase
+    assign name = raw | split: "<" | first | strip | replace: '"', "" | strip
+  else
+    assign email = raw | strip | downcase
+    assign name = ""
+  endif
+
+  assign parsed = { "name": name, "email": email }
+  return parsed
+%}

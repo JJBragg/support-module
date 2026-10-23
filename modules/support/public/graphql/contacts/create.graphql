@@ -1,0 +1,25 @@
+mutation (
+  $email: String!
+  $name: String
+  $organization: String
+  $c__names: String
+) {
+  record: record_create(
+    record: {
+      table: "modules/support/contact"
+      properties: [
+        { name: "email", value: $email }
+        { name: "name", value: $name }
+        { name: "organization", value: $organization }
+        { name: "c__names", value: $c__names }
+      ]
+    }
+  ) {
+    id
+    type: table
+
+    email: property(name: "email")
+    name: property(name: "name")
+    organization: property(name: "organization")
+  }
+}

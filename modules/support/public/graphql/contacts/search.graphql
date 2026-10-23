@@ -1,0 +1,28 @@
+query (
+  $page: Int = 1
+  $limit: Int = 20
+  $id: ID
+  $email: String
+) {
+  records(
+    page: $page
+    per_page: $limit
+    filter: {
+      id: { value: $id }
+      table: { value: "modules/support/contact" }
+      properties: [
+        { name: "email", value: $email }
+      ]
+    }
+  ) {
+    total_entries
+    results {
+      id
+      type: table
+
+      email: property(name: "email")
+      name: property(name: "name")
+      organization: property(name: "organization")
+    }
+  }
+}

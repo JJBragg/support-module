@@ -1,0 +1,37 @@
+mutation (
+  $id: ID!
+  $provider: String
+  $webhook_secret: String
+  $next_number: Int
+  $default_priority: Int
+  $new_ticket_placement: String
+  $p0_subject_keywords: [String]
+  $theme_primary: String
+  $theme_background: String
+  $theme_text: String
+  $theme_border: String
+  $brand_name: String
+) {
+  record: record_update(
+    id: $id
+    record: {
+      table: "modules/support/setting"
+      properties: [
+        { name: "provider", value: $provider }
+        { name: "webhook_secret", value: $webhook_secret }
+        { name: "next_number", value_int: $next_number }
+        { name: "default_priority", value_int: $default_priority }
+        { name: "new_ticket_placement", value: $new_ticket_placement }
+        { name: "p0_subject_keywords", value_array: $p0_subject_keywords }
+        { name: "theme_primary", value: $theme_primary }
+        { name: "theme_background", value: $theme_background }
+        { name: "theme_text", value: $theme_text }
+        { name: "theme_border", value: $theme_border }
+        { name: "brand_name", value: $brand_name }
+      ]
+    }
+  ) {
+    id
+    next_number: property_int(name: "next_number")
+  }
+}

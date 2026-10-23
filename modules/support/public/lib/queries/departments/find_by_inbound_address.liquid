@@ -1,0 +1,12 @@
+{% doc %}
+  @param {string} address - A recipient address, matched lowercased
+{% enddoc %}
+{% liquid
+  if address == blank
+    return nil
+  endif
+
+  assign needle = address | strip | downcase
+  graphql result = 'modules/support/departments/search', inbound_address: needle, slug: null, id: null, limit: 1, page: 1
+  return result.records.results.first
+%}

@@ -1,0 +1,17 @@
+{% doc %}
+  Hands out the next ticket number and advances the counter.
+
+  Read then write, so two emails arriving in the same instant can take the
+  same number. At support team volume that is a remote possibility with a
+  cosmetic consequence, and platformOS has no atomic counter to borrow.
+  Worth revisiting if this ever runs at a different scale.
+
+  @param {object} settings - The settings record
+{% enddoc %}
+{% liquid
+  assign number = settings.next_number | default: 1
+  assign next = number | plus: 1
+
+  graphql _ = 'modules/support/settings/set_next_number', id: settings.id, next_number: next
+  return number
+%}

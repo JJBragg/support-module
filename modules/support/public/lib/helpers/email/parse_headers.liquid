@@ -1,0 +1,68 @@
+{% doc %}
+  Pulls Message-ID, In-Reply-To and References out of the raw header block
+  SendGrid posts. Folded headers, where References continues on indented
+  lines, are joined back together before they are read.
+
+  Returns ids without angle brackets, which is how message_id_header is
+  stored.
+
+  @param {string} [raw] - The raw headers field
+{% enddoc %}
+{% capture nl %}
+{% endcapture %}
+{% liquid
+  assign message_id = ""
+  assign in_reply_to = ""
+  assign references = []
+
+  assign raw = raw | default: ""
+  if raw == blank
+    assign parsed = { "message_id": message_id, "in_reply_to": in_reply_to, "references": references }
+    return parsed
+  endif
+
+  assign lines = raw | split: nl
+  assign current_key = ""
+  assign current_value = ""
+  assign unfolded = []
+
+  for line in lines
+    assign without_indent = line | lstrip
+
+    if without_indent != line and current_key != blank
+      assign current_value = current_value | append: " " | append: without_indent
+    else
+      if current_key != blank
+        assign entry = { "key": current_key, "value": current_value }
+        assign unfolded = unfolded | array_add: entry
+      endif
+      assign raw_key = line | split: ":" | first
+      assign current_key = raw_key | strip | downcase
+      assign current_value = line | remove_first: raw_key | remove_first: ":" | strip
+    endif
+  endfor
+
+  if current_key != blank
+    assign entry = { "key": current_key, "value": current_value }
+    assign unfolded = unfolded | array_add: entry
+  endif
+
+  for header in unfolded
+    if header.key == "message-id" and message_id == blank
+      assign message_id = header.value | replace: "<", "" | replace: ">", "" | strip
+    elsif header.key == "in-reply-to" and in_reply_to == blank
+      assign in_reply_to = header.value | replace: "<", "" | replace: ">", "" | strip
+    elsif header.key == "references"
+      assign tokens = header.value | split: " "
+      for token in tokens
+        assign id = token | replace: "<", "" | replace: ">", "" | strip
+        if id != blank
+          assign references = references | array_add: id
+        endif
+      endfor
+    endif
+  endfor
+
+  assign parsed = { "message_id": message_id, "in_reply_to": in_reply_to, "references": references }
+  return parsed
+%}

@@ -1,0 +1,24 @@
+mutation (
+  $message_id: String!
+  $filename: String
+  $size: Int
+  $content_type: String
+) {
+  record: record_create(
+    record: {
+      table: "modules/support/attachment"
+      properties: [
+        { name: "message_id", value: $message_id }
+        { name: "filename", value: $filename }
+        { name: "size", value_int: $size }
+        { name: "content_type", value: $content_type }
+      ]
+    }
+  ) {
+    id
+    type: table
+
+    filename: property(name: "filename")
+    content_type: property(name: "content_type")
+  }
+}

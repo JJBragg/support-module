@@ -1,0 +1,70 @@
+{% doc %}
+  Splits an inbound email into what the sender wrote now and the history
+  their client quoted underneath.
+
+  Heuristics, not parsing: there is no reliable marker for quoted text, so
+  this looks for the ones real clients emit. Getting it wrong costs a
+  collapsed section holding slightly too much or too little, never a lost
+  message, because both halves are stored.
+
+  @param {string} [text] - The plain text body
+  @param {string} [html] - The HTML body
+{% enddoc %}
+{% capture nl %}
+{% endcapture %}
+{% liquid
+  assign body_text = ""
+  assign quoted_text = ""
+  assign body_html = ""
+  assign quoted_html = ""
+
+  assign text = text | default: ""
+  if text != blank
+    assign lines = text | split: nl
+    assign found = false
+    assign body_lines = []
+    assign quoted_lines = []
+
+    for line in lines
+      unless found
+        assign stripped = line | strip
+        assign first_char = stripped | slice: 0, 1
+        assign first_three = stripped | slice: 0, 3
+        if first_char == ">"
+          assign found = true
+        elsif first_three == "On " and stripped contains "wrote:"
+          assign found = true
+        elsif stripped contains "-----Original Message-----"
+          assign found = true
+        elsif stripped contains "________________"
+          assign found = true
+        endif
+      endunless
+
+      if found
+        assign quoted_lines = quoted_lines | array_add: line
+      else
+        assign body_lines = body_lines | array_add: line
+      endif
+    endfor
+
+    assign body_text = body_lines | join: nl | strip
+    assign quoted_text = quoted_lines | join: nl | strip
+  endif
+
+  assign html = html | default: ""
+  if html != blank
+    if html contains "<blockquote"
+      assign body_html = html | split: "<blockquote" | first
+      assign quoted_html = html | remove_first: body_html
+    elsif html contains "gmail_quote"
+      assign body_html = html | split: '<div class="gmail_quote' | first
+      assign quoted_html = html | remove_first: body_html
+    else
+      assign body_html = html
+    endif
+  endif
+
+  assign result = { "body_text": body_text, "quoted_text": quoted_text, "body_html": body_html, "quoted_html": quoted_html }
+  return result
+%}

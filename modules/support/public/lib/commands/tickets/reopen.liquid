@@ -1,0 +1,26 @@
+{% doc %}
+  A customer replying to a closed ticket reopens it, to the status flagged
+  is_reopen_target, and the move is logged.
+
+  @param {object} ticket - The closed ticket
+{% enddoc %}
+{% liquid
+  function target = 'modules/support/queries/statuses/flagged', flag: 'is_reopen_target'
+  if target == blank
+    log 'ERROR: no reopen target status in modules/support/commands/tickets/reopen'
+    return nil
+  endif
+
+  function previous = 'modules/support/queries/statuses/find', id: ticket.status_id
+
+  comment
+    closed_at is passed as null deliberately. record_update treats a null
+    argument as "clear this property", which is exactly what reopening
+    means here.
+  endcomment
+  graphql updated = 'modules/support/tickets/set_status', id: ticket.id, status_id: target.id, closed_at: null
+
+  function _ = 'modules/support/commands/activities/log', ticket_id: ticket.id, actor_id: null, action: 'reopened', from_value: previous.name, to_value: target.name
+
+  return updated.record
+%}

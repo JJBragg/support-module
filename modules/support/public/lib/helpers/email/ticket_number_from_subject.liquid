@@ -1,0 +1,21 @@
+{% doc %}
+  Reads the [#18022] token a reply carries in its subject. The fallback for
+  when a mail client drops In-Reply-To and References.
+
+  @param {string} [subject] - The subject line
+{% enddoc %}
+{% liquid
+  assign subject = subject | default: ''
+  unless subject contains '[#'
+    return nil
+  endunless
+
+  assign candidate = subject | split: '[#' | last | split: ']' | first | strip
+  assign digits = candidate | replace: '0', '' | replace: '1', '' | replace: '2', '' | replace: '3', '' | replace: '4', '' | replace: '5', '' | replace: '6', '' | replace: '7', '' | replace: '8', '' | replace: '9', ''
+  if candidate == blank or digits != blank
+    return nil
+  endif
+
+  assign number = candidate | to_positive_integer: 0
+  return number
+%}

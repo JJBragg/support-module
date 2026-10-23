@@ -1,0 +1,164 @@
+{% doc %}
+  Turns one posted inbound email into a ticket and a message.
+
+  Provider agnostic on purpose: it takes already extracted fields, so a
+  second provider needs its own endpoint page to map the post into these
+  names, and nothing in here changes.
+
+  Returns a result with an HTTP status for the endpoint to apply.
+
+  @param {object} params - from, to, cc, subject, text, html, headers, token
+{% enddoc %}
+{% liquid
+  function settings = 'modules/support/queries/settings/get'
+  if settings == blank
+    assign result = { "ok": false, "error": "not_configured", "status": 500 }
+    return result
+  endif
+
+  comment
+    The shared secret. SendGrid Inbound Parse does not sign its posts the
+    way the Event Webhook signs its own, so the secret travels in the URL,
+    as a path segment or a query parameter.
+  endcomment
+  assign given = params.token | default: ""
+  if settings.webhook_secret == blank or given != settings.webhook_secret
+    assign result = { "ok": false, "error": "forbidden", "status": 403 }
+    return result
+  endif
+
+  function sender = 'modules/support/helpers/email/parse_address', raw: params.from
+  if sender.email == blank
+    assign result = { "ok": false, "error": "no_sender", "status": 422 }
+    return result
+  endif
+
+  function to_addresses = 'modules/support/helpers/email/parse_address_list', raw: params.to
+  function cc_addresses = 'modules/support/helpers/email/parse_address_list', raw: params.cc
+  assign recipients = to_addresses | concat: cc_addresses
+
+  assign department = null
+  for address in recipients
+    function match = 'modules/support/queries/departments/find_by_inbound_address', address: address
+    if match
+      assign department = match
+      break
+    endif
+  endfor
+
+  assign routed = true
+  if department == blank
+    comment
+      Nothing matched the recipient. Fall back to the first department
+      rather than drop the mail: a misaddressed email is a support request
+      that has not been answered yet, and an agent can move it.
+    endcomment
+    function department = 'modules/support/queries/departments/default'
+    assign routed = false
+  endif
+
+  if department == blank
+    assign result = { "ok": false, "error": "no_department", "status": 500 }
+    return result
+  endif
+
+  function contact = 'modules/support/commands/contacts/find_or_create', email: sender.email, name: sender.name, organization: null
+
+  function headers = 'modules/support/helpers/email/parse_headers', raw: params.headers
+  comment
+    Copy the references rather than aliasing them. add_to_array mutates the
+    array it is given, so appending to headers.references here would also
+    append to what gets stored on the message.
+  endcomment
+  assign candidates = []
+  for reference in headers.references
+    assign candidates = candidates | array_add: reference
+  endfor
+  if headers.in_reply_to != blank
+    assign candidates = candidates | array_add: headers.in_reply_to
+  endif
+
+  assign ticket = null
+  assign matched_by = "none"
+
+  if candidates != blank
+    function prior = 'modules/support/queries/messages/find_by_header_ids', message_ids: candidates
+    if prior
+      function ticket = 'modules/support/queries/tickets/find', id: prior.ticket_id, number: null
+      if ticket
+        assign matched_by = "headers"
+      endif
+    endif
+  endif
+
+  if ticket == blank
+    comment
+      The fallback for clients that drop In-Reply-To and References: the
+      [#18022] token outbound replies carry in their subject.
+    endcomment
+    function number = 'modules/support/helpers/email/ticket_number_from_subject', subject: params.subject
+    if number
+      function ticket = 'modules/support/queries/tickets/find', id: null, number: number
+      if ticket
+        assign matched_by = "subject"
+      endif
+    endif
+  endif
+
+  function split = 'modules/support/helpers/email/split_quoted', text: params.text, html: params.html
+  assign quoted = split.quoted_html
+  if quoted == blank
+    assign quoted = split.quoted_text
+  endif
+
+  assign is_new = false
+  if ticket == blank
+    assign is_new = true
+    function ticket = 'modules/support/commands/tickets/create', subject: params.subject, department_id: department.id, contact_id: contact.id, contact_email: contact.email, settings: settings
+  endif
+
+  function message = 'modules/support/commands/messages/create', ticket_id: ticket.id, kind: 'inbound', contact_id: contact.id, user_id: null, from_address: sender.email, to_addresses: to_addresses, cc_addresses: cc_addresses, subject: params.subject, body_html: split.body_html, body_text: split.body_text, quoted_html: quoted, message_id_header: headers.message_id, in_reply_to: headers.in_reply_to, references: headers.references, provider_message_id: null, delivery_status: null
+
+  comment
+    Attachments arrive as attachment1 .. attachmentN, with their names and
+    types in the attachment-info JSON, and the count in attachments.
+  endcomment
+  assign attachments_saved = 0
+  assign attachment_count = params.attachments | default: 0 | plus: 0
+  if attachment_count > 0
+    assign info = params["attachment-info"] | default: ""
+    assign meta = null
+    if info != blank
+      assign meta = info | parse_json
+    endif
+
+    comment
+      Only the metadata is read. The posted file itself is a Rails
+      UploadedFile with no Liquid representation: touching it in any way,
+      even comparing it to blank, raises "undefined method to_liquid". See
+      commands/attachments/create for what that costs and why.
+    endcomment
+    for index in (1..attachment_count)
+      assign key = "attachment" | append: index
+      assign details = meta[key]
+      function saved = 'modules/support/commands/attachments/create', message_id: message.id, filename: details.filename, content_type: details.type, size: null
+      if saved
+        assign attachments_saved = attachments_saved | plus: 1
+      endif
+    endfor
+  endif
+
+  assign reopened = false
+  unless is_new
+    function status = 'modules/support/queries/statuses/find', id: ticket.status_id
+    if status.kind == 'closed'
+      function _ = 'modules/support/commands/tickets/reopen', ticket: ticket
+      assign reopened = true
+    endif
+  endunless
+
+  function _ = 'modules/support/commands/tickets/touch', ticket: ticket, direction: 'inbound', contact_email: contact.email
+
+  assign result = { "ok": true, "status": 200, "ticket_id": ticket.id, "ticket_number": ticket.number, "message_id": message.id, "new_ticket": is_new, "reopened": reopened, "matched_by": matched_by, "attachments": attachments_saved, "department": department.slug, "routed_by_address": routed }
+  return result
+%}

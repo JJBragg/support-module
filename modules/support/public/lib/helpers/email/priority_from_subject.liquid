@@ -1,0 +1,28 @@
+{% doc %}
+  The priority a new ticket opens at. The default from settings, raised to
+  P0 when the subject carries one of the escalation keywords.
+
+  Only ever called for the first email of a ticket: a reply never changes
+  priority.
+
+  @param {string} [subject] - The subject line
+  @param {object} settings - The settings record
+{% enddoc %}
+{% liquid
+  assign priority = settings.default_priority | default: 1
+  assign subject = subject | default: ''
+  assign keywords = settings.p0_subject_keywords
+
+  if subject != blank and keywords != blank
+    assign haystack = subject | downcase
+    for keyword in keywords
+      assign needle = keyword | downcase | strip
+      if needle != blank and haystack contains needle
+        assign priority = 0
+        break
+      endif
+    endfor
+  endif
+
+  return priority
+%}

@@ -3,6 +3,8 @@ query (
   $limit: Int = 50
   $id: ID
   $slug: String
+  $inbound_address: String
+  $sort: RecordsSortInput = { properties: { name: "position", order: ASC } }
 ) {
   records(
     page: $page
@@ -12,8 +14,10 @@ query (
       table: { value: "modules/support/department" }
       properties: [
         { name: "slug", value: $slug }
+        { name: "inbound_address", value: $inbound_address }
       ]
     }
+    sort: [$sort]
   ) {
     total_entries
     results {

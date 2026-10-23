@@ -1,0 +1,24 @@
+{% doc %}
+  Splits a To or Cc header into addresses. Commas inside a quoted display
+  name would split wrongly here, which costs at most a malformed name on a
+  Cc chip, never a misrouted ticket: routing matches on the address.
+
+  @param {string} [raw] - A To or Cc header value
+{% enddoc %}
+{% liquid
+  assign addresses = []
+  assign raw = raw | default: ''
+  if raw == blank
+    return addresses
+  endif
+
+  assign parts = raw | split: ','
+  for part in parts
+    function parsed = 'modules/support/helpers/email/parse_address', raw: part
+    if parsed.email != blank
+      assign addresses = addresses | array_add: parsed.email
+    endif
+  endfor
+
+  return addresses
+%}

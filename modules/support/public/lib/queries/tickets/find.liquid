@@ -1,0 +1,15 @@
+{% doc %}
+  At least one of id or number must be given.
+
+  @param {string} [id] - The ticket record ID
+  @param {number} [number] - The customer facing ticket number
+{% enddoc %}
+{% liquid
+  if id == blank and number == blank
+    log 'ERROR: missing id or number in modules/support/queries/tickets/find'
+    return nil
+  endif
+
+  graphql result = 'modules/support/tickets/search', id: id, number: number, department_id: null, status_id: null, contact_id: null, priority: null, limit: 1, page: 1
+  return result.records.results.first
+%}

@@ -1,0 +1,49 @@
+mutation (
+  $ticket_id: String!
+  $kind: String!
+  $contact_id: String
+  $user_id: String
+  $from_address: String
+  $to_addresses: [String]
+  $cc_addresses: [String]
+  $subject: String
+  $body_html: String
+  $body_text: String
+  $quoted_html: String
+  $message_id_header: String
+  $in_reply_to: String
+  $references: [String]
+  $provider_message_id: String
+  $delivery_status: String
+) {
+  record: record_create(
+    record: {
+      table: "modules/support/message"
+      properties: [
+        { name: "ticket_id", value: $ticket_id }
+        { name: "kind", value: $kind }
+        { name: "contact_id", value: $contact_id }
+        { name: "user_id", value: $user_id }
+        { name: "from_address", value: $from_address }
+        { name: "to_addresses", value_array: $to_addresses }
+        { name: "cc_addresses", value_array: $cc_addresses }
+        { name: "subject", value: $subject }
+        { name: "body_html", value: $body_html }
+        { name: "body_text", value: $body_text }
+        { name: "quoted_html", value: $quoted_html }
+        { name: "message_id_header", value: $message_id_header }
+        { name: "in_reply_to", value: $in_reply_to }
+        { name: "references", value_array: $references }
+        { name: "provider_message_id", value: $provider_message_id }
+        { name: "delivery_status", value: $delivery_status }
+      ]
+    }
+  ) {
+    id
+    created_at
+    type: table
+
+    ticket_id: property(name: "ticket_id")
+    kind: property(name: "kind")
+  }
+}

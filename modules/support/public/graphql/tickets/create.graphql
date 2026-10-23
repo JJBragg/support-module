@@ -1,0 +1,43 @@
+mutation (
+  $number: Int!
+  $subject: String
+  $department_id: String!
+  $status_id: String!
+  $contact_id: String!
+  $assignee_id: String
+  $priority: Int
+  $rank: String
+  $opened_at: String
+  $last_message_at: String
+  $last_message_direction: String
+  $c__search: String
+) {
+  record: record_create(
+    record: {
+      table: "modules/support/ticket"
+      properties: [
+        { name: "number", value_int: $number }
+        { name: "subject", value: $subject }
+        { name: "department_id", value: $department_id }
+        { name: "status_id", value: $status_id }
+        { name: "contact_id", value: $contact_id }
+        { name: "assignee_id", value: $assignee_id }
+        { name: "priority", value_int: $priority }
+        { name: "rank", value: $rank }
+        { name: "opened_at", value: $opened_at }
+        { name: "last_message_at", value: $last_message_at }
+        { name: "last_message_direction", value: $last_message_direction }
+        { name: "c__search", value: $c__search }
+      ]
+    }
+  ) {
+    id
+    type: table
+
+    number: property_int(name: "number")
+    subject: property(name: "subject")
+    status_id: property(name: "status_id")
+    priority: property_int(name: "priority")
+    rank: property(name: "rank")
+  }
+}

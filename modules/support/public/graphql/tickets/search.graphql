@@ -1,0 +1,51 @@
+query (
+  $page: Int = 1
+  $limit: Int = 20
+  $id: ID
+  $number: Int
+  $department_id: String
+  $department_ids: [String!]
+  $status_id: String
+  $contact_id: String
+  $priority: Int
+  $sort: RecordsSortInput = { properties: { name: "rank", order: ASC } }
+) {
+  records(
+    page: $page
+    per_page: $limit
+    filter: {
+      id: { value: $id }
+      table: { value: "modules/support/ticket" }
+      properties: [
+        { name: "number", value_int: $number }
+        { name: "department_id", value: $department_id, value_in: $department_ids }
+        { name: "status_id", value: $status_id }
+        { name: "contact_id", value: $contact_id }
+        { name: "priority", value_int: $priority }
+      ]
+    }
+    sort: [$sort]
+  ) {
+    total_entries
+    total_pages
+    has_next_page
+    results {
+      id
+      created_at
+      type: table
+
+      number: property_int(name: "number")
+      subject: property(name: "subject")
+      department_id: property(name: "department_id")
+      status_id: property(name: "status_id")
+      contact_id: property(name: "contact_id")
+      assignee_id: property(name: "assignee_id")
+      priority: property_int(name: "priority")
+      rank: property(name: "rank")
+      opened_at: property(name: "opened_at")
+      closed_at: property(name: "closed_at")
+      last_message_at: property(name: "last_message_at")
+      last_message_direction: property(name: "last_message_direction")
+    }
+  }
+}

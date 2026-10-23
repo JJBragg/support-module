@@ -1,0 +1,19 @@
+{% doc %}
+  The rank at one end of a priority, for placing a new ticket. Returns blank
+  when the priority is empty.
+
+  @param {number} priority - 0 to 3
+  @param {string} [edge] - bottom (the default) or top
+{% enddoc %}
+{% liquid
+  assign edge = edge | default: 'bottom'
+  if edge == 'top'
+    assign sort = { "properties": { "name": "rank", "order": "ASC" } }
+  else
+    assign sort = { "properties": { "name": "rank", "order": "DESC" } }
+  endif
+
+  graphql result = 'modules/support/tickets/search', priority: priority, sort: sort, id: null, number: null, department_id: null, status_id: null, contact_id: null, limit: 1, page: 1
+  assign ticket = result.records.results.first
+  return ticket.rank
+%}

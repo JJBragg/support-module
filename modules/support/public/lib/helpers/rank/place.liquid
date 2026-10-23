@@ -1,0 +1,37 @@
+{% doc %}
+  A rank string for a ticket joining a priority at one end.
+
+  Ranks are ten digit zero padded numbers, stepping by 1000, so they sort
+  lexicographically and leave room to insert between neighbours without
+  renumbering. Phase 3 adds the midpoint insert that drag and drop needs.
+
+  @param {number} priority - 0 to 3
+  @param {string} [edge] - bottom (the default) or top
+{% enddoc %}
+{% liquid
+  assign edge = edge | default: 'bottom'
+  assign step = 1000
+
+  function current = 'modules/support/queries/tickets/edge_rank', priority: priority, edge: edge
+
+  if current == blank
+    assign value = step
+  elsif edge == 'top'
+    assign n = current | plus: 0
+    if n > 1
+      assign value = n | divided_by: 2
+    else
+      comment
+        The top of the priority is already rank 1, so there is no gap left
+        to claim. Phase 3 rebalances; until then the two share a rank and
+        sort by whatever the database returns.
+      endcomment
+      assign value = 1
+    endif
+  else
+    assign value = current | plus: step
+  endif
+
+  assign rank = value | advanced_format: '%010d'
+  return rank
+%}

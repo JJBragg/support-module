@@ -1,0 +1,26 @@
+{% doc %}
+  A customer is only ever identified by their email address, so this is a
+  lookup on email with a create behind it. An existing contact is returned
+  untouched: a display name from one client's From header is not a reason
+  to overwrite a name an agent may have corrected.
+
+  @param {string} [email] - The sender address
+  @param {string} [name] - The display name from the From header
+  @param {string} [organization] - Known only when an agent fills it in
+{% enddoc %}
+{% liquid
+  assign email = email | default: "" | strip | downcase
+  if email == blank
+    log "ERROR: missing email in modules/support/commands/contacts/find_or_create"
+    return nil
+  endif
+
+  function existing = 'modules/support/queries/contacts/find_by_email', email: email
+  if existing
+    return existing
+  endif
+
+  assign names = name | default: "" | append: " " | append: organization | append: " " | append: email | downcase | strip
+  graphql created = 'modules/support/contacts/create', email: email, name: name, organization: organization, c__names: names
+  return created.record
+%}

@@ -1,0 +1,22 @@
+mutation (
+  $id: ID!
+  $status_id: String!
+  $closed_at: String
+) {
+  record: record_update(
+    id: $id
+    record: {
+      table: "modules/support/ticket"
+      properties: [
+        { name: "status_id", value: $status_id }
+        { name: "closed_at", value: $closed_at }
+      ]
+    }
+  ) {
+    id
+    type: table
+
+    status_id: property(name: "status_id")
+    closed_at: property(name: "closed_at")
+  }
+}

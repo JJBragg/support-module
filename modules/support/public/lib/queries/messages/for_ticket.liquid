@@ -1,0 +1,14 @@
+{% doc %}
+  Every message on a ticket, oldest first, which is the order the timeline
+  is drawn in.
+
+  @param {string} ticket_id - The ticket record ID
+{% enddoc %}
+{% liquid
+  if ticket_id == blank
+    return nil
+  endif
+
+  graphql result = 'modules/support/messages/search', ticket_id: ticket_id, message_id_header: null, message_id_headers: null, id: null, limit: 200, page: 1
+  return result.records.results
+%}

@@ -1,0 +1,28 @@
+{% doc %}
+  Records that a file arrived on a message.
+
+  The file itself is not stored yet, and the schema's upload property stays
+  empty. platformOS writes an upload either from a browser that presigned
+  an S3 URL, or from content the server generated. A file posted to a page
+  is neither: it reaches Liquid as a Rails UploadedFile, which has no
+  Liquid representation at all, so it cannot be read, compared or passed on.
+
+  Recording the name and type is still worth doing. An agent reading the
+  timeline can see that the customer attached hprb-error.png and ask for it
+  again, which beats the email looking like it had nothing on it. A blank
+  file is how the timeline knows to say so.
+
+  @param {string} message_id - The message the file arrived on
+  @param {string} [filename] - The name from attachment-info
+  @param {string} [content_type] - The type from attachment-info
+  @param {number} [size] - Bytes, when the provider reports them
+{% enddoc %}
+{% liquid
+  if message_id == blank
+    log 'ERROR: missing message_id in modules/support/commands/attachments/create'
+    return nil
+  endif
+
+  graphql created = 'modules/support/attachments/create', message_id: message_id, filename: filename, size: size, content_type: content_type
+  return created.record
+%}

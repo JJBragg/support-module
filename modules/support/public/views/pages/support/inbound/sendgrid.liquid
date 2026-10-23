@@ -1,0 +1,26 @@
+---
+slug: support/inbound/sendgrid(/:token)
+method: post
+format: json
+layout: ''
+---
+{%- comment -%}
+  SendGrid Inbound Parse posts here. The secret is part of the URL, either
+  as the trailing path segment or as ?token=, because Inbound Parse does
+  not sign its requests.
+
+  The work is done inline. SendGrid wants a prompt 2xx, and if this ever
+  grows slow enough to matter the body of it moves to a background job and
+  this page keeps answering straight away.
+{%- endcomment -%}
+{%- liquid
+  function result = 'modules/support/commands/inbound/receive', params: context.params
+
+  assign status = result.status | default: 200
+  if status != 200
+    response_status status
+  endif
+
+  assign body = { "ok": result.ok, "error": result.error, "ticket_number": result.ticket_number, "new_ticket": result.new_ticket, "reopened": result.reopened }
+  echo body | json
+-%}

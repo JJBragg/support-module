@@ -1,0 +1,17 @@
+mutation (
+  $id: ID!
+  $next_number: Int!
+) {
+  record: record_update(
+    id: $id
+    record: {
+      table: "modules/support/setting"
+      properties: [
+        { name: "next_number", value_int: $next_number }
+      ]
+    }
+  ) {
+    id
+    next_number: property_int(name: "next_number")
+  }
+}

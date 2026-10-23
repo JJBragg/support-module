@@ -1,0 +1,15 @@
+{% doc %}
+  Records that a ticket just saw traffic, and keeps the search column in
+  step with the subject and contact.
+
+  @param {object} ticket - The ticket
+  @param {string} direction - inbound or outbound
+  @param {string} [contact_email] - For the search column
+{% enddoc %}
+{% liquid
+  assign now = 'now' | date: '%Y-%m-%d %H:%M:%S'
+  assign search = ticket.number | append: ' ' | append: ticket.subject | append: ' ' | append: contact_email | downcase
+
+  graphql updated = 'modules/support/tickets/touch', id: ticket.id, last_message_at: now, last_message_direction: direction, c__search: search
+  return updated.record
+%}

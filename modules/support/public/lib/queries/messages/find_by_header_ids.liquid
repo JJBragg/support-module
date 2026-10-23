@@ -1,0 +1,15 @@
+{% doc %}
+  Finds the newest message whose Message-ID matches any of the given ids.
+  This is how an inbound reply is threaded onto its ticket.
+
+  @param {array} message_ids - Message-ID values, without angle brackets
+{% enddoc %}
+{% liquid
+  if message_ids == blank
+    return nil
+  endif
+
+  assign sort = { "created_at": { "order": "DESC" } }
+  graphql result = 'modules/support/messages/search', message_id_headers: message_ids, message_id_header: null, ticket_id: null, id: null, sort: sort, limit: 1, page: 1
+  return result.records.results.first
+%}

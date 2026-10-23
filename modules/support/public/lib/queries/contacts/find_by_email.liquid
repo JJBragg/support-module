@@ -1,0 +1,12 @@
+{% doc %}
+  @param {string} email - Matched lowercased, which is how contacts are stored
+{% enddoc %}
+{% liquid
+  if email == blank
+    return nil
+  endif
+
+  assign needle = email | strip | downcase
+  graphql result = 'modules/support/contacts/search', email: needle, id: null, limit: 1, page: 1
+  return result.records.results.first
+%}

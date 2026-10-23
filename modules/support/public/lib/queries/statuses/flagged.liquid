@@ -1,0 +1,26 @@
+{% doc %}
+  The status carrying one of the two seed flags. Eight rows, so this reads
+  them all and picks in Liquid rather than filtering on a boolean.
+
+  Falls back to the first status by position, so a misconfigured list can
+  still take an email.
+
+  @param {string} flag - is_new_default or is_reopen_target
+{% enddoc %}
+{% liquid
+  function statuses = 'modules/support/queries/statuses/search', kind: null
+  assign found = null
+
+  for status in statuses
+    if status[flag] == true
+      assign found = status
+      break
+    endif
+  endfor
+
+  if found == null
+    assign found = statuses.first
+  endif
+
+  return found
+%}

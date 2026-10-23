@@ -1,0 +1,47 @@
+query (
+  $page: Int = 1
+  $limit: Int = 50
+  $id: ID
+  $ticket_id: String
+  $message_id_header: String
+  $message_id_headers: [String!]
+  $sort: RecordsSortInput = { created_at: { order: ASC } }
+) {
+  records(
+    page: $page
+    per_page: $limit
+    filter: {
+      id: { value: $id }
+      table: { value: "modules/support/message" }
+      properties: [
+        { name: "ticket_id", value: $ticket_id }
+        { name: "message_id_header", value: $message_id_header, value_in: $message_id_headers }
+      ]
+    }
+    sort: [$sort]
+  ) {
+    total_entries
+    results {
+      id
+      created_at
+      type: table
+
+      ticket_id: property(name: "ticket_id")
+      kind: property(name: "kind")
+      contact_id: property(name: "contact_id")
+      user_id: property(name: "user_id")
+      from_address: property(name: "from_address")
+      to_addresses: property_array(name: "to_addresses")
+      cc_addresses: property_array(name: "cc_addresses")
+      subject: property(name: "subject")
+      body_html: property(name: "body_html")
+      body_text: property(name: "body_text")
+      quoted_html: property(name: "quoted_html")
+      message_id_header: property(name: "message_id_header")
+      in_reply_to: property(name: "in_reply_to")
+      references: property_array(name: "references")
+      provider_message_id: property(name: "provider_message_id")
+      delivery_status: property(name: "delivery_status")
+    }
+  }
+}

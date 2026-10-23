@@ -1,0 +1,23 @@
+mutation (
+  $ticket_id: String!
+  $actor_id: String
+  $action: String!
+  $from_value: String
+  $to_value: String
+) {
+  record: record_create(
+    record: {
+      table: "modules/support/activity"
+      properties: [
+        { name: "ticket_id", value: $ticket_id }
+        { name: "actor_id", value: $actor_id }
+        { name: "action", value: $action }
+        { name: "from_value", value: $from_value }
+        { name: "to_value", value: $to_value }
+      ]
+    }
+  ) {
+    id
+    type: table
+  }
+}
