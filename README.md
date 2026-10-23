@@ -44,6 +44,11 @@ inner loop. Never deploy this to a production instance.
 - Queries live in `lib/queries/<resource>/{find,search}.liquid`.
 - Authorization is internal to the module and keyed on `agent` records, so the
   module works on a host instance with no permission file edits.
+- `record_update` clears a property when the mutation is given an explicit
+  null, and leaves it alone when the variable is not supplied at all. Liquid
+  always supplies every argument it names, so a wide update mutation called
+  from Liquid rewrites every field it declares. Update mutations here are
+  narrow, and name only what they mean to change.
 - The agent interface ships its own layout and CSS on a system font stack, with
   four theme variables. It does not use the host site's styling.
 - No em dashes in interface copy, emails or documentation.
