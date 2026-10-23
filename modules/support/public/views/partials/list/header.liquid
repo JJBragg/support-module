@@ -1,7 +1,7 @@
 <header class="pos-support-head">
   <h1 class="pos-support-title">{{ heading }}<span class="pos-support-subtitle">{{ subtitle }}</span></h1>
   <form class="pos-support-search" method="get" action="/support" role="search">
-    {%- assign carried = 'view,status,department,priority,group,assignee,contact' | split: ',' -%}
+    {%- assign carried = 'view,status,department,priority,group,assignee' | split: ',' -%}
     {%- for key in carried -%}
       {%- assign value = context.params[key] -%}
       {%- if value != blank -%}

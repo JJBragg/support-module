@@ -83,28 +83,12 @@ metadata:
     assign rows = rows | array_add: ticket
   endfor
 
-  comment
-    The contacts who actually have something in the queue. A filter that
-    only offers names you could pick beats one listing every contact the
-    instance has ever heard from.
-  endcomment
-  assign contact_options = []
-  assign seen_contacts = {}
-  for ticket in rows
-    assign row_contact = ticket.contact
-    if row_contact != blank and seen_contacts[row_contact.id] == null
-      assign seen_contacts[row_contact.id] = true
-      assign contact_options = contact_options | array_add: row_contact
-    endif
-  endfor
-
   assign view = context.params.view | default: 'all'
   assign status_filter = context.params.status
   assign department_filter = context.params.department
   assign priority_filter = context.params.priority | default: 'all'
   assign group_by = context.params.group | default: 'priority'
   assign assignee_filter = context.params.assignee
-  assign contact_filter = context.params.contact
   assign search_query = context.params.q | default: '' | strip | downcase
   assign expanded = context.params.expand | default: '' | split: ','
   assign collapsed_groups = context.params.collapsed | default: '' | split: ','
@@ -146,11 +130,6 @@ metadata:
       assign passes_assignee = false
     endif
 
-    assign passes_contact = true
-    if contact_filter != blank and row.contact_id != contact_filter
-      assign passes_contact = false
-    endif
-
     assign passes_search = true
     if search_query != blank
       assign haystack = row.c__search | default: '' | downcase
@@ -164,7 +143,6 @@ metadata:
     assign row.passes_status = passes_status
     assign row.passes_priority = passes_priority
     assign row.passes_assignee = passes_assignee
-    assign row.passes_contact = passes_contact
     assign row.passes_search = passes_search
     assign counted = counted | array_add: row
   endfor
@@ -189,13 +167,13 @@ metadata:
     assign previous = department_counts[department_key] | default: 0
     assign department_counts[department_key] = previous | plus: 1
 
-    if row.passes_view and row.passes_department and row.passes_priority and row.passes_assignee and row.passes_contact and row.passes_search
+    if row.passes_view and row.passes_department and row.passes_priority and row.passes_assignee and row.passes_search
       assign status_key = row.status.key
       assign previous = status_counts[status_key] | default: 0
       assign status_counts[status_key] = previous | plus: 1
     endif
 
-    if row.passes_view and row.passes_department and row.passes_status and row.passes_assignee and row.passes_contact and row.passes_search
+    if row.passes_view and row.passes_department and row.passes_status and row.passes_assignee and row.passes_search
       assign priority_key = row.priority_token.key
       assign previous = priority_counts[priority_key] | default: 0
       assign priority_counts[priority_key] = previous | plus: 1
@@ -204,6 +182,17 @@ metadata:
         assign visible = visible | array_add: row
       endif
     endif
+  endfor
+
+  comment
+    What the All priorities tab counts. The per priority tabs each count
+    what the other filters allow, so this has to agree with them: showing
+    the whole queue's total beside them reads as a bug.
+  endcomment
+  assign priority_total = 0
+  for priority_token in tokens.priorities
+    assign one_count = priority_counts[priority_token.key] | default: 0
+    assign priority_total = priority_total | plus: one_count
   endfor
 
   comment
@@ -360,9 +349,7 @@ metadata:
     group_by: group_by,
     all_agents: all_agents,
     assignee_filter: assignee_filter,
-    contact_options: contact_options,
-    contact_filter: contact_filter,
-    count_all: count_all,
+    priority_total: priority_total,
     can_rerank: can_rerank
   %}
   {% render 'modules/support/list/bulk', all_agents: all_agents, statuses: statuses, tokens: tokens, return_to: return_to %}

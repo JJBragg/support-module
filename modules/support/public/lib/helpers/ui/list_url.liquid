@@ -8,7 +8,7 @@
   @param {object} overrides - Filters to change
 {% enddoc %}
 {% liquid
-  assign keys = 'view,status,department,priority,group,q,assignee,contact,expand,collapsed' | split: ','
+  assign keys = 'view,status,department,priority,group,q,assignee,expand,collapsed' | split: ','
   assign parts = []
 
   for key in keys

@@ -12,7 +12,7 @@
   <div class="pos-support-segment" role="group" aria-label="Priority">
     <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_all_priorities }}" aria-pressed="{% if priority_filter == 'all' %}true{% else %}false{% endif %}">
       <span>All priorities</span>
-      <span class="pos-support-count">{{ count_all }}</span>
+      <span class="pos-support-count">{{ priority_total }}</span>
     </a>
     {%- for priority in tokens.priorities -%}
       {%- liquid
@@ -46,13 +46,6 @@
       <option value="">Anyone</option>
       {%- for one_agent in all_agents -%}
         <option value="{{ one_agent.user_id }}" {% if assignee_filter == one_agent.user_id %}selected{% endif %}>{{ one_agent.name }}</option>
-      {%- endfor -%}
-    </select>
-    <label class="pos-support-toolbar-label" for="pos-support-contact">Contact</label>
-    <select id="pos-support-contact" name="contact" style="height: 28px; border: 1px solid var(--bd); border-radius: 6px; background: var(--bg)">
-      <option value="">Anyone</option>
-      {%- for one_contact in contact_options -%}
-        <option value="{{ one_contact.id }}" {% if contact_filter == one_contact.id %}selected{% endif %}>{{ one_contact.name | default: one_contact.email }}</option>
       {%- endfor -%}
     </select>
     <button type="submit" class="pos-support-navitem" style="height: 28px; width: auto; border: 1px solid var(--bd)">Apply</button>
