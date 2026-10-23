@@ -1,0 +1,34 @@
+mutation (
+  $id: ID!
+  $name: String!
+  $slug: String!
+  $inbound_address: String
+  $from_address: String
+  $from_name: String
+  $signature: String
+  $position: Int
+) {
+  record: record_update(
+    id: $id
+    record: {
+      table: "modules/support/department"
+      properties: [
+        { name: "name", value: $name }
+        { name: "slug", value: $slug }
+        { name: "inbound_address", value: $inbound_address }
+        { name: "from_address", value: $from_address }
+        { name: "from_name", value: $from_name }
+        { name: "signature", value: $signature }
+        { name: "position", value_int: $position }
+      ]
+    }
+  ) {
+    id
+    type: table
+
+    name: property(name: "name")
+    slug: property(name: "slug")
+    inbound_address: property(name: "inbound_address")
+    from_address: property(name: "from_address")
+  }
+}
