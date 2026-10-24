@@ -429,7 +429,7 @@
 }
 .pos-support-modes a:hover { text-decoration: none; }
 .pos-support-modes a[aria-pressed="true"] { background: var(--pri); color: #fff; font-weight: 600; }
-.pos-support-composer.is-note .pos-support-modes a[aria-pressed="true"] { background: var(--noteTx); color: #FFF6E0; }
+.pos-support-composer.is-note .pos-support-modes a[aria-pressed="true"] { background: var(--noteTx); color: #fff; }
 .pos-support-composer-hint { color: var(--mut); font-size: 12px; }
 .pos-support-composer.is-note .pos-support-composer-hint { color: var(--noteTx); }
 .pos-support-composer-fields {
@@ -468,7 +468,7 @@
 }
 .pos-support-add-note {
   margin-left: auto;
-  border-color: var(--noteTx); background: var(--noteTx); color: #FFF6E0;
+  border-color: var(--noteTx); background: var(--noteTx); color: #fff;
 }
 
 /* Flash */
