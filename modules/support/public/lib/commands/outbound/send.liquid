@@ -1,0 +1,27 @@
+{% doc %}
+  Hands an email to whichever provider the instance is configured for.
+
+  This is the seam the build spec asks for. Ticket logic never knows which
+  provider is in use: it builds an email and calls this, and adding a
+  second provider is one new file beside sendgrid plus a line here.
+
+  Always returns { sent, status, provider_message_id }, including when
+  nothing was sent, so the caller can record what actually happened rather
+  than assuming.
+
+  @param {object} object - to, cc, from_address, from_name, reply_to, subject, body, message_id, in_reply_to, references
+  @param {object} settings - The settings record
+{% enddoc %}
+{% liquid
+  assign provider = settings.provider | default: 'sendgrid'
+
+  case provider
+    when 'sendgrid'
+      function result = 'modules/support/commands/outbound/sendgrid', object: object
+      return result
+    else
+      log provider, type: 'ERROR: modules/support/commands/outbound/send does not know this provider'
+      assign result = { "sent": false, "status": "unknown_provider", "provider_message_id": null }
+      return result
+  endcase
+%}

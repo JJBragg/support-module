@@ -5,6 +5,17 @@
 (function () {
   'use strict';
 
+  // Properties panel: submit on change, and drop the Apply buttons that
+  // exist for people without JavaScript.
+  Array.prototype.forEach.call(document.querySelectorAll('[data-support-noscript]'), function (el) {
+    el.hidden = true;
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-support-autosubmit]'), function (field) {
+    field.addEventListener('change', function () {
+      field.form.submit();
+    });
+  });
+
   var list = document.querySelector('[data-support-list]');
   if (!list) return;
 

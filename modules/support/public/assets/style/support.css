@@ -246,3 +246,247 @@
 /* A flex display would otherwise win against the hidden attribute, which is
  * how the bulk bar stays out of the way until something is selected. */
 .pos-support [hidden] { display: none !important; }
+
+/* Ticket detail.
+ *
+ * The note colours are fixed like the status ones, and for a sharper
+ * reason: a private note that reads as an email is the worst mistake this
+ * module could make, so it gets its own amber surface, a dashed rule, a
+ * lock rather than an avatar, and a label saying it is not emailed. Four
+ * signals, because one is not enough.
+ */
+
+.pos-support-detail {
+  --note: #FFF6E0;
+  --noteBd: #E2C47E;
+  --noteTx: #6B4100;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pos-support-dhead {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 24px 14px; border-bottom: 1px solid var(--bd);
+}
+.pos-support-crumbs { display: flex; align-items: center; gap: 8px; color: var(--mut); font-size: 12px; }
+.pos-support-crumbs a { display: inline-flex; align-items: center; gap: 6px; }
+.pos-support-dnav { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.pos-support-dnav a, .pos-support-dnav span {
+  display: grid; place-items: center;
+  width: 26px; height: 26px;
+  border: 1px solid var(--bd); border-radius: 6px;
+}
+.pos-support-dnav span { opacity: 0.4; }
+.pos-support-dtitle { display: flex; align-items: center; gap: 10px; }
+.pos-support-dtitle h1 { margin: 0; font-size: 19px; font-weight: 650; }
+.pos-support-dnumber { color: var(--mut); font-variant-numeric: tabular-nums; }
+.pos-support-dmeta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; color: var(--mut); font-size: 12px; }
+
+.pos-support-dbody { display: flex; flex-wrap: wrap; flex: 1 1 auto; min-height: 0; }
+
+/* Conversation */
+
+.pos-support-convo {
+  flex: 1 1 560px; min-width: 0;
+  display: flex; flex-direction: column;
+  background: var(--soft);
+}
+.pos-support-timeline {
+  list-style: none; margin: 0 auto; padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 14px;
+  max-width: 900px; width: 100%;
+  position: relative;
+}
+.pos-support-rail {
+  position: absolute; left: 39px; top: 40px; bottom: 40px;
+  width: 2px; background: var(--bd);
+}
+.pos-support-msg { display: flex; gap: 12px; position: relative; }
+.pos-support-msg-avatar {
+  flex: none; width: 32px; height: 32px; margin-top: 4px;
+  display: grid; place-items: center;
+  border-radius: 50%; font-size: 11px; font-weight: 700;
+  box-shadow: 0 0 0 4px var(--soft);
+}
+.pos-support-msg.is-note .pos-support-msg-avatar {
+  border-radius: 8px; background: var(--noteTx); color: #FFF6E0;
+}
+.pos-support-msg.is-latest .pos-support-msg-avatar {
+  box-shadow: 0 0 0 4px var(--soft), 0 0 0 6px #C2410C;
+}
+.pos-support-msg-card {
+  flex: 1 1 auto; min-width: 0;
+  background: var(--bg); border: 1px solid var(--bd); border-radius: 8px;
+}
+.pos-support-msg.is-note .pos-support-msg-card {
+  background: var(--note); border-color: var(--noteBd);
+}
+.pos-support-msg-head {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 9px 14px; border-bottom: 1px solid var(--bd);
+}
+.pos-support-msg.is-note .pos-support-msg-head {
+  border-bottom: 1px dashed var(--noteBd);
+}
+.pos-support-msg-who { font-weight: 600; }
+.pos-support-msg-meta { color: var(--mut); font-size: 12px; }
+.pos-support-msg.is-note .pos-support-msg-meta { color: var(--noteTx); }
+.pos-support-msg-time { margin-left: auto; color: var(--mut); font-size: 12px; }
+.pos-support-note-label {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 1px 7px; border-radius: 999px;
+  background: var(--noteTx); color: #FFF6E0;
+  font-size: 11px; font-weight: 650;
+}
+.pos-support-msg-body { padding: 12px 14px; }
+.pos-support-msg-body p { margin: 0 0 10px; white-space: pre-wrap; }
+.pos-support-msg-body p:last-child { margin-bottom: 0; }
+.pos-support-quote-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 10px; padding: 3px 8px;
+  border: 1px solid var(--bd); border-radius: 999px;
+  background: transparent; color: var(--mut); font-size: 12px;
+}
+.pos-support-quote {
+  margin: 10px 0 0; padding: 10px 12px;
+  border-left: 2px solid var(--bd);
+  color: var(--mut); white-space: pre-wrap; font-size: 12px;
+}
+.pos-support-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 10px; padding: 4px 10px;
+  border: 1px solid var(--bd); border-radius: 999px;
+  background: var(--bg); font-size: 12px;
+}
+.pos-support-chip-size { color: var(--mut); }
+
+/* Properties panel */
+
+.pos-support-panel {
+  flex: 0 0 320px; box-sizing: border-box;
+  border-left: 1px solid var(--bd);
+  padding: 18px 20px;
+  display: flex; flex-direction: column; gap: 22px;
+}
+.pos-support-panel h2 {
+  margin: 0 0 10px; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.05em; text-transform: uppercase; color: var(--mut);
+}
+.pos-support-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.pos-support-field-label { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--mut); }
+.pos-support-prio-row { display: flex; gap: 6px; }
+.pos-support-prio-row button {
+  flex: 1 1 0; height: 30px;
+  border: 1px solid var(--bd); border-radius: 6px;
+  background: var(--bg); font-weight: 700; font-size: 12px;
+}
+.pos-support-hint-text { color: var(--mut); font-size: 11.5px; }
+.pos-support-panel select,
+.pos-support-panel-button {
+  width: 100%; height: 32px; padding: 0 8px;
+  border: 1px solid var(--bd); border-radius: 6px;
+  background: var(--bg); text-align: left;
+}
+.pos-support-contact-card { display: flex; align-items: center; gap: 10px; }
+.pos-support-other {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 7px 0; border-top: 1px solid var(--line);
+}
+.pos-support-other-subject { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pos-support-other-meta { color: var(--mut); font-size: 11.5px; }
+
+/* Composer */
+
+.pos-support-dock {
+  position: sticky; bottom: 0;
+  padding: 14px 24px 20px;
+  display: flex; justify-content: center;
+  background: linear-gradient(to bottom, transparent, var(--soft) 24px);
+}
+.pos-support-composer {
+  width: 100%; max-width: 860px;
+  background: var(--bg);
+  border: 1px solid var(--bd); border-top: 3px solid var(--pri);
+  border-radius: 8px;
+  box-shadow: 0 -6px 20px rgba(17, 24, 39, 0.06);
+  display: flex; flex-direction: column;
+}
+.pos-support-composer.is-note {
+  background: var(--note); border-color: var(--noteBd); border-top-color: var(--noteTx);
+}
+.pos-support-composer-head {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 10px; border-bottom: 1px solid var(--bd);
+}
+.pos-support-composer.is-note .pos-support-composer-head { border-bottom: 1px dashed var(--noteBd); }
+.pos-support-modes { display: flex; gap: 2px; padding: 2px; border-radius: 8px; background: var(--soft); }
+.pos-support-composer.is-note .pos-support-modes { background: rgba(255, 255, 255, 0.6); }
+.pos-support-modes a {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 28px; padding: 0 10px; border-radius: 6px;
+}
+.pos-support-modes a:hover { text-decoration: none; }
+.pos-support-modes a[aria-pressed="true"] { background: var(--pri); color: #fff; font-weight: 600; }
+.pos-support-composer.is-note .pos-support-modes a[aria-pressed="true"] { background: var(--noteTx); color: #FFF6E0; }
+.pos-support-composer-hint { color: var(--mut); font-size: 12px; }
+.pos-support-composer.is-note .pos-support-composer-hint { color: var(--noteTx); }
+.pos-support-composer-fields {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 12px; border-bottom: 1px solid var(--bd); font-size: 12px;
+}
+.pos-support-composer-row { display: flex; align-items: center; gap: 8px; }
+.pos-support-composer-row > span:first-child { width: 42px; color: var(--mut); }
+.pos-support-composer-row input {
+  flex: 1 1 auto; height: 26px; padding: 0 8px;
+  border: 1px solid var(--bd); border-radius: 6px; background: var(--bg);
+}
+.pos-support-composer textarea {
+  width: 100%; box-sizing: border-box; min-height: 110px; resize: vertical;
+  padding: 12px; border: 0; background: transparent; outline: none;
+}
+.pos-support-signature {
+  padding: 0 12px 10px; color: var(--mut); font-size: 12px; white-space: pre-wrap;
+}
+.pos-support-composer-foot {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 12px; border-top: 1px solid var(--bd);
+}
+.pos-support-composer.is-note .pos-support-composer-foot { border-top: 1px dashed var(--noteBd); }
+.pos-support-composer-note { color: var(--mut); font-size: 12px; }
+.pos-support-composer.is-note .pos-support-composer-note { color: var(--noteTx); }
+.pos-support-send { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.pos-support-send select {
+  height: 30px; padding: 0 8px;
+  border: 1px solid var(--bd); border-radius: 6px; background: var(--bg);
+}
+.pos-support-send button, .pos-support-add-note {
+  height: 30px; padding: 0 14px;
+  border: 1px solid var(--pri); border-radius: 6px;
+  background: var(--pri); color: #fff; font-weight: 600;
+}
+.pos-support-add-note {
+  margin-left: auto;
+  border-color: var(--noteTx); background: var(--noteTx); color: #FFF6E0;
+}
+
+/* Flash */
+
+.pos-support-flash {
+  position: fixed; left: 50%; top: 14px; transform: translateX(-50%); z-index: 20;
+  max-width: 560px; padding: 9px 16px;
+  border: 1px solid var(--bd); border-radius: 999px;
+  background: var(--bg); color: var(--tx);
+  box-shadow: 0 6px 20px rgba(17, 24, 39, 0.14);
+  font-weight: 550;
+}
+.pos-support-flash.is-success { border-color: #B5DDD5; background: #E4F4F1; color: #0B5D52; }
+.pos-support-flash.is-error { border-color: #EFC7C7; background: #FBECEC; color: #8A2222; }
+
+.pos-support-undelivered {
+  display: inline-flex; align-items: center;
+  padding: 1px 7px; border-radius: 999px;
+  border: 1px solid #EFC7C7; background: #FBECEC; color: #8A2222;
+  font-size: 11px; font-weight: 600;
+}

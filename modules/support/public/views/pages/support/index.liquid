@@ -315,8 +315,8 @@ metadata:
 
   comment
     Where the POST endpoints send the agent back to. A path, not a full
-    URL: modules/core/helpers/redirect_to treats anything that does not
-    start with a slash as an external redirect and sends it to / instead.
+    URL: helpers/redirect_back refuses anything that is not a path on this
+    site, so that a crafted form field cannot become an open redirect.
   endcomment
   function return_to = 'modules/support/helpers/ui/list_url', overrides: {}
 -%}

@@ -1,0 +1,69 @@
+{% comment %}A blank line before the signature. Captured, because a literal
+newline inside a liquid block is a syntax error, and no whitespace dashes,
+because they would trim it to nothing.{% endcomment %}
+{% capture paragraph_break %}
+
+{% endcapture %}
+{% doc %}
+  Turns a ticket and an agent's text into the email that will be sent.
+
+  The Message-ID is ours to invent and has to be stored, because the
+  customer's client will quote it back in In-Reply-To and that is how the
+  next inbound email finds its way to this ticket.
+
+  @param {object} ticket - The ticket
+  @param {object} department - Its department
+  @param {object} contact - The customer
+  @param {array} messages - The timeline so far, oldest first
+  @param {string} body - What the agent wrote
+  @param {array} [cc] - Extra recipients
+{% enddoc %}
+{% liquid
+  assign host = context.location.host | default: 'support.invalid'
+  assign stamp = 'now' | date: '%Y%m%d%H%M%S'
+  assign noise = 8 | random_string
+  assign message_id = 'support-' | append: ticket.number | append: '-' | append: stamp | append: '-' | append: noise | append: '@' | append: host
+
+  comment
+    Reply to the newest message that has an id of its own, and carry the
+    whole chain in References, which is what the standard asks for and
+    what the stricter clients check.
+  endcomment
+  assign in_reply_to = ''
+  assign references = []
+  for message in messages
+    if message.message_id_header != blank
+      assign references = references | array_add: message.message_id_header
+      assign in_reply_to = message.message_id_header
+    endif
+  endfor
+
+  assign subject = ticket.subject
+  unless subject contains 'Re:'
+    assign subject = 'Re: ' | append: subject
+  endunless
+  assign token = ' [#' | append: ticket.number | append: ']'
+  unless subject contains token
+    assign subject = subject | append: token
+  endunless
+
+  assign full_body = body
+  if department.signature != blank
+    assign full_body = body | append: paragraph_break | append: department.signature
+  endif
+
+  assign email = {
+    "to": contact.email,
+    "cc": cc,
+    "from_address": department.from_address,
+    "from_name": department.name,
+    "reply_to": department.inbound_address,
+    "subject": subject,
+    "body": full_body,
+    "message_id": message_id,
+    "in_reply_to": in_reply_to,
+    "references": references
+  }
+
+  return email
+%}

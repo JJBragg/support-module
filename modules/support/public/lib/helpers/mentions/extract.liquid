@@ -1,0 +1,36 @@
+{% doc %}
+  The agents named with an @ in a private note.
+
+  Matched on the first word of an agent's name, case insensitively, which
+  is how people actually write them: @artur, not @"Artur Kowalski". Two
+  agents who share a first name both match, which is the right failure:
+  notifying one person too many costs an email, notifying nobody costs an
+  answer.
+
+  @param {string} [body] - The note text
+  @param {array} agents - Every agent, from queries/agents/all
+{% enddoc %}
+{% liquid
+  assign mentioned = []
+  assign body = body | default: ''
+  if body == blank or agents == blank
+    return mentioned
+  endif
+
+  assign haystack = body | downcase
+
+  for agent in agents
+    assign words = agent.name | default: '' | split: ' '
+    assign first_word = words.first | downcase | strip
+    if first_word == blank
+      continue
+    endif
+
+    assign needle = '@' | append: first_word
+    if haystack contains needle
+      assign mentioned = mentioned | array_add: agent
+    endif
+  endfor
+
+  return mentioned
+%}

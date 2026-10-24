@@ -1,0 +1,40 @@
+en:
+  detail:
+    back: Back to the list
+    previous: Previous ticket
+    next: Next ticket
+    position: '#%{position} of %{total} in %{priority}'
+    opened: Opened %{time} by %{name}
+    not_found_title: No such ticket
+    not_found_body: It may have been deleted, or the number may be wrong.
+    conversation: Conversation
+    timeline:
+      received: Received
+      sent: Sent
+      note: Private note
+      note_meta: Agents only, not emailed
+      show_quoted:
+        one: Show quoted text, 1 earlier message
+        other: Show quoted text, %{count} earlier messages
+      hide_quoted: Hide quoted text
+      attachment_not_stored: name only, file not stored
+      delivery:
+        sending: not sent yet
+        not_configured: not sent, no email provider connected
+        failed: not sent, the provider rejected it
+        unknown_provider: not sent, the configured provider is not recognised
+    panel:
+      properties: Properties
+      priority: Priority
+      priority_hint: Changing this moves the ticket to the top of its new priority.
+      priority_locked: Only an Admin can change the work order.
+      status: Status
+      assignee: Assignee
+      unassigned: Unassigned
+      department: Department
+      apply: Apply
+      contact: Contact
+      other_tickets:
+        zero: No other tickets from this contact
+        one: 1 other ticket from this contact
+        other: '%{count} other tickets from this contact'

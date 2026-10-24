@@ -1,0 +1,34 @@
+en:
+  composer:
+    mode: Composer mode
+    reply: Reply
+    note: Private note
+    reply_label: Reply composer
+    note_label: Private note composer
+    reply_hint: Emails %{name}
+    note_hint: Agents only. %{name} will not see this.
+    reply_placeholder: Write your reply
+    note_placeholder: Write a note for the team. Use @name to pull someone in.
+    note_never_changes_status: Notes never change the status
+    add_note: Add private note
+    from: From
+    to: To
+    cc: Cc
+    cc_placeholder: Add Cc, comma separated
+    keeps_status: Status stays %{status}
+    then: Then set the status to
+    then_keep: Send, keep the status
+    then_set: Send and set %{status}
+    send: Send
+    sent_one: Reply sent
+    note_added: Note added
+    note_added_mentions:
+      one: Note added, 1 agent notified
+      other: Note added, %{count} agents notified
+    empty_reply: Write something before sending.
+    reply_failed: The reply could not be saved.
+    send_failed: Saved on the ticket, but the provider rejected it. Check the logs.
+    sent: Reply sent
+    empty_note: Write something before adding the note.
+    note_failed: The note could not be saved.
+    not_configured: Saved, but not sent. No email provider is connected yet.

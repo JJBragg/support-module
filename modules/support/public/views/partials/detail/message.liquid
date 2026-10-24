@@ -1,0 +1,87 @@
+{% comment %}A blank line separates paragraphs. No whitespace dashes on these
+two tags: they would trim the captured newlines away and leave an empty
+separator, which splits the body into single characters.{% endcomment %}
+{% capture paragraph_break %}
+
+{% endcapture %}
+{%- liquid
+  assign classes = 'pos-support-msg'
+  if message.kind == 'note'
+    assign classes = classes | append: ' is-note'
+  endif
+  if is_latest
+    assign classes = classes | append: ' is-latest'
+  endif
+
+  assign direction_label = 'modules/support/detail.timeline.sent' | t
+  assign direction_icon = tokens.icons.sent
+  if message.kind == 'inbound'
+    assign direction_label = 'modules/support/detail.timeline.received' | t
+    assign direction_icon = tokens.icons.received
+  endif
+
+  comment
+    Paragraphs come from the plain text body, escaped like everything
+    else. The HTML body is stored and deliberately not rendered: dropping
+    a customer's markup into the page unescaped is how a help desk ships
+    an XSS hole, and doing it safely needs a sandbox or an allowlist,
+    which is its own piece of work.
+  endcomment
+  assign paragraphs = message.body_text | default: '' | split: paragraph_break
+-%}
+<li class="{{ classes }}">
+  <span class="pos-support-msg-avatar" aria-hidden="true" style="{% if message.kind != 'note' %}background: {{ author.avatar_bg }}; color: {{ author.avatar_fg }}{% endif %}">
+    {%- if message.kind == 'note' -%}
+      {% render 'modules/support/ui/icon', path: tokens.icons.lock, size: 14, stroke: 2 %}
+    {%- else -%}
+      {{ author.initials }}
+    {%- endif -%}
+  </span>
+
+  <div class="pos-support-msg-card">
+    <div class="pos-support-msg-head">
+      {%- if message.kind == 'note' -%}
+        <span class="pos-support-note-label">
+          {% render 'modules/support/ui/icon', path: tokens.icons.lock, size: 11, stroke: 2.4 %}{{ 'modules/support/detail.timeline.note' | t }}
+        </span>
+      {%- endif -%}
+      <strong class="pos-support-msg-who">{{ author.name }}</strong>
+      {%- if message.kind == 'note' -%}
+        <span class="pos-support-msg-meta">{{ 'modules/support/detail.timeline.note_meta' | t }}</span>
+      {%- else -%}
+        <span class="pos-support-msg-meta">{{ author.address }}</span>
+        <span class="pos-support-msg-meta">{% render 'modules/support/ui/icon', path: direction_icon, size: 12, stroke: 2 %} {{ direction_label }}</span>
+        {%- comment -%}
+          An outbound message that did not leave the building must say so
+          here. "Sent" over an email that no provider ever accepted is the
+          kind of lie an agent only discovers when the customer calls.
+        {%- endcomment -%}
+        {%- if message.kind == 'outbound' and message.delivery_status != 'sent' -%}
+          <span class="pos-support-undelivered">{{ 'modules/support/detail.timeline.delivery.' | append: message.delivery_status | t }}</span>
+        {%- endif -%}
+      {%- endif -%}
+      <time class="pos-support-msg-time" datetime="{{ message.created_at }}">{{ message.created_at | date: '%b %-d, %I:%M %p' }}</time>
+    </div>
+
+    <div class="pos-support-msg-body">
+      {%- for paragraph in paragraphs -%}
+        <p>{{ paragraph }}</p>
+      {%- endfor -%}
+
+      {%- for attachment in attachments -%}
+        <span class="pos-support-chip">
+          {% render 'modules/support/ui/icon', path: tokens.icons.paperclip, size: 13, stroke: 2 %}
+          {{ attachment.filename }}
+          <span class="pos-support-chip-size">{{ 'modules/support/detail.timeline.attachment_not_stored' | t }}</span>
+        </span>
+      {%- endfor -%}
+
+      {%- if message.quoted_html != blank -%}
+        <details>
+          <summary class="pos-support-quote-toggle">{{ quoted_label }}</summary>
+          <blockquote class="pos-support-quote">{{ message.quoted_html }}</blockquote>
+        </details>
+      {%- endif -%}
+    </div>
+  </div>
+</li>

@@ -1,0 +1,19 @@
+mutation (
+  $id: ID!
+  $department_id: String!
+) {
+  record: record_update(
+    id: $id
+    record: {
+      table: "modules/support/ticket"
+      properties: [
+        { name: "department_id", value: $department_id }
+      ]
+    }
+  ) {
+    id
+    type: table
+
+    department_id: property(name: "department_id")
+  }
+}

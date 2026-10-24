@@ -1,0 +1,24 @@
+{% doc %}
+  Two letters for an avatar: the first letter of the first two words, so
+  Maria Lopez is ML rather than MA. Falls back to the first two characters
+  for a single word or an address.
+
+  @param {string} [name] - A display name or an email address
+{% enddoc %}
+{% liquid
+  assign name = name | default: '' | strip
+  if name == blank
+    return ''
+  endif
+
+  assign words = name | split: ' '
+  if words.size > 1
+    assign first_letter = words[0] | slice: 0, 1
+    assign second_letter = words[1] | slice: 0, 1
+    assign initials = first_letter | append: second_letter | upcase
+    return initials
+  endif
+
+  assign initials = name | slice: 0, 2 | upcase
+  return initials
+%}

@@ -21,7 +21,7 @@ method: post
 
   if ticket == blank
     # platformos-check-disable DeprecatedTag
-    include 'modules/core/helpers/redirect_to', url: return_to, default: null, error: null, format: null, info: null, notice: null, object: null
+    include 'modules/support/helpers/redirect_back', url: return_to
     # platformos-check-enable DeprecatedTag
   endif
 
@@ -37,6 +37,6 @@ method: post
   function _ = 'modules/support/commands/tickets/rerank', ticket: ticket, statuses: statuses, priority: priority, before_id: context.params.before_id, direction: context.params.direction, actor_id: current_profile.user.id
 
   # platformos-check-disable DeprecatedTag
-  include 'modules/core/helpers/redirect_to', url: return_to, default: null, error: null, format: null, info: null, notice: null, object: null
+  include 'modules/support/helpers/redirect_back', url: return_to
   # platformos-check-enable DeprecatedTag
 -%}

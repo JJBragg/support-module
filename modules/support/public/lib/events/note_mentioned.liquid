@@ -1,0 +1,26 @@
+---
+metadata:
+  event:
+    - ticket_id
+    - ticket_number
+    - ticket_subject
+    - message_id
+    - mentioned_user_id
+    - author_name
+    - excerpt
+---
+{% doc %}
+  An agent was named in a private note. One event per person named, so a
+  note mentioning three agents publishes three, and a consumer never has
+  to decide who it is for.
+
+  @param {object} event - The event payload
+{% enddoc %}
+{% liquid
+  assign c = { "errors": {}, "valid": true }
+
+  function c = 'modules/core/validations/presence', c: c, object: event, field_name: 'ticket_id', key: null
+  function c = 'modules/core/validations/presence', c: c, object: event, field_name: 'mentioned_user_id', key: null
+
+  return c
+%}

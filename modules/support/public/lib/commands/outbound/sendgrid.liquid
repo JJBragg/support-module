@@ -1,0 +1,73 @@
+{% doc %}
+  SendGrid v3 mail send.
+
+  The API key is an instance constant, never a record: secrets do not
+  belong in a table a partner can export. Without it this reports
+  not_configured rather than failing, so a module installed before anyone
+  has connected a provider still records the reply instead of losing it.
+
+  @param {object} object - The email to send
+{% enddoc %}
+{% liquid
+  assign api_key = context.constants.SUPPORT_SENDGRID_API_KEY
+
+  if api_key == blank
+    assign result = { "sent": false, "status": "not_configured", "provider_message_id": null }
+    return result
+  endif
+
+  assign recipients = []
+  assign to_entry = { "email": object.to }
+  assign recipients = recipients | array_add: to_entry
+
+  assign cc_entries = []
+  for address in object.cc
+    assign cc_entry = { "email": address }
+    assign cc_entries = cc_entries | array_add: cc_entry
+  endfor
+
+  comment
+    In-Reply-To and References are what make the customer's client file
+    the reply under their own thread rather than starting a new one.
+  endcomment
+  assign reference_header = object.references | join: ' '
+  assign thread_headers = { "In-Reply-To": object.in_reply_to, "References": reference_header, "Message-ID": object.message_id }
+
+  assign personalization = { "to": recipients, "headers": thread_headers }
+  if cc_entries.size > 0
+    assign personalization.cc = cc_entries
+  endif
+
+  assign personalizations = []
+  assign personalizations = personalizations | array_add: personalization
+
+  assign content_part = { "type": "text/plain", "value": object.body }
+  assign content = []
+  assign content = content | array_add: content_part
+
+  assign payload = {
+    "personalizations": personalizations,
+    "from": { "email": object.from_address, "name": object.from_name },
+    "reply_to": { "email": object.reply_to },
+    "subject": object.subject,
+    "content": content
+  }
+
+  assign authorization = 'Bearer ' | append: api_key
+  assign headers = { "Authorization": authorization, "Content-Type": "application/json" }
+  assign body = payload | json
+
+  assign data = { "request_type": "POST", "to": "https://api.sendgrid.com/v3/mail/send", "headers": headers, "payload": body }
+
+  graphql response = 'modules/core/api_calls/send', template: 'modules/core/api_calls/generic', data: data, options: null
+
+  assign status = response.api_call.response.status
+  if status == 202
+    assign result = { "sent": true, "status": "sent", "provider_message_id": null }
+    return result
+  endif
+
+  log response, type: 'ERROR: modules/support/commands/outbound/sendgrid rejected'
+  assign result = { "sent": false, "status": "failed", "provider_message_id": null }
+  return result
+%}

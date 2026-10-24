@@ -74,19 +74,13 @@ method: post
     assign changed = changed | plus: 1
   endfor
 
-  comment
-    modules/user/helpers/flash runs t on what it is given, so this passes
-    the key and lets the helper translate it. Counted messages cannot go
-    through it, because it takes no interpolation arguments, so this one
-    is translated here and the helper is handed the finished string.
-  endcomment
   assign notice = 'modules/support/list.bulk.updated_other' | t: count: changed
   if changed == 1
     assign notice = 'modules/support/list.bulk.updated_one' | t
   endif
-  function _ = 'modules/user/helpers/flash', error: null, info: null, notice: notice, force_clear: null
+  function _ = 'modules/support/helpers/flash', message: notice, severity: 'success'
 
   # platformos-check-disable DeprecatedTag
-  include 'modules/core/helpers/redirect_to', url: return_to, default: null, error: null, format: null, info: null, notice: null, object: null
+  include 'modules/support/helpers/redirect_back', url: return_to
   # platformos-check-enable DeprecatedTag
 -%}

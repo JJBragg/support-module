@@ -1,0 +1,35 @@
+<header class="pos-support-dhead">
+  <div class="pos-support-crumbs">
+    <a href="{{ back_url }}">
+      {% render 'modules/support/ui/icon', path: tokens.icons.chevron_left, size: 14, stroke: 2 %}{{ 'modules/support/detail.back' | t }}
+    </a>
+    <span aria-hidden="true">/</span>
+    <span>{{ ticket.priority_token.key }} {{ ticket.priority_token.label }}</span>
+
+    <div class="pos-support-dnav">
+      {%- if previous_ticket -%}
+        <a href="/support/tickets/{{ previous_ticket.number }}" aria-label="{{ 'modules/support/detail.previous' | t }}">{% render 'modules/support/ui/icon', path: tokens.icons.chevron_up, size: 14, stroke: 2 %}</a>
+      {%- else -%}
+        <span aria-hidden="true">{% render 'modules/support/ui/icon', path: tokens.icons.chevron_up, size: 14, stroke: 2 %}</span>
+      {%- endif -%}
+      {%- if next_ticket -%}
+        <a href="/support/tickets/{{ next_ticket.number }}" aria-label="{{ 'modules/support/detail.next' | t }}">{% render 'modules/support/ui/icon', path: tokens.icons.chevron_down, size: 14, stroke: 2 %}</a>
+      {%- else -%}
+        <span aria-hidden="true">{% render 'modules/support/ui/icon', path: tokens.icons.chevron_down, size: 14, stroke: 2 %}</span>
+      {%- endif -%}
+    </div>
+  </div>
+
+  <div class="pos-support-dtitle">
+    {% render 'modules/support/tags/priority', priority: ticket.priority_token %}
+    <span class="pos-support-dnumber">#{{ ticket.number }}</span>
+    <h1>{{ ticket.subject }}</h1>
+  </div>
+
+  <div class="pos-support-dmeta">
+    {% render 'modules/support/tags/status', status: ticket.status %}
+    {% render 'modules/support/tags/department', department: ticket.department %}
+    <span>{{ 'modules/support/detail.position' | t: position: position, total: position_total, priority: ticket.priority_token.key }}</span>
+    <span>{{ 'modules/support/detail.opened' | t: time: opened_at, name: contact_name }}</span>
+  </div>
+</header>

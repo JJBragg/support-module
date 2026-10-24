@@ -1,0 +1,231 @@
+---
+slug: support/tickets/:number
+layout: modules/support/agent
+metadata:
+  title: Ticket
+---
+{%- comment -%}
+  The ticket detail screen. A controller, like the list: it gathers and
+  stitches, the partials render.
+{%- endcomment -%}
+{%- liquid
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.access', entity: null
+  # platformos-check-enable DeprecatedTag
+
+  function tokens = 'modules/support/helpers/ui/tokens'
+  function current_profile = 'modules/user/helpers/current_profile'
+  function statuses = 'modules/support/queries/statuses/search', kind: null
+  function all_agents = 'modules/support/queries/agents/all'
+
+  graphql department_result = 'modules/support/departments/search', limit: 50, page: 1, id: null, slug: null, inbound_address: null
+  assign departments = department_result.records.results
+
+  assign number = context.params.number | to_positive_integer: 0
+  function ticket = 'modules/support/queries/tickets/find', number: number, id: null
+
+  if ticket == blank
+    response_status 404
+    # platformos-check-disable DeprecatedTag
+    include 'modules/support/detail/not_found'
+    # platformos-check-enable DeprecatedTag
+    break
+  endif
+
+  comment
+    Department scoping is checked against this ticket, not against the
+    queue, because a link or a typed number can reach a ticket the agent
+    would never have been shown.
+  endcomment
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.tickets.view', entity: ticket
+  # platformos-check-enable DeprecatedTag
+
+  assign status_by_id = {}
+  for status in statuses
+    assign token = tokens.statuses[status.key] | default: tokens.status_fallback
+    assign status.token = token
+    assign status_by_id[status.id] = status
+  endfor
+
+  assign department_by_id = {}
+  assign department_position = 0
+  for department in departments
+    assign palette_index = department_position | modulo: 6
+    assign department.palette = tokens.department_palette[palette_index]
+    assign department.letter = department.name | slice: 0, 1 | upcase
+    assign department_by_id[department.id] = department
+    assign department_position = department_position | plus: 1
+  endfor
+
+  assign agent_by_user = {}
+  assign agent_position = 0
+  for one_agent in all_agents
+    assign palette_index = agent_position | modulo: 6
+    assign one_agent.palette = tokens.agent_palette[palette_index]
+    assign agent_by_user[one_agent.user_id] = one_agent
+    assign agent_position = agent_position | plus: 1
+  endfor
+
+  assign ticket.status = status_by_id[ticket.status_id]
+  assign ticket.department = department_by_id[ticket.department_id]
+  assign ticket.priority_token = tokens.priorities[ticket.priority]
+
+  function contact = 'modules/support/queries/contacts/find', id: ticket.contact_id
+  assign contact_name = contact.name | default: contact.email
+  function contact_initials = 'modules/support/helpers/ui/initials', name: contact_name
+
+  comment
+    Position, and the previous and next links, run along the shared work
+    order within this priority. That is the order the team agreed on, so
+    it is the order "next ticket" should mean.
+  endcomment
+  function siblings = 'modules/support/queries/tickets/in_priority', priority: ticket.priority, statuses: statuses
+  assign position = 0
+  assign position_total = siblings.size
+  assign previous_ticket = null
+  assign next_ticket = null
+  assign index = 0
+  for sibling in siblings
+    if sibling.id == ticket.id
+      assign position = index | plus: 1
+      if index > 0
+        assign previous_index = index | minus: 1
+        assign previous_ticket = siblings[previous_index]
+      endif
+      assign next_index = index | plus: 1
+      if next_index < siblings.size
+        assign next_ticket = siblings[next_index]
+      endif
+    endif
+    assign index = index | plus: 1
+  endfor
+
+  function messages = 'modules/support/queries/messages/for_ticket', ticket_id: ticket.id
+  assign message_ids = []
+  for message in messages
+    assign message_ids = message_ids | array_add: message.id
+  endfor
+  function attachments_by_message = 'modules/support/queries/attachments/for_messages', message_ids: message_ids
+
+  assign timeline = []
+  assign index = 0
+  assign last_index = messages.size | minus: 1
+  for message in messages
+    assign author = { "name": "", "address": "", "initials": "", "avatar_bg": "#EFF0F2", "avatar_fg": "#374151" }
+
+    if message.kind == 'inbound'
+      assign author.name = contact_name
+      assign author.address = contact.email
+      assign author.initials = contact_initials
+      assign author.avatar_bg = '#FDE7D6'
+      assign author.avatar_fg = '#8A3B12'
+    else
+      assign writer = agent_by_user[message.user_id]
+      assign author.name = writer.name | default: 'Support'
+      assign author.address = message.from_address
+      assign author.initials = writer.initials | default: 'S'
+      if message.kind == 'outbound'
+        assign author.avatar_bg = 'var(--pri)'
+        assign author.avatar_fg = '#ffffff'
+      else
+        assign author.avatar_bg = writer.palette.bg | default: '#EFF0F2'
+        assign author.avatar_fg = writer.palette.fg | default: '#374151'
+      endif
+    endif
+
+    assign is_latest = false
+    if index == last_index
+      assign is_latest = true
+    endif
+
+    assign quoted_label = 'modules/support/detail.timeline.show_quoted' | t: count: index
+
+    assign entry = { "message": message, "author": author, "attachments": attachments_by_message[message.id], "is_latest": is_latest, "quoted_label": quoted_label }
+    assign timeline = timeline | array_add: entry
+    assign index = index | plus: 1
+  endfor
+
+  assign others_limit = 5
+  function other_tickets = 'modules/support/queries/tickets/for_contact', contact_id: ticket.contact_id, exclude_id: ticket.id, limit: others_limit
+  assign decorated_others = []
+  for other in other_tickets
+    assign other.status = status_by_id[other.status_id]
+    assign other.priority_token = tokens.priorities[other.priority]
+    assign decorated_others = decorated_others | array_add: other
+  endfor
+
+  comment
+    The three the composer offers after sending, from the build spec's
+    send options. Looked up by key rather than hardcoded, so a partner
+    who renames them keeps the behaviour.
+  endcomment
+  assign send_status_keys = 'waiting_customer,confirmation,closed' | split: ','
+  assign send_statuses = []
+  for key in send_status_keys
+    for status in statuses
+      if status.key == key
+        assign send_statuses = send_statuses | array_add: status
+      endif
+    endfor
+  endfor
+
+  assign composer_mode = context.params.composer | default: 'reply'
+
+  assign opened_at = ticket.opened_at | date: '%b %-d, %I:%M %p'
+  assign back_url = '/support'
+  assign return_to = '/support/tickets/' | append: ticket.number
+-%}
+<div class="pos-support-detail">
+  {% render 'modules/support/detail/header',
+    ticket: ticket,
+    tokens: tokens,
+    position: position,
+    position_total: position_total,
+    previous_ticket: previous_ticket,
+    next_ticket: next_ticket,
+    opened_at: opened_at,
+    contact_name: contact_name,
+    back_url: back_url
+  %}
+
+  <div class="pos-support-dbody">
+    <section class="pos-support-convo" aria-label="{{ 'modules/support/detail.conversation' | t }}">
+      <ol class="pos-support-timeline">
+        <li class="pos-support-rail" aria-hidden="true"></li>
+        {%- for entry in timeline -%}
+          {% render 'modules/support/detail/message',
+            message: entry.message,
+            author: entry.author,
+            attachments: entry.attachments,
+            is_latest: entry.is_latest,
+            quoted_label: entry.quoted_label,
+            tokens: tokens
+          %}
+        {%- endfor -%}
+      </ol>
+
+      {% render 'modules/support/detail/composer',
+        ticket: ticket,
+        contact: contact,
+        contact_name: contact_name,
+        composer_mode: composer_mode,
+        from_address: ticket.department.from_address,
+        signature: ticket.department.signature,
+        send_statuses: send_statuses
+      %}
+    </section>
+
+    {% render 'modules/support/detail/panel',
+      ticket: ticket,
+      tokens: tokens,
+      statuses: statuses,
+      departments: departments,
+      all_agents: all_agents,
+      contact: contact,
+      contact_initials: contact_initials,
+      other_tickets: decorated_others,
+      return_to: return_to
+    %}
+  </div>
+</div>

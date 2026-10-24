@@ -1,0 +1,25 @@
+{% doc %}
+  Attachments for a whole timeline, grouped by message id, in one query
+  rather than one per message.
+
+  @param {array} message_ids - The message record ids
+{% enddoc %}
+{% liquid
+  assign grouped = {}
+  if message_ids == blank
+    return grouped
+  endif
+
+  graphql result = 'modules/support/attachments/search', message_ids: message_ids, message_id: null, id: null, limit: 200, page: 1
+
+  for attachment in result.records.results
+    assign existing = grouped[attachment.message_id]
+    if existing == blank
+      assign existing = []
+    endif
+    assign existing = existing | array_add: attachment
+    assign grouped[attachment.message_id] = existing
+  endfor
+
+  return grouped
+%}

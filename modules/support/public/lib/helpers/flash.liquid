@@ -1,0 +1,28 @@
+{% doc %}
+  Puts a message on the next page.
+
+  Why not modules/user/helpers/flash: that one runs t on what it is given,
+  so it takes a translation key. Half the messages here are counted or
+  interpolated, which means they have to be translated at the call site
+  with arguments, and handing the result to a helper that translates again
+  turns it into a blank string under safe_translate. This one takes the
+  finished sentence.
+
+  Writes the same {message, severity} shape the user module writes, so the
+  host's own layout shows these too if an agent interface is ever embedded
+  in one.
+
+  @param {string} message - Already translated
+  @param {string} [severity] - success, error or info. Defaults to info
+{% enddoc %}
+{% liquid
+  if message == blank
+    return null
+  endif
+
+  assign severity = severity | default: 'info'
+  assign flash = { "message": message, "severity": severity, "from": context.location.pathname, "force_clear": false }
+
+  function _ = 'modules/core/commands/session/set', key: 'sflash', value: flash
+  return true
+%}

@@ -1,0 +1,106 @@
+---
+slug: support/tickets/reply
+method: post
+---
+{%- comment -%}
+  Sends an agent's reply to the customer.
+
+  The message is recorded before the provider is called, and its delivery
+  status is written afterwards. That order is deliberate: if the send
+  fails, or no provider is connected yet, the reply is still on the
+  ticket and visibly not delivered, rather than lost with the request.
+{%- endcomment -%}
+{%- liquid
+  function current_profile = 'modules/user/helpers/current_profile'
+  function settings = 'modules/support/queries/settings/get'
+  function statuses = 'modules/support/queries/statuses/search', kind: null
+  function ticket = 'modules/support/queries/tickets/find', id: context.params.ticket_id, number: null
+
+  assign return_to = context.params.return_to | default: '/support'
+
+  if ticket == blank
+    # platformos-check-disable DeprecatedTag
+    include 'modules/support/helpers/redirect_back', url: return_to
+    # platformos-check-enable DeprecatedTag
+  endif
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.tickets.update', entity: ticket
+  # platformos-check-enable DeprecatedTag
+
+  assign body = context.params.body | default: '' | strip
+  if body == blank
+    assign error = 'modules/support/composer.empty_reply' | t
+    function _ = 'modules/support/helpers/flash', message: error, severity: 'error'
+    # platformos-check-disable DeprecatedTag
+    include 'modules/support/helpers/redirect_back', url: return_to
+    # platformos-check-enable DeprecatedTag
+  endif
+
+  function contact = 'modules/support/queries/contacts/find', id: ticket.contact_id
+  graphql department_result = 'modules/support/departments/search', id: ticket.department_id, slug: null, inbound_address: null, limit: 1, page: 1
+  assign department = department_result.records.results.first
+  function messages = 'modules/support/queries/messages/for_ticket', ticket_id: ticket.id
+
+  function cc = 'modules/support/helpers/email/parse_address_list', raw: context.params.cc
+  function email = 'modules/support/helpers/email/build_reply', ticket: ticket, department: department, contact: contact, messages: messages, body: body, cc: cc
+
+  assign outbound = { "ticket_id": ticket.id, "kind": "outbound", "user_id": current_profile.user.id, "from_address": email.from_address, "to_addresses": null, "cc_addresses": cc, "subject": email.subject, "body_text": email.body, "message_id_header": email.message_id, "in_reply_to": email.in_reply_to, "references": email.references, "delivery_status": "sending" }
+  assign recipients = contact.email | split: ','
+  assign outbound.to_addresses = recipients
+
+  function message = 'modules/support/commands/messages/create', object: outbound
+  unless message.valid
+    log message.errors, type: 'ERROR: modules/support/tickets/reply could not record the reply'
+    assign error = 'modules/support/composer.reply_failed' | t
+    function _ = 'modules/support/helpers/flash', message: error, severity: 'error'
+    # platformos-check-disable DeprecatedTag
+    include 'modules/support/helpers/redirect_back', url: return_to
+    # platformos-check-enable DeprecatedTag
+  endunless
+
+  function delivery = 'modules/support/commands/outbound/send', object: email, settings: settings
+  graphql _ = 'modules/support/messages/set_delivery', id: message.id, delivery_status: delivery.status, provider_message_id: delivery.provider_message_id
+
+  function _ = 'modules/support/commands/tickets/touch', ticket: ticket, direction: 'outbound', contact_email: contact.email
+
+  comment
+    Send and set, from the build spec's send options. A blank choice
+    leaves the status exactly where it was.
+  endcomment
+  if context.params.then_status_id != blank
+    assign closed_at = null
+    assign previous_name = ''
+    assign new_name = ''
+    for status in statuses
+      if status.id == ticket.status_id
+        assign previous_name = status.name
+      endif
+      if status.id == context.params.then_status_id
+        assign new_name = status.name
+        if status.kind == 'closed'
+          assign closed_at = 'now' | date: '%Y-%m-%d %H:%M:%S'
+        endif
+      endif
+    endfor
+
+    graphql _ = 'modules/support/tickets/set_status', id: ticket.id, status_id: context.params.then_status_id, closed_at: closed_at
+    assign activity = { "ticket_id": ticket.id, "actor_id": current_profile.user.id, "action": "status_changed", "from_value": previous_name, "to_value": new_name }
+    function _ = 'modules/support/commands/activities/create', object: activity
+  endif
+
+  if delivery.sent
+    assign notice = 'modules/support/composer.sent' | t
+    function _ = 'modules/support/helpers/flash', message: notice, severity: 'success'
+  elsif delivery.status == 'not_configured'
+    assign info = 'modules/support/composer.not_configured' | t
+    function _ = 'modules/support/helpers/flash', message: info, severity: 'info'
+  else
+    assign error = 'modules/support/composer.send_failed' | t
+    function _ = 'modules/support/helpers/flash', message: error, severity: 'error'
+  endif
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/redirect_back', url: return_to
+  # platformos-check-enable DeprecatedTag
+-%}

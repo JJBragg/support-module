@@ -1,0 +1,23 @@
+{%- comment -%}
+  The agent interface renders its own flash. It does not load
+  common-styling, so the toast the user module's generated layout uses is
+  not here, and without this every message these endpoints set would be
+  written to the session and never read.
+
+  Reads the {message, severity} shape, and clears it once the pathname
+  has moved on.
+{%- endcomment -%}
+{%- liquid
+  function flash = 'modules/core/commands/session/get', key: 'sflash', clear: null
+  assign message = flash.message
+  assign severity = flash.severity | default: 'info'
+
+  if message != blank
+    if context.location.pathname != flash.from or flash.force_clear
+      function _ = 'modules/core/commands/session/clear', key: 'sflash'
+    endif
+  endif
+-%}
+{%- if message != blank -%}
+  <div class="pos-support-flash is-{{ severity }}" role="status">{{ message }}</div>
+{%- endif -%}

@@ -1,0 +1,31 @@
+query (
+  $page: Int = 1
+  $limit: Int = 100
+  $id: ID
+  $message_id: String
+  $message_ids: [String!]
+) {
+  records(
+    page: $page
+    per_page: $limit
+    filter: {
+      id: { value: $id }
+      table: { value: "modules/support/attachment" }
+      properties: [
+        { name: "message_id", value: $message_id, value_in: $message_ids }
+      ]
+    }
+  ) {
+    total_entries
+    results {
+      id
+      type: table
+
+      message_id: property(name: "message_id")
+      filename: property(name: "filename")
+      size: property_int(name: "size")
+      content_type: property(name: "content_type")
+      file: property_upload(name: "file") { file_name url }
+    }
+  }
+}

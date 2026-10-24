@@ -1,0 +1,32 @@
+{% doc %}
+  Sends the "you were mentioned" email.
+
+  @param {object} object - The note_mentioned payload
+  @param {string} email - Where to send it
+  @param {string} [name] - The recipient's name
+{% enddoc %}
+{% liquid
+  assign from = 'modules/support/emails.from_email' | t
+  assign subject = 'modules/support/emails.mention.subject' | t: number: object.ticket_number, subject: object.ticket_subject
+
+  assign url = '/support/tickets/' | append: object.ticket_number
+
+  assign payload = {
+    "to": email,
+    "from": from,
+    "subject": subject,
+    "partial": "modules/support/emails/mention",
+    "layout": null,
+    "data": {
+      "name": name,
+      "author_name": object.author_name,
+      "ticket_number": object.ticket_number,
+      "ticket_subject": object.ticket_subject,
+      "excerpt": object.excerpt,
+      "url": url
+    }
+  }
+
+  function result = 'modules/core/commands/email/send', object: payload
+  return result
+%}

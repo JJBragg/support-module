@@ -1,0 +1,12 @@
+{% doc %}
+  @param {object} data - name, author_name, ticket_number, ticket_subject, excerpt, url
+{% enddoc %}
+<p>{{ 'modules/support/emails.mention.greeting' | t: name: data.name }}</p>
+
+<p>{{ 'modules/support/emails.mention.body' | t: author: data.author_name, number: data.ticket_number, subject: data.ticket_subject }}</p>
+
+<blockquote>{{ data.excerpt }}</blockquote>
+
+<p><a href="{{ context.location.host | prepend: 'https://' | append: data.url }}">{{ 'modules/support/emails.mention.link' | t: number: data.ticket_number }}</a></p>
+
+<p>{{ 'modules/support/emails.mention.footer' | t }}</p>

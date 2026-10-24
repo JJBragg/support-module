@@ -1,0 +1,95 @@
+<aside class="pos-support-panel" aria-label="{{ 'modules/support/detail.panel.properties' | t }}">
+  <div>
+    <h2>{{ 'modules/support/detail.panel.properties' | t }}</h2>
+
+    <form class="pos-support-field" method="post" action="/support/tickets/update">
+      <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+      <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+      <input type="hidden" name="return_to" value="{{ return_to }}">
+      <span class="pos-support-field-label" id="pos-support-prio-label">{{ 'modules/support/detail.panel.priority' | t }}</span>
+      <div class="pos-support-prio-row" role="group" aria-labelledby="pos-support-prio-label">
+        {%- for priority in tokens.priorities -%}
+          {%- liquid
+            assign is_on = false
+            if priority.key == ticket.priority_token.key
+              assign is_on = true
+            endif
+            assign style = 'background: var(--bg); color: var(--tx)'
+            if is_on
+              assign style = 'background: ' | append: priority.bg | append: '; color: ' | append: priority.fg | append: '; border-color: ' | append: priority.bd
+            endif
+          -%}
+          <button type="submit" name="priority" value="{{ forloop.index0 }}" aria-pressed="{{ is_on }}" title="{{ priority.key }} {{ priority.label }}" style="{{ style }}">{{ priority.key }}</button>
+        {%- endfor -%}
+      </div>
+      <span class="pos-support-hint-text">{{ 'modules/support/detail.panel.priority_hint' | t }}</span>
+    </form>
+
+    <form class="pos-support-field" method="post" action="/support/tickets/update">
+      <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+      <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+      <input type="hidden" name="return_to" value="{{ return_to }}">
+      <label class="pos-support-field-label" for="pos-support-status">{{ 'modules/support/detail.panel.status' | t }}</label>
+      <select id="pos-support-status" name="status_id" data-support-autosubmit>
+        {%- for status in statuses -%}
+          <option value="{{ status.id }}" {% if status.id == ticket.status_id %}selected{% endif %}>{{ status.name }}</option>
+        {%- endfor -%}
+      </select>
+      <button type="submit" data-support-noscript>{{ 'modules/support/detail.panel.apply' | t }}</button>
+    </form>
+
+    <form class="pos-support-field" method="post" action="/support/tickets/update">
+      <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+      <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+      <input type="hidden" name="return_to" value="{{ return_to }}">
+      <label class="pos-support-field-label" for="pos-support-assignee-field">{{ 'modules/support/detail.panel.assignee' | t }}</label>
+      <select id="pos-support-assignee-field" name="assignee_id" data-support-autosubmit>
+        <option value="none">{{ 'modules/support/detail.panel.unassigned' | t }}</option>
+        {%- for one_agent in all_agents -%}
+          <option value="{{ one_agent.user_id }}" {% if one_agent.user_id == ticket.assignee_id %}selected{% endif %}>{{ one_agent.name }}</option>
+        {%- endfor -%}
+      </select>
+      <button type="submit" data-support-noscript>{{ 'modules/support/detail.panel.apply' | t }}</button>
+    </form>
+
+    <form class="pos-support-field" method="post" action="/support/tickets/update">
+      <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+      <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+      <input type="hidden" name="return_to" value="{{ return_to }}">
+      <label class="pos-support-field-label" for="pos-support-department-field">{{ 'modules/support/detail.panel.department' | t }}</label>
+      <select id="pos-support-department-field" name="department_id" data-support-autosubmit>
+        {%- for department in departments -%}
+          <option value="{{ department.id }}" {% if department.id == ticket.department_id %}selected{% endif %}>{{ department.name }}</option>
+        {%- endfor -%}
+      </select>
+      <button type="submit" data-support-noscript>{{ 'modules/support/detail.panel.apply' | t }}</button>
+    </form>
+  </div>
+
+  <div>
+    <h2>{{ 'modules/support/detail.panel.contact' | t }}</h2>
+    <div class="pos-support-contact-card">
+      <span class="pos-support-avatar" aria-hidden="true" style="background: #FDE7D6; color: #8A3B12">{{ contact_initials }}</span>
+      <div>
+        <strong>{{ contact.name | default: contact.email }}</strong>
+        {%- if contact.organization != blank -%}
+          <div class="pos-support-contact-org">{{ contact.organization }}</div>
+        {%- endif -%}
+      </div>
+    </div>
+    <div style="margin-top: 8px"><a href="mailto:{{ contact.email }}">{{ contact.email }}</a></div>
+  </div>
+
+  <div>
+    <h2>{{ 'modules/support/detail.panel.other_tickets' | t: count: other_tickets.size }}</h2>
+    {%- for other in other_tickets -%}
+      <a class="pos-support-other" href="/support/tickets/{{ other.number }}">
+        {% render 'modules/support/tags/priority', priority: other.priority_token %}
+        <span style="min-width: 0">
+          <span class="pos-support-other-subject" title="{{ other.subject }}">{{ other.subject }}</span>
+          <span class="pos-support-other-meta">#{{ other.number }} · {{ other.status.name }}</span>
+        </span>
+      </a>
+    {%- endfor -%}
+  </div>
+</aside>

@@ -1,0 +1,19 @@
+mutation (
+  $id: ID!
+  $delivery_status: String!
+  $provider_message_id: String
+) {
+  record: record_update(
+    id: $id
+    record: {
+      table: "modules/support/message"
+      properties: [
+        { name: "delivery_status", value: $delivery_status }
+        { name: "provider_message_id", value: $provider_message_id }
+      ]
+    }
+  ) {
+    id
+    delivery_status: property(name: "delivery_status")
+  }
+}

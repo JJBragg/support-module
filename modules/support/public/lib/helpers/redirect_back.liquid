@@ -1,0 +1,32 @@
+{% doc %}
+  Sends the agent back where they came from.
+
+  Include it, do not call it as a function: it ends the response, and that
+  only propagates through include.
+
+  Why not modules/core/helpers/redirect_to: that helper publishes a flash
+  of its own on the way out, every time, even when given no message. It
+  writes the core {error, notice, info} shape over the same session key
+  any flash set earlier in the request used, so the message the agent was
+  supposed to read is replaced by an empty one and never appears. This is
+  the upstream issue written up in docs/for-platformos-engineers.
+
+  Keeps the one thing that helper does that matters here: a return path
+  that is not a path on this site is refused, so a crafted form field
+  cannot turn an action into an open redirect.
+
+  @param {string} [url] - Where to go. Defaults to the queue
+{% enddoc %}
+{% liquid
+  assign target = url | default: '/support'
+
+  assign leading = target | slice: 0, 1
+  assign protocol_relative = target | slice: 0, 2
+
+  if leading != '/' or protocol_relative == '//'
+    assign target = '/support'
+  endif
+
+  redirect_to target
+  break
+%}

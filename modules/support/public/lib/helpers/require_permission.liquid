@@ -17,15 +17,14 @@
       session return_to = context.location.href
 
       comment
-        Set the flash with the user module's helper, which writes the
-        {message, severity} shape its generated layout reads, and take the
-        plain redirect_to tag. modules/core/helpers/redirect_to would be the
-        obvious choice and is the wrong one here: it publishes the core
-        {error, notice, info} shape over the same session key, which that
-        layout reads as blank. The argument is a translation key, not a
-        translated string, because the helper runs t itself.
+        Our own flash helper, and the plain redirect_to tag.
+        modules/core/helpers/redirect_to would be the obvious choice and is
+        the wrong one here: it publishes the core {error, notice, info}
+        shape over the same session key, which the layouts that read
+        {message, severity} see as blank.
       endcomment
-      function _ = 'modules/user/helpers/flash', error: null, info: 'modules/support/authorization.redirect_anonymous_info', notice: null, force_clear: null
+      assign info = 'modules/support/authorization.redirect_anonymous_info' | t
+      function _ = 'modules/support/helpers/flash', message: info, severity: 'info'
       redirect_to '/sessions/new'
       break
     else

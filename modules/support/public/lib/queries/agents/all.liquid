@@ -24,15 +24,13 @@
       assign name = profile.email
     endif
 
-    comment
-      Built in two steps on purpose. Chained as one filter run, the second
-      slice would apply to the joined string and give a single letter.
-    endcomment
     assign first_initial = profile.first_name | slice: 0, 1
     assign last_initial = profile.last_name | slice: 0, 1
     assign initials = first_initial | append: last_initial | upcase
     if initials == blank
-      assign initials = name | slice: 0, 2 | upcase
+      # platformos-check-disable NestedGraphQLQuery
+      function initials = 'modules/support/helpers/ui/initials', name: name
+      # platformos-check-enable NestedGraphQLQuery
     endif
 
     assign agent.name = name

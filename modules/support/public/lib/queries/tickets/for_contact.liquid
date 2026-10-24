@@ -1,0 +1,29 @@
+{% doc %}
+  The contact's other tickets, newest first, for the panel on the detail
+  screen. Includes closed ones: "has this person been here before" is the
+  question it answers, and a closed ticket is often the answer.
+
+  @param {string} contact_id - The contact
+  @param {string} [exclude_id] - The ticket being looked at
+  @param {number} [limit] - Defaults to 5
+{% enddoc %}
+{% liquid
+  if contact_id == blank
+    return nil
+  endif
+
+  assign limit = limit | default: 5
+  assign fetch = limit | plus: 1
+  assign sort = { "created_at": { "order": "DESC" } }
+
+  graphql result = 'modules/support/tickets/search', contact_id: contact_id, sort: sort, limit: fetch, page: 1, id: null, number: null, department_id: null, department_ids: null, status_id: null, status_ids: null, assignee_id: null, priority: null, query: null
+
+  assign others = []
+  for ticket in result.records.results
+    unless ticket.id == exclude_id
+      assign others = others | array_add: ticket
+    endunless
+  endfor
+
+  return others
+%}

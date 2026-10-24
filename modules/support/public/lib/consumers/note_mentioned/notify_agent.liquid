@@ -1,0 +1,25 @@
+---
+metadata:
+  priority: default
+  max_attempts: 5
+---
+{% doc %}
+  Emails the agent who was named.
+
+  This goes out through platformOS, not through the ticket's email
+  provider. It is internal post between colleagues, it has nothing to do
+  with the customer's thread, and it must keep working on an instance
+  where no provider has been connected yet.
+
+  @param {object} event - The note_mentioned payload
+{% enddoc %}
+{% liquid
+  function profile = 'modules/user/queries/profiles/find', user_id: event.mentioned_user_id, id: null, uuid: null, first_name: null, last_name: null
+
+  if profile.email == blank
+    log event, type: 'modules/support/consumers/note_mentioned: no email for the mentioned agent'
+    return null
+  endif
+
+  function _ = 'modules/support/commands/notifications/mention', object: event, email: profile.email, name: profile.name
+%}

@@ -1,0 +1,79 @@
+---
+slug: support/tickets/note
+method: post
+---
+{%- comment -%}
+  Adds a private note. There is no provider involved and no email to the
+  customer: a note is internal, and the one thing it must never do is
+  leave the building.
+{%- endcomment -%}
+{%- liquid
+  function current_profile = 'modules/user/helpers/current_profile'
+  function all_agents = 'modules/support/queries/agents/all'
+  function ticket = 'modules/support/queries/tickets/find', id: context.params.ticket_id, number: null
+
+  assign return_to = context.params.return_to | default: '/support'
+
+  if ticket == blank
+    # platformos-check-disable DeprecatedTag
+    include 'modules/support/helpers/redirect_back', url: return_to
+    # platformos-check-enable DeprecatedTag
+  endif
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.tickets.update', entity: ticket
+  # platformos-check-enable DeprecatedTag
+
+  assign body = context.params.body | default: '' | strip
+
+  if body == blank
+    assign error = 'modules/support/composer.empty_note' | t
+    function _ = 'modules/support/helpers/flash', message: error, severity: 'error'
+    # platformos-check-disable DeprecatedTag
+    include 'modules/support/helpers/redirect_back', url: return_to
+    # platformos-check-enable DeprecatedTag
+  endif
+
+  assign note = { "ticket_id": ticket.id, "kind": "note", "user_id": current_profile.user.id, "body_text": body, "subject": ticket.subject }
+  function message = 'modules/support/commands/messages/create', object: note
+
+  unless message.valid
+    log message.errors, type: 'ERROR: modules/support/tickets/note could not record the note'
+    assign error = 'modules/support/composer.note_failed' | t
+    function _ = 'modules/support/helpers/flash', message: error, severity: 'error'
+    # platformos-check-disable DeprecatedTag
+    include 'modules/support/helpers/redirect_back', url: return_to
+    # platformos-check-enable DeprecatedTag
+  endunless
+
+  function mentioned = 'modules/support/helpers/mentions/extract', body: body, agents: all_agents
+
+  assign excerpt = body | truncate: 200
+  assign author_name = current_profile.name | default: current_profile.email
+  assign notified = 0
+
+  for agent in mentioned
+    comment
+      Mentioning yourself is a way of leaving a reminder, not a request to
+      be emailed about your own note.
+    endcomment
+    unless agent.user_id == current_profile.user.id
+      assign payload = { "ticket_id": ticket.id, "ticket_number": ticket.number, "ticket_subject": ticket.subject, "message_id": message.id, "mentioned_user_id": agent.user_id, "author_name": author_name, "excerpt": excerpt }
+      # platformos-check-disable NestedGraphQLQuery
+      function _ = 'modules/core/commands/events/publish', type: 'note_mentioned', object: payload, delay: null, max_attempts: null
+      # platformos-check-enable NestedGraphQLQuery
+      assign notified = notified | plus: 1
+    endunless
+  endfor
+
+  if notified > 0
+    assign notice = 'modules/support/composer.note_added_mentions' | t: count: notified
+  else
+    assign notice = 'modules/support/composer.note_added' | t
+  endif
+  function _ = 'modules/support/helpers/flash', message: notice, severity: 'success'
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/redirect_back', url: return_to
+  # platformos-check-enable DeprecatedTag
+-%}

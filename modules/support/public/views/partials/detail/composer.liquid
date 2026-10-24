@@ -1,0 +1,95 @@
+{%- liquid
+  assign is_note = false
+  if composer_mode == 'note'
+    assign is_note = true
+  endif
+
+  assign ticket_path = '/support/tickets/' | append: ticket.number
+  assign note_path = ticket_path | append: '?composer=note'
+
+  assign classes = 'pos-support-composer'
+  if is_note
+    assign classes = classes | append: ' is-note'
+  endif
+
+  if is_note
+    assign hint = 'modules/support/composer.note_hint' | t: name: contact_name
+  else
+    assign hint = 'modules/support/composer.reply_hint' | t: name: contact_name
+  endif
+-%}
+<div class="pos-support-dock">
+  {%- if is_note -%}
+    <form class="{{ classes }}" method="post" action="/support/tickets/note" aria-label="{{ 'modules/support/composer.note_label' | t }}">
+      <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+      <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+      <input type="hidden" name="return_to" value="{{ ticket_path }}">
+
+      <div class="pos-support-composer-head">
+        <div class="pos-support-modes" role="group" aria-label="{{ 'modules/support/composer.mode' | t }}">
+          <a href="{{ ticket_path }}" aria-pressed="false">{{ 'modules/support/composer.reply' | t }}</a>
+          <a href="{{ note_path }}" aria-pressed="true">{{ 'modules/support/composer.note' | t }}</a>
+        </div>
+        <span class="pos-support-composer-hint">{{ hint }}</span>
+      </div>
+
+      <label class="pos-support-sr" for="pos-support-note-body">{{ 'modules/support/composer.note_label' | t }}</label>
+      <textarea id="pos-support-note-body" name="body" rows="4" placeholder="{{ 'modules/support/composer.note_placeholder' | t }}"></textarea>
+
+      <div class="pos-support-composer-foot">
+        <span class="pos-support-composer-note">{{ 'modules/support/composer.note_never_changes_status' | t }}</span>
+        <button class="pos-support-add-note" type="submit">{{ 'modules/support/composer.add_note' | t }}</button>
+      </div>
+    </form>
+  {%- else -%}
+    <form class="{{ classes }}" method="post" action="/support/tickets/reply" aria-label="{{ 'modules/support/composer.reply_label' | t }}">
+      <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+      <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+      <input type="hidden" name="return_to" value="{{ ticket_path }}">
+
+      <div class="pos-support-composer-head">
+        <div class="pos-support-modes" role="group" aria-label="{{ 'modules/support/composer.mode' | t }}">
+          <a href="{{ ticket_path }}" aria-pressed="true">{{ 'modules/support/composer.reply' | t }}</a>
+          <a href="{{ note_path }}" aria-pressed="false">{{ 'modules/support/composer.note' | t }}</a>
+        </div>
+        <span class="pos-support-composer-hint">{{ hint }}</span>
+      </div>
+
+      <div class="pos-support-composer-fields">
+        <div class="pos-support-composer-row">
+          <span>{{ 'modules/support/composer.from' | t }}</span>
+          <span>{{ from_address }}</span>
+        </div>
+        <div class="pos-support-composer-row">
+          <span>{{ 'modules/support/composer.to' | t }}</span>
+          <span>{{ contact.email }}</span>
+        </div>
+        <div class="pos-support-composer-row">
+          <label for="pos-support-cc">{{ 'modules/support/composer.cc' | t }}</label>
+          <input id="pos-support-cc" type="text" name="cc" value="" placeholder="{{ 'modules/support/composer.cc_placeholder' | t }}">
+        </div>
+      </div>
+
+      <label class="pos-support-sr" for="pos-support-reply-body">{{ 'modules/support/composer.reply_label' | t }}</label>
+      <textarea id="pos-support-reply-body" name="body" rows="5" placeholder="{{ 'modules/support/composer.reply_placeholder' | t }}"></textarea>
+
+      {%- if signature != blank -%}
+        <div class="pos-support-signature">{{ signature }}</div>
+      {%- endif -%}
+
+      <div class="pos-support-composer-foot">
+        <span class="pos-support-composer-note">{{ 'modules/support/composer.keeps_status' | t: status: ticket.status.name }}</span>
+        <div class="pos-support-send">
+          <label class="pos-support-sr" for="pos-support-then">{{ 'modules/support/composer.then' | t }}</label>
+          <select id="pos-support-then" name="then_status_id">
+            <option value="">{{ 'modules/support/composer.then_keep' | t }}</option>
+            {%- for status in send_statuses -%}
+              <option value="{{ status.id }}">{{ 'modules/support/composer.then_set' | t: status: status.name }}</option>
+            {%- endfor -%}
+          </select>
+          <button type="submit">{{ 'modules/support/composer.send' | t }}</button>
+        </div>
+      </div>
+    </form>
+  {%- endif -%}
+</div>

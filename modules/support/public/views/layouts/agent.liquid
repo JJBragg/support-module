@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="{{ 'modules/support/style/support.css' | asset_url }}">
   </head>
   <body class="pos-support" style="--pri: {{ primary }}; --bg: {{ background }}; --tx: {{ text }}; --bd: {{ border }}">
+    {% render 'modules/support/ui/flash' %}
     {{ content_for_layout }}
     <script src="{{ 'modules/support/js/support.js' | asset_url }}" defer></script>
   </body>
