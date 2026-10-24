@@ -34,10 +34,17 @@
 .pos-support *::before,
 .pos-support *::after { box-sizing: border-box; }
 
-.pos-support a { color: inherit; text-decoration: none; }
+/*
+ * The element resets are wrapped in :where() so they carry no specificity.
+ * Written as .pos-support button they score 0,1,1 and quietly beat every
+ * single class rule below, so .pos-support-add-note could set a colour and
+ * a weight and watch colour: inherit win. A reset should lose every
+ * argument it has with a real rule.
+ */
+:where(.pos-support) :where(a) { color: inherit; text-decoration: none; }
 .pos-support a:hover { text-decoration: underline; }
-.pos-support button { font: inherit; color: inherit; cursor: pointer; }
-.pos-support input { font: inherit; color: inherit; }
+:where(.pos-support) :where(button) { font: inherit; color: inherit; cursor: pointer; }
+:where(.pos-support) :where(input) { font: inherit; color: inherit; }
 .pos-support-sr {
   position: absolute; width: 1px; height: 1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
