@@ -13,6 +13,16 @@ method: post
   rerank command drag and drop uses.
 {%- endcomment -%}
 {%- liquid
+  comment
+    Guarded twice, and the order matters. The unscoped check first, so an
+    anonymous caller is sent to log in before the page looks anything up
+    and before a missing ticket can tell them it is missing. The
+    department scoped check once there is a ticket to scope it to.
+  endcomment
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.tickets.update', entity: null
+  # platformos-check-enable DeprecatedTag
+
   function current_profile = 'modules/user/helpers/current_profile'
   function statuses = 'modules/support/queries/statuses/search', kind: null
   function ticket = 'modules/support/queries/tickets/find', id: context.params.ticket_id, number: null
@@ -72,11 +82,23 @@ method: post
     graphql _ = 'modules/support/tickets/set_department', id: ticket.id, department_id: context.params.department_id
   endif
 
+  comment
+    A priority change places the ticket at the top of its new group, so it
+    is a rerank and carries the rerank permission, not the update one. The
+    panel disables these buttons for an agent; this is the half that an
+    agent cannot get around by posting the form themselves.
+  endcomment
   if context.params.priority != blank
-    assign new_priority = context.params.priority | plus: 0
-    unless new_priority == ticket.priority
-      function _ = 'modules/support/commands/tickets/rerank', ticket: ticket, statuses: statuses, priority: new_priority, before_id: null, direction: null, actor_id: actor_id
-    endunless
+    function can_rerank = 'modules/support/helpers/can', do: 'support.tickets.rerank', entity: ticket
+    if can_rerank
+      assign new_priority = context.params.priority | plus: 0
+      unless new_priority == ticket.priority
+        function _ = 'modules/support/commands/tickets/rerank', ticket: ticket, statuses: statuses, priority: new_priority, before_id: null, direction: null, actor_id: actor_id
+      endunless
+    else
+      assign denied = 'modules/support/detail.panel.priority_locked' | t
+      function _ = 'modules/support/helpers/flash', message: denied, severity: 'error'
+    endif
   endif
 
   # platformos-check-disable DeprecatedTag

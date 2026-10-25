@@ -89,7 +89,12 @@ metadata:
   assign priority_filter = context.params.priority | default: 'all'
   assign group_by = context.params.group | default: 'priority'
   assign assignee_filter = context.params.assignee
-  assign search_query = context.params.q | default: '' | strip | downcase
+  comment
+    The box says "ticket #, subject or email", so an agent types #18022.
+    The haystack holds the bare number, so the hash comes off here rather
+    than quietly matching nothing.
+  endcomment
+  assign search_query = context.params.q | default: '' | strip | downcase | remove_first: '#'
   assign expanded = context.params.expand | default: '' | split: ','
   assign collapsed_groups = context.params.collapsed | default: '' | split: ','
 

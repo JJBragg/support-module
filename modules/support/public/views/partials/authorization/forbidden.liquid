@@ -1,6 +1,20 @@
+{%- comment -%}
+  Two different refusals wear the same 403. Someone with no agent record
+  cannot reach support at all and needs to be added. An agent who walked
+  into an Admin screen has access to support and needs to know it is this
+  screen that is closed, not the whole queue.
+{%- endcomment -%}
 {%- liquid
-  assign title = 'modules/support/authorization.forbidden_title' | t
-  assign body = 'modules/support/authorization.forbidden_body' | t
+  function agent = 'modules/support/helpers/current_agent'
+
+  if agent == blank
+    assign title = 'modules/support/authorization.forbidden_title' | t
+    assign body = 'modules/support/authorization.forbidden_body' | t
+  else
+    assign title = 'modules/support/authorization.admin_only_title' | t
+    assign body = 'modules/support/authorization.admin_only_body' | t
+  endif
 -%}
 <h1>{{ title }}</h1>
 <p>{{ body }}</p>
+<p><a href="/support">{{ 'modules/support/detail.back' | t }}</a></p>

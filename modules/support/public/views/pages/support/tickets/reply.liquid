@@ -11,6 +11,15 @@ method: post
   ticket and visibly not delivered, rather than lost with the request.
 {%- endcomment -%}
 {%- liquid
+  comment
+    Unscoped first, so an anonymous caller is sent to log in before the
+    page looks anything up. The department scoped check follows, once
+    there is a ticket to scope it to.
+  endcomment
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.tickets.update', entity: null
+  # platformos-check-enable DeprecatedTag
+
   function current_profile = 'modules/user/helpers/current_profile'
   function settings = 'modules/support/queries/settings/get'
   function statuses = 'modules/support/queries/statuses/search', kind: null

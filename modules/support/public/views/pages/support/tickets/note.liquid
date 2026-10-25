@@ -8,6 +8,15 @@ method: post
   leave the building.
 {%- endcomment -%}
 {%- liquid
+  comment
+    Unscoped first, so an anonymous caller is sent to log in before the
+    page looks anything up. The department scoped check follows, once
+    there is a ticket to scope it to.
+  endcomment
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.tickets.update', entity: null
+  # platformos-check-enable DeprecatedTag
+
   function current_profile = 'modules/user/helpers/current_profile'
   function all_agents = 'modules/support/queries/agents/all'
   function ticket = 'modules/support/queries/tickets/find', id: context.params.ticket_id, number: null

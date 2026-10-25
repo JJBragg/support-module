@@ -13,6 +13,7 @@ en:
       sent: Sent
       note: Private note
       note_meta: Agents only, not emailed
+      show_quoted_plain: Show quoted text
       show_quoted:
         one: Show quoted text, 1 earlier message
         other: Show quoted text, %{count} earlier messages

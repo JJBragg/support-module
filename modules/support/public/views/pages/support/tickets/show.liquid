@@ -13,6 +13,7 @@ metadata:
   include 'modules/support/helpers/require_permission', do: 'support.access', entity: null
   # platformos-check-enable DeprecatedTag
 
+  function can_rerank = 'modules/support/helpers/can', do: 'support.tickets.rerank', entity: null
   function tokens = 'modules/support/helpers/ui/tokens'
   function current_profile = 'modules/user/helpers/current_profile'
   function statuses = 'modules/support/queries/statuses/search', kind: null
@@ -139,7 +140,17 @@ metadata:
       assign is_latest = true
     endif
 
-    assign quoted_label = 'modules/support/detail.timeline.show_quoted' | t: count: index
+    comment
+      The count is how many messages of this ticket sit above this one, so
+      the first message in the ticket quotes nothing we hold. Saying "0
+      earlier messages" there is worse than saying nothing: the customer
+      did quote something, it just predates the ticket.
+    endcomment
+    if index == 0
+      assign quoted_label = 'modules/support/detail.timeline.show_quoted_plain' | t
+    else
+      assign quoted_label = 'modules/support/detail.timeline.show_quoted' | t: count: index
+    endif
 
     assign entry = { "message": message, "author": author, "attachments": attachments_by_message[message.id], "is_latest": is_latest, "quoted_label": quoted_label }
     assign timeline = timeline | array_add: entry
@@ -225,6 +236,7 @@ metadata:
       contact: contact,
       contact_initials: contact_initials,
       other_tickets: decorated_others,
+      can_rerank: can_rerank,
       return_to: return_to
     %}
   </div>

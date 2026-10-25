@@ -2,6 +2,12 @@
   <div>
     <h2>{{ 'modules/support/detail.panel.properties' | t }}</h2>
 
+    {%- comment -%}
+      Changing the priority moves the ticket to the top of its new group,
+      which is a change to the work order the whole team shares. Reranking
+      is Admin only, so these buttons are too, and an agent sees why
+      rather than a control that does nothing.
+    {%- endcomment -%}
     <form class="pos-support-field" method="post" action="/support/tickets/update">
       <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
       <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
@@ -19,10 +25,14 @@
               assign style = 'background: ' | append: priority.bg | append: '; color: ' | append: priority.fg | append: '; border-color: ' | append: priority.bd
             endif
           -%}
-          <button type="submit" name="priority" value="{{ forloop.index0 }}" aria-pressed="{{ is_on }}" title="{{ priority.key }} {{ priority.label }}" style="{{ style }}">{{ priority.key }}</button>
+          <button type="submit" name="priority" value="{{ forloop.index0 }}" aria-pressed="{{ is_on }}" title="{{ priority.key }} {{ priority.label }}" style="{{ style }}" {% unless can_rerank %}disabled{% endunless %}>{{ priority.key }}</button>
         {%- endfor -%}
       </div>
-      <span class="pos-support-hint-text">{{ 'modules/support/detail.panel.priority_hint' | t }}</span>
+      {%- if can_rerank -%}
+        <span class="pos-support-hint-text">{{ 'modules/support/detail.panel.priority_hint' | t }}</span>
+      {%- else -%}
+        <span class="pos-support-hint-text">{{ 'modules/support/detail.panel.priority_locked' | t }}</span>
+      {%- endif -%}
     </form>
 
     <form class="pos-support-field" method="post" action="/support/tickets/update">

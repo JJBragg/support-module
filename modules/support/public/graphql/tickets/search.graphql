@@ -51,6 +51,10 @@ query (
       closed_at: property(name: "closed_at")
       last_message_at: property(name: "last_message_at")
       last_message_direction: property(name: "last_message_direction")
+
+      # The haystack the list's search box matches against. Written on
+      # create and kept current by touch; useless unless it is also read.
+      c__search: property(name: "c__search")
     }
   }
 }
