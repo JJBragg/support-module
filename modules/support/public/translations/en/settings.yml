@@ -6,6 +6,20 @@ en:
     save: Save
     rename: Rename
 
+    fields:
+      name: Name
+      slug: Name
+      inbound_address: Inbound address
+      from_address: From address
+      from_name: Sender name
+      signature: Signature
+      key: Name
+      kind: Type
+      role: Role
+      email: Email
+      title: Job title
+      department_ids: Departments
+
     departments:
       heading: Departments
       subtitle: Each department has its own inbox, sending address and signature.

@@ -92,6 +92,7 @@
   <form class="pos-support-editform pos-support-addform" id="add-agent" method="post" action="/support/settings/agents">
     <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
     <input type="hidden" name="op" value="invite">
+    <span class="pos-support-formlegend">{{ 'modules/support/settings.agents.add' | t }}</span>
     <div class="pos-support-formfield">
       <label for="ag-new-email">{{ 'modules/support/settings.agents.email' | t }}</label>
       <input id="ag-new-email" type="email" name="email" required>

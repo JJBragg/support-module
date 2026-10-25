@@ -90,6 +90,7 @@
   <form class="pos-support-editform pos-support-addform" id="add-department" method="post" action="/support/settings/departments">
     <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
     <input type="hidden" name="op" value="create">
+    <span class="pos-support-formlegend">{{ 'modules/support/settings.departments.add' | t }}</span>
     <div class="pos-support-formfield">
       <label for="dep-new-name">{{ 'modules/support/settings.departments.name' | t }}</label>
       <input id="dep-new-name" type="text" name="name" required>

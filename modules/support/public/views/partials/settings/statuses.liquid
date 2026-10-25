@@ -56,11 +56,15 @@
             <label class="pos-support-sr" for="st-name-{{ status.id }}">{{ 'modules/support/settings.statuses.name' | t }}</label>
             <input id="st-name-{{ status.id }}" type="text" name="name" value="{{ status.name }}" required>
             <button type="submit">{{ 'modules/support/settings.rename' | t }}</button>
+            {%- liquid
+              assign is_new_default_label = 'modules/support/settings.statuses.is_new_default' | t
+              assign is_reopen_target_label = 'modules/support/settings.statuses.is_reopen_target' | t
+            -%}
             {%- if status.is_new_default -%}
-              <span class="pos-support-status-job">{{ 'modules/support/settings.statuses.is_new_default' | t }}</span>
+              <span class="pos-support-status-job" title="{{ is_new_default_label }}">{{ is_new_default_label }}</span>
             {%- endif -%}
             {%- if status.is_reopen_target -%}
-              <span class="pos-support-status-job">{{ 'modules/support/settings.statuses.is_reopen_target' | t }}</span>
+              <span class="pos-support-status-job" title="{{ is_reopen_target_label }}">{{ is_reopen_target_label }}</span>
             {%- endif -%}
           </form>
 
@@ -88,6 +92,7 @@
   <form class="pos-support-editform pos-support-addform" id="add-status" method="post" action="/support/settings/statuses">
     <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
     <input type="hidden" name="op" value="create">
+    <span class="pos-support-formlegend">{{ 'modules/support/settings.statuses.add' | t }}</span>
     <div class="pos-support-formfield">
       <label for="st-new-name">{{ 'modules/support/settings.statuses.name' | t }}</label>
       <input id="st-new-name" type="text" name="name" required>

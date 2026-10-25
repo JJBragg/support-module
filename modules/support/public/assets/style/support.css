@@ -581,7 +581,7 @@
 
 .pos-support-status-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .pos-support-status-name input {
-  flex: 1 1 0; min-width: 0; height: 30px; padding: 0 10px;
+  flex: 1 1 140px; min-width: 110px; height: 30px; padding: 0 10px;
   border: 1px solid transparent; border-radius: 6px; background: transparent;
   font-weight: 600;
 }
@@ -599,8 +599,10 @@
   display: grid; place-items: center; flex: 0 0 auto;
 }
 .pos-support-status-job {
+  flex: 0 1 auto; min-width: 0;
   padding: 0 6px; border: 1px solid var(--bd); border-radius: 4px;
-  font-size: 11px; color: var(--mut); white-space: nowrap;
+  font-size: 11px; color: var(--mut);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .pos-support-kinds { grid-template-columns: repeat(3, minmax(0, 1fr)); display: grid; }
 
@@ -648,6 +650,11 @@
 }
 .pos-support-addform {
   border: 1px solid var(--bd); border-radius: 8px; background: var(--soft);
+}
+.pos-support-formlegend {
+  grid-column: 1 / -1; margin-bottom: -4px;
+  font-size: 12px; font-weight: 650; color: var(--mut);
+  text-transform: uppercase; letter-spacing: 0.04em;
 }
 .pos-support-formfield { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .pos-support-formfield-wide { grid-column: 1 / -1; }

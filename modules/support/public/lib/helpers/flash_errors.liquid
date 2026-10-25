@@ -7,6 +7,13 @@
   was, says the same thing for far less machinery. If a form ever grows
   past a handful of fields this is the thing to replace.
 
+  Validation messages are written to sit after a field name, the way a
+  form shows them: "is already taken". Read on their own at the top of
+  the screen they are a sentence with the subject missing, so a message
+  that starts lower case gets its field name put back on the front. A
+  message that starts with a capital is already a whole sentence and is
+  left alone.
+
   Returns true when it flashed something, so a caller can use it as the
   failure branch.
 
@@ -14,11 +21,29 @@
 {% enddoc %}
 {% liquid
   for field in errors
+    assign field_name = field[0]
+
     for message in field[1]
-      if message != blank
-        function _ = 'modules/support/helpers/flash', message: message, severity: 'error'
-        return true
+      if message == blank
+        continue
       endif
+
+      assign sentence = message
+      assign first_character = message | slice: 0, 1
+      assign lowered = first_character | downcase
+      assign uppered = first_character | upcase
+
+      if first_character == lowered and lowered != uppered
+        assign label_key = 'modules/support/settings.fields.' | append: field_name
+        assign label = label_key | t
+        if label == blank or label contains 'translation missing'
+          assign label = field_name | replace: '_', ' ' | capitalize
+        endif
+        assign sentence = label | append: ' ' | append: message
+      endif
+
+      function _ = 'modules/support/helpers/flash', message: sentence, severity: 'error'
+      return true
     endfor
   endfor
 

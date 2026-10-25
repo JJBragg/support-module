@@ -19,5 +19,5 @@ en:
     status_is_reopen_target: cannot be closed while reopened tickets return to this status
     last_admin: cannot change, this is the only admin left
     invite_email_missing: Enter the email address of the person you want to add.
-    invite_no_account: '%{email} does not have an account on this site yet. Ask them to sign up first, then add them here.'
-    invite_already_agent: '%{email} already has access to the support queue.'
+    invite_no_account: 'There is no account for %{email} on this site yet. Ask them to sign up first, then add them here.'
+    invite_already_agent: 'That account already has access to the support queue: %{email}.'
