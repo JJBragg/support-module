@@ -1,0 +1,116 @@
+<section class="pos-support-section" id="agents" aria-labelledby="pos-support-h-ag">
+  <div class="pos-support-section-head">
+    <div>
+      <h2 id="pos-support-h-ag">{{ 'modules/support/settings.agents.heading' | t }}</h2>
+      <span>{{ 'modules/support/settings.agents.subtitle' | t }}</span>
+    </div>
+    <a class="pos-support-primary-button" href="#add-agent">
+      {% render 'modules/support/ui/icon', path: 'M12 5v14M5 12h14', size: 13, stroke: 2.4 %}
+      {{ 'modules/support/settings.agents.add' | t }}
+    </a>
+  </div>
+
+  {%- liquid
+    assign role_admin = 'modules/support/settings.agents.role_admin' | t
+    assign role_agent = 'modules/support/settings.agents.role_agent' | t
+    assign role_labels = { "admin": role_admin, "agent": role_agent }
+    assign roles = 'admin,agent' | split: ','
+  -%}
+
+  <div class="pos-support-tablewrap">
+    <table class="pos-support-agents">
+      <thead>
+        <tr>
+          <th scope="col">{{ 'modules/support/settings.agents.name' | t }}</th>
+          <th scope="col">{{ 'modules/support/settings.agents.email' | t }}</th>
+          <th scope="col">{{ 'modules/support/settings.agents.role' | t }}</th>
+          <th scope="col">{{ 'modules/support/settings.agents.departments' | t }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {%- for agent in agents -%}
+          <tr>
+            <td>
+              <div class="pos-support-agent-cell">
+                <span class="pos-support-avatar" aria-hidden="true" style="background: {{ agent.palette.bg }}; color: {{ agent.palette.fg }}">{{ agent.initials }}</span>
+                <span class="pos-support-agent-names">
+                  <span class="pos-support-agent-name">{{ agent.name }}</span>
+                  <span class="pos-support-agent-title">{{ agent.title }}</span>
+                </span>
+              </div>
+            </td>
+            <td class="pos-support-agent-email">{{ agent.email }}</td>
+            <td>
+              <form method="post" action="/support/settings/agents">
+                <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+                <input type="hidden" name="op" value="role">
+                <input type="hidden" name="agent_id" value="{{ agent.id }}">
+                <label class="pos-support-sr" for="ag-role-{{ agent.id }}">{{ 'modules/support/settings.agents.role_for' | t: name: agent.name }}</label>
+                <select id="ag-role-{{ agent.id }}" name="role" data-support-autosubmit>
+                  {%- for role in roles -%}
+                    <option value="{{ role }}" {% if agent.role == role %}selected{% endif %}>{{ role_labels[role] }}</option>
+                  {%- endfor -%}
+                </select>
+                <button type="submit" data-support-noscript>{{ 'modules/support/settings.save' | t }}</button>
+              </form>
+            </td>
+            <td>
+              {%- if agent.role == 'admin' -%}
+                <span class="pos-support-hint-text">{{ 'modules/support/settings.agents.admin_sees_all' | t }}</span>
+              {%- else -%}
+                <form class="pos-support-dept-toggles" method="post" action="/support/settings/agents">
+                  <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+                  <input type="hidden" name="op" value="department">
+                  <input type="hidden" name="agent_id" value="{{ agent.id }}">
+                  {%- for department in departments -%}
+                    {%- liquid
+                      assign is_on = false
+                      if agent.department_ids contains department.id
+                        assign is_on = true
+                      endif
+                      assign style = 'border-style: dashed; color: var(--mut)'
+                      if is_on
+                        assign style = 'background: ' | append: department.palette.bg | append: '; color: ' | append: department.palette.fg | append: '; border-color: ' | append: department.palette.bd
+                      endif
+                    -%}
+                    <button type="submit" name="department_id" value="{{ department.id }}" aria-pressed="{{ is_on }}" style="{{ style }}">
+                      <span class="pos-support-chip-letter" aria-hidden="true" style="background: {{ department.palette.fg }}">{{ department.letter }}</span>
+                      {{ department.name }}
+                    </button>
+                  {%- endfor -%}
+                </form>
+              {%- endif -%}
+            </td>
+          </tr>
+        {%- endfor -%}
+      </tbody>
+    </table>
+  </div>
+
+  <span class="pos-support-hint-text">{{ 'modules/support/settings.agents.hint' | t }}</span>
+
+  <form class="pos-support-editform pos-support-addform" id="add-agent" method="post" action="/support/settings/agents">
+    <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+    <input type="hidden" name="op" value="invite">
+    <div class="pos-support-formfield">
+      <label for="ag-new-email">{{ 'modules/support/settings.agents.email' | t }}</label>
+      <input id="ag-new-email" type="email" name="email" required>
+      <span class="pos-support-hint-text">{{ 'modules/support/settings.agents.add_hint' | t }}</span>
+    </div>
+    <div class="pos-support-formfield">
+      <label for="ag-new-title">{{ 'modules/support/settings.agents.title' | t }}</label>
+      <input id="ag-new-title" type="text" name="title">
+    </div>
+    <div class="pos-support-formfield">
+      <label for="ag-new-role">{{ 'modules/support/settings.agents.role' | t }}</label>
+      <select id="ag-new-role" name="role">
+        {%- for role in roles -%}
+          <option value="{{ role }}" {% if role == 'agent' %}selected{% endif %}>{{ role_labels[role] }}</option>
+        {%- endfor -%}
+      </select>
+    </div>
+    <div class="pos-support-formfoot">
+      <button class="pos-support-primary-button" type="submit">{{ 'modules/support/settings.agents.add' | t }}</button>
+    </div>
+  </form>
+</section>

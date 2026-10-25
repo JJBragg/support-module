@@ -1,0 +1,22 @@
+mutation (
+  $id: ID!
+  $name: String!
+  $kind: String!
+) {
+  record: record_update(
+    id: $id
+    record: {
+      table: "modules/support/status"
+      properties: [
+        { name: "name", value: $name }
+        { name: "kind", value: $kind }
+      ]
+    }
+  ) {
+    id
+    type: table
+
+    name: property(name: "name")
+    kind: property(name: "kind")
+  }
+}

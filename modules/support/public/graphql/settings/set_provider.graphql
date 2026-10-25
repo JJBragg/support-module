@@ -1,0 +1,17 @@
+mutation (
+  $id: ID!
+  $provider: String!
+) {
+  record: record_update(
+    id: $id
+    record: {
+      table: "modules/support/setting"
+      properties: [
+        { name: "provider", value: $provider }
+      ]
+    }
+  ) {
+    id
+    provider: property(name: "provider")
+  }
+}

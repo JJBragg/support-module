@@ -1,0 +1,19 @@
+{% doc %}
+  Renames a status or changes what kind of status it is.
+
+  The key is left alone for the same reason a department's slug is: code
+  and saved URLs key off it, and a rename is a label change.
+
+  @param {object} status - The existing record
+  @param {object} object - name and kind
+{% enddoc %}
+{% liquid
+  function object = 'modules/support/commands/statuses/update/build', object: object, status: status
+  function object = 'modules/support/commands/statuses/update/check', object: object, status: status
+
+  if object.valid
+    function object = 'modules/core/commands/execute', mutation_name: 'modules/support/statuses/update', object: object, selection: null
+  endif
+
+  return object
+%}

@@ -1,0 +1,16 @@
+{% doc %}
+  Changes an agent's role, title or department access.
+
+  @param {object} agent - The existing record
+  @param {object} object - role, department_ids, title
+{% enddoc %}
+{% liquid
+  function object = 'modules/support/commands/agents/update/build', object: object, agent: agent
+  function object = 'modules/support/commands/agents/update/check', object: object, agent: agent
+
+  if object.valid
+    function object = 'modules/core/commands/execute', mutation_name: 'modules/support/agents/update', object: object, selection: null
+  endif
+
+  return object
+%}

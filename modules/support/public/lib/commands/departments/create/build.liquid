@@ -1,0 +1,21 @@
+{% doc %}
+  @param {object} object - The raw input
+{% enddoc %}
+{% liquid
+  assign name = object.name | strip
+  assign inbound_address = object.inbound_address | strip | downcase
+  assign from_address = object.from_address | strip | downcase
+  assign from_name = object.from_name | strip
+  function slug = 'modules/support/helpers/slug', name: name
+
+  comment
+    New departments go to the end of the sidebar. Reordering them is not a
+    screen yet, so the position only has to be stable and unique enough to
+    sort by.
+  endcomment
+  function existing = 'modules/support/queries/departments/all'
+  assign position = existing | size | plus: 1
+
+  assign data = { "name": name, "slug": slug, "inbound_address": inbound_address, "from_address": from_address, "from_name": from_name, "signature": object.signature, "position": position }
+  return data
+%}

@@ -1,0 +1,23 @@
+{% doc %}
+  @param {object} object - The built input
+{% enddoc %}
+{% liquid
+  assign c = { "errors": {}, "valid": true }
+
+  function c = 'modules/core/validations/presence', c: c, object: object, field_name: 'name', key: null
+  function c = 'modules/core/validations/presence', c: c, object: object, field_name: 'slug', key: 'modules/support/validation.department_name_unusable'
+  function c = 'modules/core/validations/uniqueness', c: c, object: object, field_name: 'slug', table: 'modules/support/department', exclude_name: null, scope_name: null, key: 'modules/support/validation.department_taken'
+
+  if object.inbound_address != blank
+    function c = 'modules/core/validations/email', c: c, object: object, field_name: 'inbound_address', key: null
+    function c = 'modules/core/validations/uniqueness', c: c, object: object, field_name: 'inbound_address', table: 'modules/support/department', exclude_name: null, scope_name: null, key: 'modules/support/validation.inbound_taken'
+  endif
+
+  if object.from_address != blank
+    function c = 'modules/core/validations/email', c: c, object: object, field_name: 'from_address', key: null
+  endif
+
+  assign object.valid = c.valid
+  assign object.errors = c.errors
+  return object
+%}

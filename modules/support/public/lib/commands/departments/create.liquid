@@ -1,0 +1,16 @@
+{% doc %}
+  Adds a department: a queue with its own inbox, sending address and
+  signature.
+
+  @param {object} object - name, inbound_address, from_address, from_name, signature
+{% enddoc %}
+{% liquid
+  function object = 'modules/support/commands/departments/create/build', object: object
+  function object = 'modules/support/commands/departments/create/check', object: object
+
+  if object.valid
+    function object = 'modules/core/commands/execute', mutation_name: 'modules/support/departments/create', object: object, selection: null
+  endif
+
+  return object
+%}

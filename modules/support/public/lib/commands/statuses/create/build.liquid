@@ -1,0 +1,19 @@
+{% doc %}
+  @param {object} object - The raw input
+{% enddoc %}
+{% liquid
+  assign name = object.name | strip
+  function key = 'modules/support/helpers/slug', name: name
+  assign key = key | replace: '-', '_'
+
+  function existing = 'modules/support/queries/statuses/search', kind: null
+  assign position = existing | size | plus: 1
+
+  comment
+    Never the default for new tickets and never the reopen target. Both of
+    those are single valued, and taking one over from the status that
+    holds it is a separate decision from adding a status.
+  endcomment
+  assign data = { "name": name, "key": key, "kind": object.kind, "position": position, "is_new_default": false, "is_reopen_target": false }
+  return data
+%}

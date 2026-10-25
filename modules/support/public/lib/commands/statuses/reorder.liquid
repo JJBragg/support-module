@@ -1,0 +1,70 @@
+{% doc %}
+  Moves one status one place up or down, then renumbers the whole list
+  from 1.
+
+  Renumbering every row rather than swapping two is deliberate. Positions
+  drift: a seed that skipped a number, a status added while another was
+  being edited, two admins reordering at once. Rewriting the sequence
+  costs one mutation per status, which is eight, once, when a person
+  clicks an arrow. It also means a list that has drifted repairs itself
+  the first time anyone touches it.
+
+  @param {string} status_id - The status being moved
+  @param {string} direction - up or down
+{% enddoc %}
+{% liquid
+  function statuses = 'modules/support/queries/statuses/search', kind: null
+
+  assign current_index = -1
+  assign index = 0
+  for status in statuses
+    if status.id == status_id
+      assign current_index = index
+    endif
+    assign index = index | plus: 1
+  endfor
+
+  if current_index == -1
+    return false
+  endif
+
+  assign target_index = current_index | plus: 1
+  if direction == 'up'
+    assign target_index = current_index | minus: 1
+  endif
+
+  assign last_index = statuses | size | minus: 1
+  if target_index < 0 or target_index > last_index
+    return false
+  endif
+
+  assign moving = statuses[current_index]
+  assign displaced = statuses[target_index]
+
+  assign reordered = []
+  for status in statuses
+    if status.id == moving.id
+      assign reordered = reordered | array_add: displaced
+    elsif status.id == displaced.id
+      assign reordered = reordered | array_add: moving
+    else
+      assign reordered = reordered | array_add: status
+    endif
+  endfor
+
+  assign position = 1
+  for status in reordered
+    unless status.position == position
+      comment
+        One mutation per row that actually moved. platformOS has no bulk
+        record update, and this runs when a person clicks an arrow.
+      endcomment
+      # platformos-check-disable NestedGraphQLQuery
+      graphql _ = 'modules/support/statuses/set_position', id: status.id, position: position
+      # platformos-check-enable NestedGraphQLQuery
+    endunless
+    assign position = position | plus: 1
+  endfor
+
+  return true
+%}

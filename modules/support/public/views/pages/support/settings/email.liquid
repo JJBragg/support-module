@@ -1,0 +1,69 @@
+---
+slug: support/settings/email
+method: post
+---
+{%- comment -%}
+  The provider connection: switch provider, send a test, or issue a new
+  inbound secret.
+
+  The test goes out through the same path a reply to a customer takes, so
+  what comes back is worth something. It reports the provider's own
+  status rather than a tidy success, including not_configured, which is
+  the state this instance is actually in until the API key exists.
+{%- endcomment -%}
+{%- liquid
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.settings.manage', entity: null
+  # platformos-check-enable DeprecatedTag
+
+  function current_profile = 'modules/user/helpers/current_profile'
+  function settings = 'modules/support/queries/settings/get'
+
+  assign return_to = '/support/settings#email'
+  assign op = context.params.op
+
+  if op == 'provider'
+    function changed = 'modules/support/commands/settings/set_provider', provider: context.params.provider
+    if changed
+      assign message = 'modules/support/settings.flash.provider_saved' | t
+      function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
+    else
+      assign message = 'modules/support/settings.flash.provider_unknown' | t
+      function _ = 'modules/support/helpers/flash', message: message, severity: 'error'
+    endif
+
+  elsif op == 'regenerate'
+    function secret = 'modules/support/commands/settings/regenerate_webhook_secret'
+    if secret
+      assign message = 'modules/support/settings.flash.secret_regenerated' | t
+      function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
+      assign return_to = '/support/settings?reveal=1#email'
+    else
+      assign message = 'modules/support/settings.flash.secret_failed' | t
+      function _ = 'modules/support/helpers/flash', message: message, severity: 'error'
+    endif
+
+  elsif op == 'test'
+    function departments = 'modules/support/queries/departments/all'
+    assign department = departments.first
+    assign recipient = current_profile.email
+
+    if department == blank or recipient == blank
+      assign message = 'modules/support/settings.flash.test_impossible' | t
+      function _ = 'modules/support/helpers/flash', message: message, severity: 'error'
+    else
+      function result = 'modules/support/commands/settings/send_test_email', to: recipient, department: department, settings: settings
+      if result.sent
+        assign message = 'modules/support/settings.flash.test_sent' | t: email: recipient
+        function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
+      else
+        assign message = 'modules/support/settings.flash.test_failed' | t: status: result.status
+        function _ = 'modules/support/helpers/flash', message: message, severity: 'error'
+      endif
+    endif
+  endif
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/redirect_back', url: return_to
+  # platformos-check-enable DeprecatedTag
+-%}

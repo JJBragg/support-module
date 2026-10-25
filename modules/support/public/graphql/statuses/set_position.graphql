@@ -1,0 +1,17 @@
+mutation (
+  $id: ID!
+  $position: Int!
+) {
+  record: record_update(
+    id: $id
+    record: {
+      table: "modules/support/status"
+      properties: [
+        { name: "position", value_int: $position }
+      ]
+    }
+  ) {
+    id
+    position: property_int(name: "position")
+  }
+}

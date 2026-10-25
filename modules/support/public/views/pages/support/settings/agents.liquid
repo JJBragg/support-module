@@ -1,0 +1,77 @@
+---
+slug: support/settings/agents
+method: post
+---
+{%- comment -%}
+  Give someone access, change their role, or toggle one department on or
+  off. The toggle posts the department it is for and the server flips it,
+  rather than posting the whole set of checkboxes, so two admins editing
+  different departments on the same agent cannot overwrite each other.
+{%- endcomment -%}
+{%- liquid
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.settings.manage', entity: null
+  # platformos-check-enable DeprecatedTag
+
+  assign return_to = '/support/settings#agents'
+  assign op = context.params.op
+
+  if op == 'invite'
+    assign object = { "email": context.params.email, "role": context.params.role, "title": context.params.title, "department_ids": [] }
+    function result = 'modules/support/commands/agents/invite', object: object
+    if result.valid
+      assign message = 'modules/support/settings.flash.agent_added' | t: email: context.params.email
+      function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
+    else
+      function _ = 'modules/support/helpers/flash_errors', errors: result.errors
+      assign return_to = '/support/settings#add-agent'
+    endif
+
+  else
+    function agent = 'modules/support/queries/agents/find', id: context.params.agent_id, user_id: null
+    if agent == blank
+      assign message = 'modules/support/settings.flash.agent_missing' | t
+      function _ = 'modules/support/helpers/flash', message: message, severity: 'error'
+    else
+      assign object = null
+
+      if op == 'role'
+        assign object = { "role": context.params.role }
+      elsif op == 'department'
+        assign current_ids = agent.department_ids
+        if current_ids == blank
+          assign current_ids = []
+        endif
+
+        assign next_ids = []
+        assign was_on = false
+        for department_id in current_ids
+          if department_id == context.params.department_id
+            assign was_on = true
+          else
+            assign next_ids = next_ids | array_add: department_id
+          endif
+        endfor
+        unless was_on
+          assign next_ids = next_ids | array_add: context.params.department_id
+        endunless
+
+        assign object = { "department_ids": next_ids }
+      endif
+
+      if object
+        function result = 'modules/support/commands/agents/update', agent: agent, object: object
+        if result.valid
+          assign message = 'modules/support/settings.flash.agent_saved' | t
+          function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
+        else
+          function _ = 'modules/support/helpers/flash_errors', errors: result.errors
+        endif
+      endif
+    endif
+  endif
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/redirect_back', url: return_to
+  # platformos-check-enable DeprecatedTag
+-%}

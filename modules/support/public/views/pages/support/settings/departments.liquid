@@ -1,0 +1,49 @@
+---
+slug: support/settings/departments
+method: post
+---
+{%- comment -%}
+  Create and edit departments. One endpoint, two operations, because they
+  are the same fields and the same validations with a different verb.
+{%- endcomment -%}
+{%- liquid
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.settings.manage', entity: null
+  # platformos-check-enable DeprecatedTag
+
+  assign return_to = '/support/settings#departments'
+  assign object = { "name": context.params.name, "inbound_address": context.params.inbound_address, "from_address": context.params.from_address, "from_name": context.params.from_name, "signature": context.params.signature }
+
+  if context.params.op == 'create'
+    function result = 'modules/support/commands/departments/create', object: object
+    if result.valid
+      assign message = 'modules/support/settings.flash.department_added' | t: name: result.name
+      function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
+    else
+      function _ = 'modules/support/helpers/flash_errors', errors: result.errors
+      assign return_to = '/support/settings#add-department'
+    endif
+
+  elsif context.params.op == 'update'
+    graphql found = 'modules/support/departments/search', id: context.params.department_id, limit: 1, page: 1, slug: null, inbound_address: null
+    assign department = found.records.results.first
+
+    if department == blank
+      assign message = 'modules/support/settings.flash.department_missing' | t
+      function _ = 'modules/support/helpers/flash', message: message, severity: 'error'
+    else
+      function result = 'modules/support/commands/departments/update', department: department, object: object
+      if result.valid
+        assign message = 'modules/support/settings.flash.department_saved' | t: name: object.name
+        function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
+      else
+        function _ = 'modules/support/helpers/flash_errors', errors: result.errors
+        assign return_to = '/support/settings?department=' | append: department.id | append: '#departments'
+      endif
+    endif
+  endif
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/redirect_back', url: return_to
+  # platformos-check-enable DeprecatedTag
+-%}

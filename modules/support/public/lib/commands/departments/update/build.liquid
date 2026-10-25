@@ -1,0 +1,18 @@
+{% doc %}
+  @param {object} object - The raw input
+  @param {object} department - The existing record
+{% enddoc %}
+{% liquid
+  assign name = object.name | strip
+  assign inbound_address = object.inbound_address | strip | downcase
+  assign from_address = object.from_address | strip | downcase
+  assign from_name = object.from_name | strip
+
+  comment
+    The mutation names every column, so anything the form does not carry
+    has to be carried here instead. Leaving one out does not leave it
+    alone, it writes a null over it.
+  endcomment
+  assign data = { "id": department.id, "name": name, "slug": department.slug, "inbound_address": inbound_address, "from_address": from_address, "from_name": from_name, "signature": object.signature, "position": department.position }
+  return data
+%}

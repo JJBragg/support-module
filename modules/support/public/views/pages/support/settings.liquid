@@ -1,17 +1,110 @@
 ---
 slug: support/settings
+layout: modules/support/agent
 metadata:
   title: Support settings
 ---
 {%- comment -%}
-  Placeholder. Phase 5 builds departments, statuses, agents and the email
-  provider here. It exists now to prove the Admin guard.
+  Settings. A controller, like the queue: it gathers everything and hands
+  finished arrays to the partials.
+
+  Every write is its own small form posting to its own endpoint, so each
+  one works with JavaScript off. The script only submits selects on
+  change and copies the endpoint URL.
+
+  The webhook secret is not rendered unless ?reveal=1 asks for it. That
+  keeps it out of the page source, out of a screen share and out of a
+  screenshot of this page, which is the usual way a shared secret leaks.
 {%- endcomment -%}
 {%- liquid
   # platformos-check-disable DeprecatedTag
   include 'modules/support/helpers/require_permission', do: 'support.settings.manage', entity: null
   # platformos-check-enable DeprecatedTag
+
+  function current_profile = 'modules/user/helpers/current_profile'
+  function settings = 'modules/support/queries/settings/get'
+  function tokens = 'modules/support/helpers/ui/tokens'
+  function departments = 'modules/support/queries/departments/all'
+  function statuses = 'modules/support/queries/statuses/search', kind: null
+  function all_agents = 'modules/support/queries/agents/all'
+  function last_inbound = 'modules/support/queries/messages/last_inbound'
+
+  assign brand = settings.brand_name | default: 'Support'
+
+  comment
+    A failed save flashes the first error and comes back with the row it
+    was editing named in the query string, so the screen reopens where the
+    admin was rather than collapsed with a message about a form they can
+    no longer see.
+  endcomment
+  assign open_department = context.params.department
+  assign reveal = false
+  if context.params.reveal == '1'
+    assign reveal = true
+  endif
+
+  comment
+    Colour departments and agents by position, the same way the queue
+    does, so a department is the same colour on every screen.
+  endcomment
+  assign palette_size = tokens.department_palette | size
+  assign prepared_departments = []
+  for department in departments
+    assign palette_index = forloop.index0 | modulo: palette_size
+    assign department.palette = tokens.department_palette[palette_index]
+    assign department.letter = department.name | slice: 0, 1 | upcase
+    assign department.is_open = false
+    if open_department == department.id
+      assign department.is_open = true
+    endif
+    assign prepared_departments = prepared_departments | array_add: department
+  endfor
+
+  assign agent_palette_size = tokens.agent_palette | size
+  assign prepared_agents = []
+  for agent in all_agents
+    assign palette_index = forloop.index0 | modulo: agent_palette_size
+    assign agent.palette = tokens.agent_palette[palette_index]
+    assign prepared_agents = prepared_agents | array_add: agent
+  endfor
+
+  assign prepared_statuses = []
+  for status in statuses
+    assign token = tokens.statuses[status.key] | default: tokens.status_fallback
+    assign status.token = token
+    assign prepared_statuses = prepared_statuses | array_add: status
+  endfor
+
+  comment
+    The one honest proof the inbound side works. A provider can be
+    selected, keyed and still delivering nothing.
+  endcomment
+  assign inbound_at = last_inbound.created_at
+  assign endpoint_base = 'https://' | append: context.location.host | append: '/support/inbound/sendgrid/'
+  assign secret_mask = '••••••••••••••••••••••••••••••••'
+
+  assign endpoint_url = endpoint_base | append: secret_mask
+  assign secret_display = secret_mask
+  if reveal
+    assign endpoint_url = endpoint_base | append: settings.webhook_secret
+    assign secret_display = settings.webhook_secret
+  endif
 -%}
-<h1>Support settings</h1>
-<p>The Admin guard passed.</p>
-<p><a href="/support">Back to tickets</a></p>
+{% render 'modules/support/settings/nav', brand: brand, tokens: tokens, current_profile: current_profile %}
+<main class="pos-support-main pos-support-settings">
+  <header class="pos-support-settings-head">
+    <h1>{{ 'modules/support/settings.title' | t }}</h1>
+    <span>{{ 'modules/support/settings.subtitle' | t }}</span>
+  </header>
+
+  {% render 'modules/support/settings/departments', departments: prepared_departments %}
+  {% render 'modules/support/settings/statuses', statuses: prepared_statuses %}
+  {% render 'modules/support/settings/agents', agents: prepared_agents, departments: prepared_departments %}
+  {% render 'modules/support/settings/email',
+    settings: settings,
+    inbound_at: inbound_at,
+    endpoint_url: endpoint_url,
+    secret_display: secret_display,
+    reveal: reveal
+  %}
+</main>

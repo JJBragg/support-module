@@ -1,0 +1,13 @@
+{% doc %}
+  The most recent message a customer sent, across every ticket.
+
+  The Settings screen uses it as the only honest proof that the inbound
+  connection works: a provider can look configured and still deliver
+  nothing, and the thing an admin actually wants to know is whether mail
+  has arrived lately.
+{% enddoc %}
+{% liquid
+  assign newest_first = { "created_at": { "order": "DESC" } }
+  graphql result = 'modules/support/messages/search', limit: 1, page: 1, id: null, ticket_id: null, kind: 'inbound', message_id_header: null, message_id_headers: null, sort: newest_first
+  return result.records.results.first
+%}

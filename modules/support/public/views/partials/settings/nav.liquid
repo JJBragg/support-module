@@ -1,0 +1,41 @@
+{%- liquid
+  assign profile_name = current_profile.name | default: current_profile.email
+  assign first_initial = current_profile.first_name | slice: 0, 1
+  assign last_initial = current_profile.last_name | slice: 0, 1
+  assign viewer_initials = first_initial | append: last_initial | upcase
+  if viewer_initials == blank
+    assign viewer_initials = profile_name | slice: 0, 2 | upcase
+  endif
+-%}
+<nav class="pos-support-nav" aria-label="{{ 'modules/support/settings.title' | t }}">
+  <div class="pos-support-brand">
+    <div class="pos-support-brand-mark" aria-hidden="true">{{ brand | slice: 0, 1 | upcase }}</div>
+    <div class="pos-support-brand-name">{{ brand }}</div>
+    <div class="pos-support-avatar" role="img" aria-label="{{ 'modules/support/list.nav.signed_in_as' | t: name: profile_name }}" style="background: #DBEAFE; color: #1E3A8A">{{ viewer_initials }}</div>
+  </div>
+
+  <a class="pos-support-navitem pos-support-navback" href="/support">
+    {% render 'modules/support/ui/icon', path: tokens.icons.chevron_left, size: 14, stroke: 2.2 %}
+    <span class="pos-support-navitem-label">{{ 'modules/support/settings.back_to_tickets' | t }}</span>
+  </a>
+
+  <div class="pos-support-group">
+    <div class="pos-support-group-label">{{ 'modules/support/settings.title' | t }}</div>
+    <a class="pos-support-navitem" href="#departments">
+      {% render 'modules/support/ui/icon', path: tokens.icons.inbox, size: 15, stroke: 2 %}
+      <span class="pos-support-navitem-label">{{ 'modules/support/settings.departments.heading' | t }}</span>
+    </a>
+    <a class="pos-support-navitem" href="#statuses">
+      {% render 'modules/support/ui/icon', path: tokens.statuses.confirmation.icon, size: 15, stroke: 2 %}
+      <span class="pos-support-navitem-label">{{ 'modules/support/settings.statuses.heading' | t }}</span>
+    </a>
+    <a class="pos-support-navitem" href="#agents">
+      {% render 'modules/support/ui/icon', path: tokens.icons.mine, size: 15, stroke: 2 %}
+      <span class="pos-support-navitem-label">{{ 'modules/support/settings.agents.heading' | t }}</span>
+    </a>
+    <a class="pos-support-navitem" href="#email">
+      {% render 'modules/support/ui/icon', path: tokens.icons.inbox, size: 15, stroke: 2 %}
+      <span class="pos-support-navitem-label">{{ 'modules/support/settings.email.heading' | t }}</span>
+    </a>
+  </div>
+</nav>

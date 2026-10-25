@@ -1,0 +1,109 @@
+<section class="pos-support-section" id="departments" aria-labelledby="pos-support-h-dep">
+  <div class="pos-support-section-head">
+    <div>
+      <h2 id="pos-support-h-dep">{{ 'modules/support/settings.departments.heading' | t }}</h2>
+      <span>{{ 'modules/support/settings.departments.subtitle' | t }}</span>
+    </div>
+    <a class="pos-support-ghost-button" href="#add-department">
+      {% render 'modules/support/ui/icon', path: 'M12 5v14M5 12h14', size: 13, stroke: 2.4 %}
+      {{ 'modules/support/settings.departments.add' | t }}
+    </a>
+  </div>
+
+  <ul class="pos-support-rows">
+    {%- for department in departments -%}
+      {%- liquid
+        assign not_set = 'modules/support/settings.departments.not_set' | t
+        assign inbound_display = department.inbound_address
+        if inbound_display == blank
+          assign inbound_display = not_set
+        endif
+        assign from_display = department.from_address
+        if from_display == blank
+          assign from_display = not_set
+        endif
+      -%}
+      <li>
+        <div class="pos-support-srow pos-support-srow-dep">
+          <span class="pos-support-srow-name">
+            <span class="pos-support-chip-letter" aria-hidden="true" style="background: {{ department.palette.fg }}">{{ department.letter }}</span>
+            {{ department.name }}
+          </span>
+          <span class="pos-support-srow-field">
+            <span class="pos-support-srow-label">{{ 'modules/support/settings.departments.inbound' | t }}</span>
+            <span class="pos-support-srow-value">{{ inbound_display }}</span>
+          </span>
+          <span class="pos-support-srow-field">
+            <span class="pos-support-srow-label">{{ 'modules/support/settings.departments.from' | t }}</span>
+            <span class="pos-support-srow-value">{{ from_display }}</span>
+          </span>
+          {%- liquid
+            assign edit_url = '/support/settings?department=' | append: department.id | append: '#departments'
+            assign close_url = '/support/settings#departments'
+            assign toggle_url = edit_url
+            assign toggle_label = 'modules/support/settings.departments.edit' | t
+            if department.is_open
+              assign toggle_url = close_url
+              assign toggle_label = 'modules/support/settings.departments.done' | t
+            endif
+          -%}
+          <a class="pos-support-srow-action" href="{{ toggle_url }}" aria-expanded="{{ department.is_open }}">{{ toggle_label }}</a>
+        </div>
+
+        {%- if department.is_open -%}
+          <form class="pos-support-editform" method="post" action="/support/settings/departments">
+            <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+            <input type="hidden" name="op" value="update">
+            <input type="hidden" name="department_id" value="{{ department.id }}">
+
+            <div class="pos-support-formfield">
+              <label for="dep-name-{{ department.id }}">{{ 'modules/support/settings.departments.name' | t }}</label>
+              <input id="dep-name-{{ department.id }}" type="text" name="name" value="{{ department.name }}" required>
+            </div>
+            <div class="pos-support-formfield">
+              <label for="dep-fromname-{{ department.id }}">{{ 'modules/support/settings.departments.from_name' | t }}</label>
+              <input id="dep-fromname-{{ department.id }}" type="text" name="from_name" value="{{ department.from_name }}">
+            </div>
+            <div class="pos-support-formfield">
+              <label for="dep-inbound-{{ department.id }}">{{ 'modules/support/settings.departments.inbound' | t }}</label>
+              <input id="dep-inbound-{{ department.id }}" type="email" name="inbound_address" value="{{ department.inbound_address }}">
+              <span class="pos-support-hint-text">{{ 'modules/support/settings.departments.inbound_hint' | t: name: department.name }}</span>
+            </div>
+            <div class="pos-support-formfield">
+              <label for="dep-from-{{ department.id }}">{{ 'modules/support/settings.departments.from' | t }}</label>
+              <input id="dep-from-{{ department.id }}" type="email" name="from_address" value="{{ department.from_address }}">
+              <span class="pos-support-hint-text">{{ 'modules/support/settings.departments.from_hint' | t }}</span>
+            </div>
+            <div class="pos-support-formfield pos-support-formfield-wide">
+              <label for="dep-sig-{{ department.id }}">{{ 'modules/support/settings.departments.signature' | t }}</label>
+              <textarea id="dep-sig-{{ department.id }}" name="signature" rows="3">{{ department.signature }}</textarea>
+            </div>
+            <div class="pos-support-formfoot">
+              <button class="pos-support-primary-button" type="submit">{{ 'modules/support/settings.save' | t }}</button>
+            </div>
+          </form>
+        {%- endif -%}
+      </li>
+    {%- endfor -%}
+  </ul>
+
+  <form class="pos-support-editform pos-support-addform" id="add-department" method="post" action="/support/settings/departments">
+    <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+    <input type="hidden" name="op" value="create">
+    <div class="pos-support-formfield">
+      <label for="dep-new-name">{{ 'modules/support/settings.departments.name' | t }}</label>
+      <input id="dep-new-name" type="text" name="name" required>
+    </div>
+    <div class="pos-support-formfield">
+      <label for="dep-new-inbound">{{ 'modules/support/settings.departments.inbound' | t }}</label>
+      <input id="dep-new-inbound" type="email" name="inbound_address">
+    </div>
+    <div class="pos-support-formfield">
+      <label for="dep-new-from">{{ 'modules/support/settings.departments.from' | t }}</label>
+      <input id="dep-new-from" type="email" name="from_address">
+    </div>
+    <div class="pos-support-formfoot">
+      <button class="pos-support-primary-button" type="submit">{{ 'modules/support/settings.departments.add' | t }}</button>
+    </div>
+  </form>
+</section>

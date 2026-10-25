@@ -9,3 +9,15 @@ en:
     kind: must be an inbound email, an outbound email or a private note
     role: must be admin or agent
     action: is not something this module records
+    department_name_unusable: needs at least one letter or number
+    department_taken: is already the name of another department
+    inbound_taken: is already the inbound address of another department
+    status_name_unusable: needs at least one letter or number
+    status_taken: is already the name of another status
+    status_kind: must be open, on hold or closed
+    status_is_new_default: cannot be closed while new tickets start in this status
+    status_is_reopen_target: cannot be closed while reopened tickets return to this status
+    last_admin: cannot change, this is the only admin left
+    invite_email_missing: Enter the email address of the person you want to add.
+    invite_no_account: '%{email} does not have an account on this site yet. Ask them to sign up first, then add them here.'
+    invite_already_agent: '%{email} already has access to the support queue.'

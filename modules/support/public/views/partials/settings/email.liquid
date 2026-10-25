@@ -1,0 +1,110 @@
+{%- liquid
+  assign api_key = context.constants.SUPPORT_SENDGRID_API_KEY
+  assign has_key = false
+  if api_key != blank
+    assign has_key = true
+  endif
+
+  comment
+    Three states, not two. A provider with no key is not connected, and a
+    provider with a key that has never received anything is not connected
+    either: it is configured. Calling that connected is how an admin finds
+    out six weeks later that nothing was ever arriving.
+  endcomment
+  assign state = 'not_configured'
+  if has_key
+    assign state = 'configured'
+    if inbound_at != blank
+      assign state = 'connected'
+    endif
+  endif
+
+  assign state_label = 'modules/support/settings.email.state_not_configured' | t
+  assign state_detail = 'modules/support/settings.email.state_not_configured_detail' | t
+  assign state_class = 'is-off'
+  if state == 'configured'
+    assign state_label = 'modules/support/settings.email.state_configured' | t
+    assign state_detail = 'modules/support/settings.email.state_configured_detail' | t
+    assign state_class = 'is-waiting'
+  elsif state == 'connected'
+    assign inbound_on = inbound_at | date: '%b %-d, %H:%M'
+    assign state_label = 'modules/support/settings.email.state_connected' | t
+    assign state_detail = 'modules/support/settings.email.state_connected_detail' | t: at: inbound_on
+    assign state_class = 'is-on'
+  endif
+
+  assign providers = 'sendgrid' | split: ','
+  assign provider_sendgrid = 'modules/support/settings.email.provider_sendgrid' | t
+  assign provider_labels = { "sendgrid": provider_sendgrid }
+  assign current_provider = settings.provider | default: 'sendgrid'
+-%}
+<section class="pos-support-section" id="email" aria-labelledby="pos-support-h-em">
+  <div class="pos-support-section-head">
+    <div>
+      <h2 id="pos-support-h-em">{{ 'modules/support/settings.email.heading' | t }}</h2>
+      <span>{{ 'modules/support/settings.email.subtitle' | t }}</span>
+    </div>
+  </div>
+
+  <div class="pos-support-card">
+    <div class="pos-support-card-row">
+      <form class="pos-support-formfield" method="post" action="/support/settings/email">
+        <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+        <input type="hidden" name="op" value="provider">
+        <label for="em-provider">{{ 'modules/support/settings.email.provider' | t }}</label>
+        <select id="em-provider" name="provider" data-support-autosubmit>
+          {%- for provider in providers -%}
+            <option value="{{ provider }}" {% if provider == current_provider %}selected{% endif %}>{{ provider_labels[provider] }}</option>
+          {%- endfor -%}
+        </select>
+        <button type="submit" data-support-noscript>{{ 'modules/support/settings.save' | t }}</button>
+      </form>
+
+      <div class="pos-support-state {{ state_class }}" role="status">
+        <strong>{{ state_label }}</strong>
+        <span>{{ state_detail }}</span>
+      </div>
+
+      <form method="post" action="/support/settings/email">
+        <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+        <input type="hidden" name="op" value="test">
+        <button class="pos-support-ghost-button" type="submit">{{ 'modules/support/settings.email.send_test' | t }}</button>
+      </form>
+    </div>
+
+    <div class="pos-support-formfield pos-support-formfield-wide">
+      <label for="em-endpoint">{{ 'modules/support/settings.email.endpoint' | t }}</label>
+      <div class="pos-support-inline">
+        <input id="em-endpoint" class="pos-support-mono" type="text" readonly value="{{ endpoint_url }}" data-support-copy-source>
+        {%- if reveal -%}
+          <button class="pos-support-ghost-button" type="button" data-support-copy data-copied="{{ 'modules/support/settings.email.copied' | t }}">{{ 'modules/support/settings.email.copy' | t }}</button>
+        {%- else -%}
+          <a class="pos-support-ghost-button" href="/support/settings?reveal=1#email">{{ 'modules/support/settings.email.reveal' | t }}</a>
+        {%- endif -%}
+      </div>
+      <span class="pos-support-hint-text">{{ 'modules/support/settings.email.endpoint_hint' | t }}</span>
+    </div>
+
+    <div class="pos-support-formfield pos-support-formfield-wide">
+      <label for="em-secret">{{ 'modules/support/settings.email.secret' | t }}</label>
+      <div class="pos-support-inline">
+        <input id="em-secret" class="pos-support-mono" type="text" readonly value="{{ secret_display }}">
+        {%- if reveal -%}
+          <a class="pos-support-ghost-button" href="/support/settings#email">{{ 'modules/support/settings.email.hide' | t }}</a>
+        {%- else -%}
+          <a class="pos-support-ghost-button" href="/support/settings?reveal=1#email">{{ 'modules/support/settings.email.reveal' | t }}</a>
+        {%- endif -%}
+        <form method="post" action="/support/settings/email" onsubmit="return confirm('{{ 'modules/support/settings.email.regenerate_confirm' | t }}')">
+          <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+          <input type="hidden" name="op" value="regenerate">
+          <button class="pos-support-danger-button" type="submit">{{ 'modules/support/settings.email.regenerate' | t }}</button>
+        </form>
+      </div>
+      <span class="pos-support-hint-text">{{ 'modules/support/settings.email.secret_hint' | t }}</span>
+    </div>
+
+    {%- unless has_key -%}
+      <p class="pos-support-notice">{{ 'modules/support/settings.email.key_missing' | t }}</p>
+    {%- endunless -%}
+  </div>
+</section>

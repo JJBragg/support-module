@@ -1,0 +1,24 @@
+{% doc %}
+  @param {object} object - The raw input
+  @param {object} agent - The existing record
+{% enddoc %}
+{% liquid
+  assign role = object.role | default: agent.role
+
+  assign department_ids = object.department_ids
+  if department_ids == nil
+    assign department_ids = agent.department_ids
+  endif
+  if department_ids == blank
+    assign department_ids = []
+  endif
+
+  assign title = object.title
+  if title == nil
+    assign title = agent.title
+  endif
+  assign title = title | strip
+
+  assign data = { "id": agent.id, "role": role, "department_ids": department_ids, "title": title }
+  return data
+%}

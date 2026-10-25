@@ -1,0 +1,50 @@
+{% doc %}
+  Gives an existing platformOS user access to the support queue.
+
+  It does not create the account. Creating users, sending an invitation
+  and setting a first password belong to whatever signup the host site
+  already has, and a support module that grew its own would end up with
+  two front doors into one instance. So this looks the person up and says
+  plainly when they are not there yet.
+
+  @param {object} object - email, role, title, department_ids
+{% enddoc %}
+{% liquid
+  assign email = object.email | strip | downcase
+
+  if email == blank
+    assign message = 'modules/support/validation.invite_email_missing' | t
+    assign messages = message | split: '|'
+    assign failure = { "valid": false, "errors": { "email": messages } }
+    return failure
+  endif
+
+  comment
+    emails takes a list. The user module's own doc block types it as a
+    string, which is what the linter is reading.
+  endcomment
+  assign emails = email | split: ','
+  # platformos-check-disable ValidRenderPartialArgumentTypes
+  function profiles = 'modules/user/queries/profiles/search', emails: emails, limit: 1, page: 1, id: null, ids: null, not_ids: null, uuid: null, user_id: null, first_name: null, last_name: null, query: null, sort: null
+  # platformos-check-enable ValidRenderPartialArgumentTypes
+  assign profile = profiles.results.first
+
+  if profile == blank
+    assign message = 'modules/support/validation.invite_no_account' | t: email: email
+    assign messages = message | split: '|'
+    assign failure = { "valid": false, "errors": { "email": messages } }
+    return failure
+  endif
+
+  function existing = 'modules/support/queries/agents/find', user_id: profile.user_id, id: null
+  if existing
+    assign message = 'modules/support/validation.invite_already_agent' | t: email: email
+    assign messages = message | split: '|'
+    assign failure = { "valid": false, "errors": { "email": messages } }
+    return failure
+  endif
+
+  assign agent = { "user_id": profile.user_id, "role": object.role, "department_ids": object.department_ids, "title": object.title }
+  function result = 'modules/support/commands/agents/create', object: agent
+  return result
+%}

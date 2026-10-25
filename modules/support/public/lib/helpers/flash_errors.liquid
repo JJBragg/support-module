@@ -1,0 +1,26 @@
+{% doc %}
+  Puts the first validation error on the next page.
+
+  Settings is a column of small forms, so an error panel per form would
+  mean rendering every form's state through the redirect. One message
+  naming what went wrong, next to a screen that reopens where the admin
+  was, says the same thing for far less machinery. If a form ever grows
+  past a handful of fields this is the thing to replace.
+
+  Returns true when it flashed something, so a caller can use it as the
+  failure branch.
+
+  @param {object} errors - A contract's errors, field name to messages
+{% enddoc %}
+{% liquid
+  for field in errors
+    for message in field[1]
+      if message != blank
+        function _ = 'modules/support/helpers/flash', message: message, severity: 'error'
+        return true
+      endif
+    endfor
+  endfor
+
+  return false
+%}

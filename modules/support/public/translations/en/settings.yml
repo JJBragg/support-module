@@ -1,0 +1,103 @@
+en:
+  settings:
+    title: Settings
+    subtitle: Changes apply to the whole team as soon as they are saved.
+    back_to_tickets: Back to tickets
+    save: Save
+    rename: Rename
+
+    departments:
+      heading: Departments
+      subtitle: Each department has its own inbox, sending address and signature.
+      add: Add department
+      edit: Edit
+      done: Done
+      name: Name
+      from_name: Sender name
+      inbound: Inbound address
+      inbound_hint: Customer emails sent here create or update tickets in %{name}.
+      from: From address
+      from_hint: Replies go out from this address. It has to be verified with your email provider.
+      signature: Signature
+      not_set: Not set
+
+    statuses:
+      heading: Statuses
+      subtitle: This order is used in the sidebar, in Group by status and in every status menu.
+      add: Add status
+      order: Order
+      name: Name
+      kind: Type
+      kind_for: Type for %{name}
+      kind_open: Open
+      kind_on_hold: On hold
+      kind_closed: Closed
+      move_up: Move %{name} up
+      move_down: Move %{name} down
+      is_new_default: New tickets start here
+      is_reopen_target: Reopened tickets return here
+      hint: Open statuses show in the queue. On hold statuses stay open but are set aside. Closed statuses leave the queue, and a customer reply reopens the ticket.
+
+    agents:
+      heading: Agents
+      subtitle: Agents only see tickets in the departments you give them.
+      add: Add agent
+      add_hint: The person needs an account on this site already. Adding them here gives that account access to the support queue.
+      name: Name
+      email: Email
+      title: Job title
+      role: Role
+      role_for: Role for %{name}
+      role_admin: Admin
+      role_agent: Agent
+      departments: Departments
+      admin_sees_all: Admins see every department.
+      hint: Click a department to give or remove access. Faded departments are off.
+
+    email:
+      heading: Email provider
+      subtitle: Inbound mail and outgoing replies both run through this connection.
+      provider: Provider
+      provider_sendgrid: SendGrid
+      send_test: Send test email
+      state_connected: Connected
+      state_connected_detail: Last inbound email %{at}
+      state_configured: Configured
+      state_configured_detail: Keyed, but no inbound email has arrived yet.
+      state_not_configured: Not connected
+      state_not_configured_detail: No API key is set, so replies are recorded but not sent.
+      endpoint: Inbound endpoint URL
+      endpoint_hint: Paste this into SendGrid under Inbound Parse for each department's inbound domain. It contains the secret, so treat it like one.
+      copy: Copy
+      copied: Copied
+      reveal: Reveal
+      hide: Hide
+      secret: Webhook secret
+      secret_hint: Regenerating breaks inbound mail until the new secret is saved at the provider.
+      regenerate: Regenerate
+      regenerate_confirm: Inbound mail stops working until you save the new secret at your provider. Continue?
+      key_missing: No API key is set for this instance. Add SUPPORT_SENDGRID_API_KEY as a constant in the Partner Portal, then send a test email to check it.
+      test_subject: Test email from %{brand}
+      test_body: |-
+        This is a test of the outgoing email connection.
+
+        If you are reading it, replies to customers will reach them too.
+
+    flash:
+      department_added: '%{name} added.'
+      department_saved: '%{name} saved.'
+      department_missing: That department no longer exists.
+      status_added: '%{name} added.'
+      status_saved: '%{name} saved.'
+      status_missing: That status no longer exists.
+      status_not_moved: That status is already as far as it goes.
+      agent_added: '%{email} now has access to the support queue.'
+      agent_saved: Saved.
+      agent_missing: That agent no longer exists.
+      provider_saved: Provider saved.
+      provider_unknown: That is not a provider this module knows.
+      secret_regenerated: New secret issued. Save it at your provider now, inbound mail is down until you do.
+      secret_failed: The secret could not be changed.
+      test_sent: Test email sent to %{email}.
+      test_failed: 'Not sent: %{status}.'
+      test_impossible: There is nowhere to send a test from yet. Add a department with a from address first.

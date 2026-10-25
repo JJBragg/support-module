@@ -1,0 +1,31 @@
+{% doc %}
+  Turns a name into a url safe key: lower case, letters and digits kept,
+  everything else collapsed into single dashes, no dash at either end.
+
+  Written out by hand rather than reached for as a filter so the result is
+  the same on every platformOS version, and so a department called
+  "Billing & Ops" and one called "Billing / Ops" cannot quietly collide.
+
+  @param {string} name - The human name
+{% enddoc %}
+{% liquid
+  assign allowed = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  assign characters = name | downcase | split: ''
+
+  assign slug = ''
+  assign pending_dash = false
+
+  for character in characters
+    if allowed contains character
+      if pending_dash and slug != ''
+        assign slug = slug | append: '-'
+      endif
+      assign pending_dash = false
+      assign slug = slug | append: character
+    else
+      assign pending_dash = true
+    endif
+  endfor
+
+  return slug
+%}

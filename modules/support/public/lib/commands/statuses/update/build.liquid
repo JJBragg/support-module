@@ -1,0 +1,11 @@
+{% doc %}
+  @param {object} object - The raw input
+  @param {object} status - The existing record
+{% enddoc %}
+{% liquid
+  assign name = object.name | default: status.name | strip
+  assign kind = object.kind | default: status.kind
+
+  assign data = { "id": status.id, "name": name, "kind": kind }
+  return data
+%}

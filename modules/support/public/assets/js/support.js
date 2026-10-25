@@ -16,6 +16,32 @@
     });
   });
 
+  // Settings: copy the inbound endpoint. The field is readable and
+  // selectable without this, so losing the clipboard API costs a
+  // keystroke, not the feature.
+  Array.prototype.forEach.call(document.querySelectorAll('[data-support-copy]'), function (button) {
+    button.addEventListener('click', function () {
+      var source = document.querySelector('[data-support-copy-source]');
+      if (!source) return;
+
+      var done = function () {
+        var original = button.textContent;
+        button.textContent = button.getAttribute('data-copied') || original;
+        window.setTimeout(function () {
+          button.textContent = original;
+        }, 1600);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(source.value).then(done, function () {
+          source.select();
+        });
+      } else {
+        source.select();
+      }
+    });
+  });
+
   var list = document.querySelector('[data-support-list]');
   if (!list) return;
 

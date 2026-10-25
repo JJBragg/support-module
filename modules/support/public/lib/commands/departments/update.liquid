@@ -1,0 +1,20 @@
+{% doc %}
+  Edits a department in place.
+
+  The slug is deliberately not recomputed from a new name. It is what the
+  queue filter in the URL uses, so renaming Billing to Billing and Ops
+  would silently break every saved link the team has.
+
+  @param {object} department - The existing record
+  @param {object} object - name, inbound_address, from_address, from_name, signature
+{% enddoc %}
+{% liquid
+  function object = 'modules/support/commands/departments/update/build', object: object, department: department
+  function object = 'modules/support/commands/departments/update/check', object: object
+
+  if object.valid
+    function object = 'modules/core/commands/execute', mutation_name: 'modules/support/departments/update', object: object, selection: null
+  endif
+
+  return object
+%}

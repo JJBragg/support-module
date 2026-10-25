@@ -1,0 +1,20 @@
+{% doc %}
+  Switches which provider outbound mail goes through.
+
+  @param {string} provider - A provider commands/outbound/send knows
+{% enddoc %}
+{% liquid
+  assign providers = 'sendgrid' | split: ','
+  unless providers contains provider
+    return false
+  endunless
+
+  function settings = 'modules/support/queries/settings/get'
+  if settings == blank
+    log 'ERROR: no settings record in modules/support/commands/settings/set_provider'
+    return false
+  endif
+
+  graphql _ = 'modules/support/settings/set_provider', id: settings.id, provider: provider
+  return true
+%}

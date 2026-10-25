@@ -1,0 +1,28 @@
+{% doc %}
+  Sends one email through the configured provider and reports what came
+  back.
+
+  It goes through commands/outbound/send rather than platformOS email, on
+  purpose. platformOS mail would prove nothing about the provider: the
+  whole question is whether replies to customers will leave the building,
+  and the only answer worth having comes from the path those replies take.
+
+  Returns { sent, status }.
+
+  @param {string} to - Where to send it
+  @param {object} department - Supplies the from address and name
+  @param {object} settings - The settings record
+{% enddoc %}
+{% liquid
+  assign stamp = 'now' | date: '%Y%m%d%H%M%S'
+  assign host = context.location.host
+  assign message_id = 'support-test-' | append: stamp | append: '@' | append: host
+
+  assign subject = 'modules/support/settings.email.test_subject' | t: brand: settings.brand_name
+  assign body = 'modules/support/settings.email.test_body' | t: host: host
+
+  assign email = { "to": to, "cc": null, "from_address": department.from_address, "from_name": department.from_name, "reply_to": department.inbound_address, "subject": subject, "body": body, "message_id": message_id, "in_reply_to": null, "references": null }
+  function result = 'modules/support/commands/outbound/send', object: email, settings: settings
+
+  return result
+%}

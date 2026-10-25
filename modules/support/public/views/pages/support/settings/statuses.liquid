@@ -1,0 +1,56 @@
+---
+slug: support/settings/statuses
+method: post
+---
+{%- comment -%}
+  Add a status, rename one, change its kind, or move it one place in the
+  order. Four small operations on one endpoint, each posted by its own
+  form so every one of them works without JavaScript.
+{%- endcomment -%}
+{%- liquid
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.settings.manage', entity: null
+  # platformos-check-enable DeprecatedTag
+
+  assign return_to = '/support/settings#statuses'
+  assign op = context.params.op
+
+  if op == 'create'
+    assign object = { "name": context.params.name, "kind": context.params.kind }
+    function result = 'modules/support/commands/statuses/create', object: object
+    if result.valid
+      assign message = 'modules/support/settings.flash.status_added' | t: name: result.name
+      function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
+    else
+      function _ = 'modules/support/helpers/flash_errors', errors: result.errors
+      assign return_to = '/support/settings#add-status'
+    endif
+
+  elsif op == 'reorder'
+    function moved = 'modules/support/commands/statuses/reorder', status_id: context.params.status_id, direction: context.params.direction
+    unless moved
+      assign message = 'modules/support/settings.flash.status_not_moved' | t
+      function _ = 'modules/support/helpers/flash', message: message, severity: 'error'
+    endunless
+
+  elsif op == 'rename' or op == 'kind'
+    function status = 'modules/support/queries/statuses/find', id: context.params.status_id
+    if status == blank
+      assign message = 'modules/support/settings.flash.status_missing' | t
+      function _ = 'modules/support/helpers/flash', message: message, severity: 'error'
+    else
+      assign object = { "name": context.params.name, "kind": context.params.kind }
+      function result = 'modules/support/commands/statuses/update', status: status, object: object
+      if result.valid
+        assign message = 'modules/support/settings.flash.status_saved' | t: name: result.name
+        function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
+      else
+        function _ = 'modules/support/helpers/flash_errors', errors: result.errors
+      endif
+    endif
+  endif
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/redirect_back', url: return_to
+  # platformos-check-enable DeprecatedTag
+-%}

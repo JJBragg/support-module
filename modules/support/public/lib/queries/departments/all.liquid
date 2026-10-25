@@ -1,0 +1,8 @@
+{% doc %}
+  Every department, in display order. One call, used by the queue sidebar,
+  the detail panel and the Settings screen.
+{% enddoc %}
+{% liquid
+  graphql result = 'modules/support/departments/search', limit: 50, page: 1, id: null, slug: null, inbound_address: null
+  return result.records.results
+%}

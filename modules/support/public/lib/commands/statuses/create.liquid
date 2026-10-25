@@ -1,0 +1,15 @@
+{% doc %}
+  Adds a status to the end of the order.
+
+  @param {object} object - name and kind
+{% enddoc %}
+{% liquid
+  function object = 'modules/support/commands/statuses/create/build', object: object
+  function object = 'modules/support/commands/statuses/create/check', object: object
+
+  if object.valid
+    function object = 'modules/core/commands/execute', mutation_name: 'modules/support/statuses/create', object: object, selection: null
+  endif
+
+  return object
+%}
