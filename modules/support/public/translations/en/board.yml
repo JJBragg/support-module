@@ -26,7 +26,7 @@ en:
       move_label: Move ticket %{number} to another status
       move_submit: Move
     confirm:
-      title: Close #%{number}?
+      title: 'Close #%{number}?'
       body: The ticket leaves the queue. If the customer replies, it reopens to %{status}.
       cancel: Cancel
       submit: Close ticket

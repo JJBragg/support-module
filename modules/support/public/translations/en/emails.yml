@@ -5,5 +5,5 @@ en:
       subject: '%{subject} (#%{number}): you were mentioned in a note'
       greeting: Hello %{name},
       body: '%{author} mentioned you in a private note on ticket #%{number}, %{subject}.'
-      link: Open ticket #%{number}
+      link: 'Open ticket #%{number}'
       footer: This note is internal. The customer cannot see it.
