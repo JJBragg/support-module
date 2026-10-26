@@ -93,6 +93,16 @@ with JavaScript off. Closed tickets load from their own query capped at 50,
 only when Show Closed asks for them. Collapsed columns are stored on the agent
 record, so the board opens the way it was left on any machine.
 
+**Groundwork from the PRD comparison.** The ticket and message columns
+that cannot be backfilled once there are real tickets, because a module
+cannot ship a migration: needs_reply, channel, first_replied_at,
+last_customer_message_at, solved_at, the SLA fields, organization_id and
+tags on the ticket; match_reason and raw_headers on the message. Four are
+written now, the rest wait for the feature that fills them. Status
+categories went from three to six (new, open, pending, on_hold, solved,
+closed), which is what an SLA clock and the reply rules will read.
+Nothing on screen changed: the queue still excludes only closed.
+
 **Phase 5, settings.** `/support/settings`, Admins only. Departments with
 inline edit, statuses with reorder and an Open / On hold / Closed switch,
 agents with role and per-department access, and the email provider with its
@@ -125,6 +135,17 @@ Two spec questions are still open and neither blocks Phase 6: the exact
 allowed status transitions (answered 2026-10-25 as free movement, so
 nothing to build) and whether the latest-message ring stays orange-red or
 switches to the primary colour.
+
+**From the PRD comparison**, in rough order of how much they hurt: the
+acknowledgement email with loop and auto-reply protection and a Spam
+status with a sender blocklist, which are one piece of work because the
+ack is the thing that loops; merge and split; CCs carried forward, which
+is a correctness bug today since a reply drops everyone who was on the
+thread; the Needs reply view, now that the field exists; the SLA engine;
+organizations as a table. Four decisions are JJ's and Artur's: `/support`
+or `/admin/support`, SendGrid or Postmark, work order or SLA as the
+default sort, and whether a reply to a closed ticket reopens it or opens
+a follow-up.
 
 **Second tier review items**, in `docs/code-review-2026-10-23.md`: the 365 line
 list controller wants moving into `lib/queries/tickets/board`; partials declare
@@ -194,6 +215,18 @@ and in commit messages. The short list:
   Assign to a different name.
 - `pos-cli` cannot prompt for a 2FA code when it has no terminal. Pass
   `--otp-code`; the session then lasts eight hours.
+- YAML reads an unquoted hash after a space as a comment, so
+  `title: Close #%{number}?` silently becomes `Close`. Ticket numbers are
+  written with a hash all over this interface. Quote any value with one in it.
+- A missing query parameter and an empty one are not worth telling apart.
+  Where the difference matters, send a sentinel: the board's column forms post
+  the word `none` rather than an empty field.
+- `comment ... endcomment` inside `{% liquid %}` needs its own lines. A one
+  line `comment x endcomment` is "comment tag was never closed". Use `#`.
+- A module cannot ship a migration, so the question to ask of any new column
+  is whether it would need backfilling later. If yes, add it now even with
+  nothing to write into it. If it is only ever set at the moment of an
+  action, it can wait.
 - YAML reads an unquoted hash after a space as a comment, so
   `title: Close #%{number}?` silently becomes `Close`. Ticket numbers are
   written with a hash all over this interface. Quote any value with one in it.
