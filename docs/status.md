@@ -145,7 +145,10 @@ allowed status transitions (answered 2026-10-25 as free movement, so
 nothing to build) and whether the latest-message ring stays orange-red or
 switches to the primary colour.
 
-**From the PRD comparison**, in rough order of how much they hurt: merge
+**From the PRD comparison** in `docs/prd-comparison-2026-10-26.md`, which
+is written for Artur and holds the full list with his requirement IDs. In
+rough order of how much they hurt: the GitHub link, which has no
+groundwork at all; merge
 and split; CCs carried forward, which is a correctness bug today since a
 reply drops everyone who was on the thread; the Needs reply view, now
 that the field exists; the SLA engine; organizations as a table; saved
