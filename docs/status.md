@@ -154,12 +154,39 @@ or `/admin/support`, SendGrid or Postmark, work order or SLA as the
 default sort, and whether a reply to a closed ticket reopens it or opens
 a follow-up.
 
+**Opening the provider seam.** Ticket logic already knows nothing about
+the provider: outbound goes through `commands/outbound/send`, inbound
+through a page that maps a provider's post into neutral names. But the
+provider list is hard coded in four places (the dispatch, the allowed
+values, the Settings dropdown, and one endpoint page per provider), so a
+partner adding Postmark today has to edit the module, which is a fork
+rather than an integration. Making it genuinely open means a convention
+the module calls by name, so a partner ships a small module of their own
+with an outbound command and an inbound endpoint and selects it in
+Settings.
+
 **Second tier review items**, in `docs/code-review-2026-10-23.md`: the 365 line
 list controller wants moving into `lib/queries/tickets/board`; partials declare
 no parameters; the script is not on `window.pos`; packaging gaps (postInstall
 message, version script, check config, CI, no tests); query naming drift; the
 `access_callback` bridge so a host's RBAC can see support permissions; and the
 known limits want writing into the README.
+
+## Decided
+
+Recorded here so the next person, and Artur, do not reopen them.
+
+- **Marking a ticket as spam stays available to agents** (2026-10-26, JJ),
+  blocklist entry and all. Unblocking remains Admins only in Settings.
+- **The list keeps no route to closed tickets** (2026-10-26, JJ). The
+  board's Show Closed is the way to reach them.
+- **A customer reply to a closed ticket reopens it** (2026-10-26, JJ),
+  which is what the module already does. Artur's PRD opens a linked
+  follow-up ticket instead; this is a deliberate divergence and he needs
+  telling, because it changes what resolution time means once SLA lands.
+- **SendGrid is the provider we run on** (2026-10-26, JJ), and partners
+  must be able to use their own. The seam is real but it is not open yet:
+  see the provider note below.
 
 ## Waiting on someone else
 
