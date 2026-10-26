@@ -19,6 +19,13 @@ en:
         other: Show quoted text, %{count} earlier messages
       hide_quoted: Hide quoted text
       attachment_not_stored: name only, file not stored
+      show_headers: Show original headers
+      # Why the threading cascade put this email on this ticket. Shown on
+      # the message so a reply on the wrong ticket can be explained.
+      matched:
+        headers: matched on In-Reply-To
+        subject: matched on the ticket number in the subject
+        new: opened this ticket
       delivery:
         sending: not sent yet
         not_configured: not sent, no email provider connected

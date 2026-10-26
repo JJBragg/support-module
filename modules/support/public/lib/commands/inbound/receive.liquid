@@ -151,7 +151,18 @@
       endunless
     endif
 
-    assign incoming = { "ticket_id": ticket.id, "kind": "inbound", "contact_id": contact.id, "user_id": null, "from_address": sender.email, "to_addresses": to_addresses, "cc_addresses": cc_addresses, "subject": params.subject, "body_html": split.body_html, "body_text": split.body_text, "quoted_html": quoted, "message_id_header": headers.message_id, "in_reply_to": headers.in_reply_to, "references": headers.references, "provider_message_id": null, "delivery_status": null }
+    comment
+      Why this message landed here, kept on the message rather than only
+      returned to the provider. When a reply turns up on the wrong ticket,
+      this and the header block below are the whole investigation: without
+      them the answer is a shrug, because the email itself is gone.
+    endcomment
+    assign match_reason = matched_by
+    if is_new
+      assign match_reason = 'new'
+    endif
+
+    assign incoming = { "ticket_id": ticket.id, "kind": "inbound", "contact_id": contact.id, "user_id": null, "from_address": sender.email, "to_addresses": to_addresses, "cc_addresses": cc_addresses, "subject": params.subject, "body_html": split.body_html, "body_text": split.body_text, "quoted_html": quoted, "message_id_header": headers.message_id, "in_reply_to": headers.in_reply_to, "references": headers.references, "provider_message_id": null, "delivery_status": null, "match_reason": match_reason, "raw_headers": params.headers }
     function message = 'modules/support/commands/messages/create', object: incoming
     unless message.valid
       log message.errors, type: 'ERROR: modules/support/commands/inbound/receive could not record the message'
@@ -223,6 +234,6 @@
     function _ = 'modules/core/commands/events/publish', type: 'ticket_reopened', object: reopened_payload, delay: null, max_attempts: null
   endif
 
-  assign result = { "ok": true, "status": 200, "ticket_id": ticket.id, "ticket_number": ticket.number, "message_id": message.id, "new_ticket": is_new, "reopened": reopened, "matched_by": matched_by, "attachments": attachments_saved, "department": department.slug, "routed_by_address": routed }
+  assign result = { "ok": true, "status": 200, "ticket_id": ticket.id, "ticket_number": ticket.number, "message_id": message.id, "new_ticket": is_new, "reopened": reopened, "matched_by": match_reason, "attachments": attachments_saved, "department": department.slug, "routed_by_address": routed }
   return result
 %}

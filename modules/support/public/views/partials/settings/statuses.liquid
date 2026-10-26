@@ -11,11 +11,14 @@
   </div>
 
   {%- liquid
-    assign kinds = 'open,on_hold,closed' | split: ','
+    assign kinds = 'new,open,pending,on_hold,solved,closed' | split: ','
+    assign kind_new = 'modules/support/settings.statuses.kind_new' | t
     assign kind_open = 'modules/support/settings.statuses.kind_open' | t
+    assign kind_pending = 'modules/support/settings.statuses.kind_pending' | t
     assign kind_on_hold = 'modules/support/settings.statuses.kind_on_hold' | t
+    assign kind_solved = 'modules/support/settings.statuses.kind_solved' | t
     assign kind_closed = 'modules/support/settings.statuses.kind_closed' | t
-    assign kind_labels = { "open": kind_open, "on_hold": kind_on_hold, "closed": kind_closed }
+    assign kind_labels = { "new": kind_new, "open": kind_open, "pending": kind_pending, "on_hold": kind_on_hold, "solved": kind_solved, "closed": kind_closed }
     assign last_index = statuses | size | minus: 1
   -%}
 
@@ -68,19 +71,25 @@
             {%- endif -%}
           </form>
 
-          <form class="pos-support-segment pos-support-kinds" method="post" action="/support/settings/statuses" role="group" aria-label="{{ 'modules/support/settings.statuses.kind_for' | t: name: status.name }}">
+          {%- comment -%}
+            A select, not the row of buttons this used to be. Six
+            categories will not sit in a 250px column, and a row that
+            wraps to three lines per status turns the whole screen into a
+            wall. The script submits it on change and hides the Apply
+            button, which is there for anyone without one.
+          {%- endcomment -%}
+          <form class="pos-support-kindpick" method="post" action="/support/settings/statuses">
             <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
             <input type="hidden" name="op" value="kind">
             <input type="hidden" name="status_id" value="{{ status.id }}">
-            {%- for kind in kinds -%}
-              {%- liquid
-                assign is_on = false
-                if kind == status.kind
-                  assign is_on = true
-                endif
-              -%}
-              <button type="submit" name="kind" value="{{ kind }}" aria-pressed="{{ is_on }}">{{ kind_labels[kind] }}</button>
-            {%- endfor -%}
+            <input type="hidden" name="name" value="{{ status.name }}">
+            <label class="pos-support-sr" for="st-kind-{{ status.id }}">{{ 'modules/support/settings.statuses.kind_for' | t: name: status.name }}</label>
+            <select id="st-kind-{{ status.id }}" name="kind" data-support-autosubmit>
+              {%- for kind in kinds -%}
+                <option value="{{ kind }}" {% if kind == status.kind %}selected{% endif %}>{{ kind_labels[kind] }}</option>
+              {%- endfor -%}
+            </select>
+            <button type="submit" data-support-noscript>{{ 'modules/support/settings.apply' | t }}</button>
           </form>
         </div>
       </li>

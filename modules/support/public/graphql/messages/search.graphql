@@ -44,6 +44,12 @@ query (
       references: property_array(name: "references")
       provider_message_id: property(name: "provider_message_id")
       delivery_status: property(name: "delivery_status")
+
+      # Both are read on the ticket page: the match reason on the message's
+      # own line, the headers behind Show original. A column nothing reads
+      # is a column nobody notices has stopped being written.
+      match_reason: property(name: "match_reason")
+      raw_headers: property(name: "raw_headers")
     }
   }
 }

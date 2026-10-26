@@ -41,3 +41,51 @@ properties:
   # Ticket number, subject and contact email, for the one search box.
   - name: c__search
     type: string
+
+  # Everything below exists before anything writes it, because a module
+  # cannot ship a migration. The test for being here is narrow: would this
+  # column need backfilling over existing tickets if it were added later?
+  # Fields written at the moment of an action and never backfilled, such as
+  # a merge pointer or a snooze, are not here and cost nothing to add when
+  # the action exists.
+
+  # Someone is waiting on us: the last message came from the customer.
+  # Written by tickets/touch, the one place that knows which way it went.
+  - name: needs_reply
+    type: boolean
+
+  # How the ticket arrived. email today; chat, portal and api later.
+  - name: channel
+    type: string
+
+  - name: tags
+    type: array
+
+  # The organization the contact belongs to. Empty until organizations are
+  # a table rather than a line of text on the contact, and then backfilled
+  # from that text.
+  - name: organization_id
+    type: string
+
+  # When an agent first answered in public, and when the customer last
+  # wrote. Both are read by an SLA clock, and neither can be recovered
+  # later without walking every message on every ticket.
+  - name: first_replied_at
+    type: datetime
+  - name: last_customer_message_at
+    type: datetime
+
+  # When the ticket reached a status in the solved category. Gone for good
+  # if it is not recorded as it happens.
+  - name: solved_at
+    type: datetime
+
+  # Filled by the SLA engine, which does not exist yet. A due time depends
+  # on the policy and the history at the moment it was set, so these cannot
+  # be worked out after the fact either.
+  - name: sla_first_reply_due_at
+    type: datetime
+  - name: sla_resolution_due_at
+    type: datetime
+  - name: sla_state
+    type: string

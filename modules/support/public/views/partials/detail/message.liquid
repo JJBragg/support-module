@@ -28,6 +28,21 @@ separator, which splits the body into single characters.{% endcomment %}
     which is its own piece of work.
   endcomment
   assign paragraphs = message.body_text | default: '' | split: paragraph_break
+
+  comment
+    Why this email landed on this ticket. Shown rather than stored and
+    forgotten: the point of recording it is that an agent looking at a
+    reply on the wrong ticket can see what the threading matched on,
+    without anyone opening a console.
+  endcomment
+  assign match_label = ''
+  if message.kind == 'inbound' and message.match_reason != blank
+    assign match_key = 'modules/support/detail.timeline.matched.' | append: message.match_reason
+    assign match_label = match_key | t
+    if match_label contains 'translation missing'
+      assign match_label = ''
+    endif
+  endif
 -%}
 <li class="{{ classes }}">
   <span class="pos-support-msg-avatar" aria-hidden="true" style="{% if message.kind != 'note' %}background: {{ author.avatar_bg }}; color: {{ author.avatar_fg }}{% endif %}">
@@ -51,6 +66,9 @@ separator, which splits the body into single characters.{% endcomment %}
       {%- else -%}
         <span class="pos-support-msg-meta">{{ author.address }}</span>
         <span class="pos-support-msg-meta">{% render 'modules/support/ui/icon', path: direction_icon, size: 12, stroke: 2 %} {{ direction_label }}</span>
+        {%- if match_label != blank -%}
+          <span class="pos-support-msg-meta">{{ match_label }}</span>
+        {%- endif -%}
         {%- comment -%}
           An outbound message that did not leave the building must say so
           here. "Sent" over an email that no provider ever accepted is the
@@ -75,6 +93,13 @@ separator, which splits the body into single characters.{% endcomment %}
           <span class="pos-support-chip-size">{{ 'modules/support/detail.timeline.attachment_not_stored' | t }}</span>
         </span>
       {%- endfor -%}
+
+      {%- if message.raw_headers != blank -%}
+        <details>
+          <summary class="pos-support-quote-toggle">{{ 'modules/support/detail.timeline.show_headers' | t }}</summary>
+          <pre class="pos-support-headers">{{ message.raw_headers }}</pre>
+        </details>
+      {%- endif -%}
 
       {%- if message.quoted_html != blank -%}
         <details>

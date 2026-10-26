@@ -44,3 +44,15 @@ properties:
     type: string
   - name: delivery_status
     type: string
+
+  # Why this message landed on this ticket: headers, subject or new. The
+  # threading cascade already works it out; nothing else can reconstruct
+  # it afterwards, which is what makes it worth a column.
+  - name: match_reason
+    type: string
+
+  # The header block as it was posted. Small and bounded, and the only
+  # evidence there is when a reply lands on the wrong ticket. The body is
+  # not what you debug threading with, so the body is not kept twice.
+  - name: raw_headers
+    type: text

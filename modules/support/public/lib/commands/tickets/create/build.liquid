@@ -11,6 +11,13 @@
   endcomment
   assign search = subject | append: ' ' | append: object.contact_email | downcase
 
-  assign data = { "subject": subject, "department_id": object.department_id, "status_id": object.status_id, "contact_id": object.contact_id, "assignee_id": null, "priority": object.priority, "rank": object.rank, "opened_at": now, "last_message_at": now, "last_message_direction": "inbound", "c__search": search }
+  comment
+    Every ticket starts life owing the customer an answer, because every
+    ticket starts with their email. The channel is how it arrived, and
+    email is the only door there is so far.
+  endcomment
+  assign channel = object.channel | default: 'email'
+
+  assign data = { "subject": subject, "department_id": object.department_id, "status_id": object.status_id, "contact_id": object.contact_id, "assignee_id": null, "priority": object.priority, "rank": object.rank, "opened_at": now, "last_message_at": now, "last_message_direction": "inbound", "needs_reply": true, "channel": channel, "c__search": search }
   return data
 %}

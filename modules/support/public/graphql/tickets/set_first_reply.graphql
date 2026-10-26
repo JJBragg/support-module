@@ -1,0 +1,22 @@
+# Narrow on purpose. The first public reply happens once per ticket and
+# nothing else on the ticket is being changed, so this mutation names one
+# property and cannot clear another by omission.
+mutation (
+  $id: ID!
+  $first_replied_at: String!
+) {
+  record: record_update(
+    id: $id
+    record: {
+      table: "modules/support/ticket"
+      properties: [
+        { name: "first_replied_at", value: $first_replied_at }
+      ]
+    }
+  ) {
+    id
+    type: table
+
+    first_replied_at: property(name: "first_replied_at")
+  }
+}

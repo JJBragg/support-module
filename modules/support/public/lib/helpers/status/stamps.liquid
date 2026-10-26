@@ -1,0 +1,35 @@
+{% doc %}
+  The two timestamps a status change decides: when the ticket was closed,
+  and when it was marked solved.
+
+  Both are set when the ticket enters a status of that category and blank
+  otherwise, so moving back out clears them. A ticket that went solved,
+  then open, then solved again should say when it was solved this time,
+  not the first time.
+
+  Four endpoints change a status. Working this out in each of them is four
+  chances to get it wrong in three of them.
+
+  @param {object} status - The status the ticket is moving to
+{% enddoc %}
+{% liquid
+  assign now = 'now' | date: '%Y-%m-%d %H:%M:%S'
+
+  assign closed_at = null
+  assign solved_at = null
+
+  if status.kind == 'closed'
+    assign closed_at = now
+    comment
+      A closed ticket is a solved one that stopped waiting, so solved_at
+      stays set. "When did we consider this answered" then has one answer
+      whether the ticket is sitting in Confirmation or has since closed.
+    endcomment
+    assign solved_at = now
+  elsif status.kind == 'solved'
+    assign solved_at = now
+  endif
+
+  assign stamps = { "closed_at": closed_at, "solved_at": solved_at }
+  return stamps
+%}

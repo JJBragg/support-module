@@ -15,6 +15,6 @@
     assign references = []
   endif
 
-  assign data = { "ticket_id": object.ticket_id, "kind": object.kind, "contact_id": object.contact_id, "user_id": object.user_id, "from_address": object.from_address, "to_addresses": to_addresses, "cc_addresses": cc_addresses, "subject": object.subject, "body_html": object.body_html, "body_text": object.body_text, "quoted_html": object.quoted_html, "message_id_header": object.message_id_header, "in_reply_to": object.in_reply_to, "references": references, "provider_message_id": object.provider_message_id, "delivery_status": object.delivery_status }
+  assign data = { "ticket_id": object.ticket_id, "kind": object.kind, "contact_id": object.contact_id, "user_id": object.user_id, "from_address": object.from_address, "to_addresses": to_addresses, "cc_addresses": cc_addresses, "subject": object.subject, "body_html": object.body_html, "body_text": object.body_text, "quoted_html": object.quoted_html, "message_id_header": object.message_id_header, "in_reply_to": object.in_reply_to, "references": references, "provider_message_id": object.provider_message_id, "delivery_status": object.delivery_status, "match_reason": object.match_reason, "raw_headers": object.raw_headers }
   return data
 %}

@@ -52,6 +52,17 @@ query (
       last_message_at: property(name: "last_message_at")
       last_message_direction: property(name: "last_message_direction")
 
+      needs_reply: property_boolean(name: "needs_reply")
+      channel: property(name: "channel")
+      tags: property_array(name: "tags")
+      organization_id: property(name: "organization_id")
+      first_replied_at: property(name: "first_replied_at")
+      last_customer_message_at: property(name: "last_customer_message_at")
+      solved_at: property(name: "solved_at")
+      sla_first_reply_due_at: property(name: "sla_first_reply_due_at")
+      sla_resolution_due_at: property(name: "sla_resolution_due_at")
+      sla_state: property(name: "sla_state")
+
       # The haystack the list's search box matches against. Written on
       # create and kept current by touch; useless unless it is also read.
       c__search: property(name: "c__search")

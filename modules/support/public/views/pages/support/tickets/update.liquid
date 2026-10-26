@@ -42,22 +42,20 @@ method: post
   assign actor_id = current_profile.user.id
 
   if context.params.status_id != blank and context.params.status_id != ticket.status_id
-    assign closed_at = null
     assign previous_name = ''
-    assign new_name = ''
+    assign target = null
     for status in statuses
       if status.id == ticket.status_id
         assign previous_name = status.name
       endif
       if status.id == context.params.status_id
-        assign new_name = status.name
-        if status.kind == 'closed'
-          assign closed_at = 'now' | date: '%Y-%m-%d %H:%M:%S'
-        endif
+        assign target = status
       endif
     endfor
+    assign new_name = target.name
+    function stamps = 'modules/support/helpers/status/stamps', status: target
 
-    graphql _ = 'modules/support/tickets/set_status', id: ticket.id, status_id: context.params.status_id, closed_at: closed_at
+    graphql _ = 'modules/support/tickets/set_status', id: ticket.id, status_id: context.params.status_id, closed_at: stamps.closed_at, solved_at: stamps.solved_at
     assign activity = { "ticket_id": ticket.id, "actor_id": actor_id, "action": "status_changed", "from_value": previous_name, "to_value": new_name }
     function _ = 'modules/support/commands/activities/create', object: activity
   endif

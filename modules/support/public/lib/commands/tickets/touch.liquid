@@ -2,6 +2,17 @@
   Records that a ticket just saw traffic, and keeps the search column in
   step with the subject and contact.
 
+  Also the one place that knows which way a message went, so it is the one
+  place that decides whether the ticket is waiting on us. An inbound email
+  means the customer is waiting; an outbound reply means they are not. A
+  private note goes through neither, which is right: writing a note to
+  yourself does not answer anybody.
+
+  last_customer_message_at is re-sent unchanged on an outbound touch rather
+  than left out. record_update clears a property given an explicit null and
+  a Liquid graphql call cannot drop an argument conditionally, so the value
+  to keep has to be handed back in.
+
   @param {object} ticket - The ticket
   @param {string} direction - inbound or outbound
   @param {string} [contact_email] - For the search column
@@ -10,6 +21,13 @@
   assign now = 'now' | date: '%Y-%m-%d %H:%M:%S'
   assign search = ticket.number | append: ' ' | append: ticket.subject | append: ' ' | append: contact_email | downcase
 
-  graphql updated = 'modules/support/tickets/touch', id: ticket.id, last_message_at: now, last_message_direction: direction, c__search: search
+  assign needs_reply = false
+  assign last_customer_message_at = ticket.last_customer_message_at
+  if direction == 'inbound'
+    assign needs_reply = true
+    assign last_customer_message_at = now
+  endif
+
+  graphql updated = 'modules/support/tickets/touch', id: ticket.id, last_message_at: now, last_message_direction: direction, needs_reply: needs_reply, last_customer_message_at: last_customer_message_at, c__search: search
   return updated.record
 %}

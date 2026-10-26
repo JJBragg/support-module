@@ -74,26 +74,35 @@ method: post
   function _ = 'modules/support/commands/tickets/touch', ticket: ticket, direction: 'outbound', contact_email: contact.email
 
   comment
+    The first time an agent answered in public. Set once and never again,
+    because that is the measurement: a second reply is not a first reply.
+    The acknowledgement email, when it exists, will not come through here,
+    which is correct. An automatic receipt is not an answer.
+  endcomment
+  if ticket.first_replied_at == blank
+    assign replied_at = 'now' | date: '%Y-%m-%d %H:%M:%S'
+    graphql _ = 'modules/support/tickets/set_first_reply', id: ticket.id, first_replied_at: replied_at
+  endif
+
+  comment
     Send and set, from the build spec's send options. A blank choice
     leaves the status exactly where it was.
   endcomment
   if context.params.then_status_id != blank
-    assign closed_at = null
     assign previous_name = ''
-    assign new_name = ''
+    assign target = null
     for status in statuses
       if status.id == ticket.status_id
         assign previous_name = status.name
       endif
       if status.id == context.params.then_status_id
-        assign new_name = status.name
-        if status.kind == 'closed'
-          assign closed_at = 'now' | date: '%Y-%m-%d %H:%M:%S'
-        endif
+        assign target = status
       endif
     endfor
+    assign new_name = target.name
+    function stamps = 'modules/support/helpers/status/stamps', status: target
 
-    graphql _ = 'modules/support/tickets/set_status', id: ticket.id, status_id: context.params.then_status_id, closed_at: closed_at
+    graphql _ = 'modules/support/tickets/set_status', id: ticket.id, status_id: context.params.then_status_id, closed_at: stamps.closed_at, solved_at: stamps.solved_at
     assign activity = { "ticket_id": ticket.id, "actor_id": current_profile.user.id, "action": "status_changed", "from_value": previous_name, "to_value": new_name }
     function _ = 'modules/support/commands/activities/create', object: activity
   endif

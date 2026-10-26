@@ -15,14 +15,14 @@
   Returns the number of records created, for the migration to log.
 {% enddoc %}
 {% assign seed_statuses = [
-  { "key": "new",              "name": "New",                  "kind": "open",    "position": 1, "is_new_default": true,  "is_reopen_target": false },
-  { "key": "under_review",     "name": "Under Review",         "kind": "open",    "position": 2, "is_new_default": false, "is_reopen_target": true  },
-  { "key": "in_progress",      "name": "In Progress",          "kind": "open",    "position": 3, "is_new_default": false, "is_reopen_target": false },
-  { "key": "waiting_customer", "name": "Waiting on customer",  "kind": "open",    "position": 4, "is_new_default": false, "is_reopen_target": false },
-  { "key": "waiting_deploy",   "name": "Waiting on deploy",    "kind": "open",    "position": 5, "is_new_default": false, "is_reopen_target": false },
-  { "key": "confirmation",     "name": "Confirmation",         "kind": "open",    "position": 6, "is_new_default": false, "is_reopen_target": false },
-  { "key": "on_hold",          "name": "On Hold",              "kind": "on_hold", "position": 7, "is_new_default": false, "is_reopen_target": false },
-  { "key": "closed",           "name": "Closed",               "kind": "closed",  "position": 8, "is_new_default": false, "is_reopen_target": false }
+  { "key": "new",               "name": "New",                   "kind": "new",      "position": 1, "is_new_default": true , "is_reopen_target": false },
+  { "key": "under_review",      "name": "Under Review",          "kind": "open",     "position": 2, "is_new_default": false, "is_reopen_target": true  },
+  { "key": "in_progress",       "name": "In Progress",           "kind": "open",     "position": 3, "is_new_default": false, "is_reopen_target": false },
+  { "key": "waiting_customer",  "name": "Waiting on customer",   "kind": "pending",  "position": 4, "is_new_default": false, "is_reopen_target": false },
+  { "key": "waiting_deploy",    "name": "Waiting on deploy",     "kind": "on_hold",  "position": 5, "is_new_default": false, "is_reopen_target": false },
+  { "key": "confirmation",      "name": "Confirmation",          "kind": "solved",   "position": 6, "is_new_default": false, "is_reopen_target": false },
+  { "key": "on_hold",           "name": "On Hold",               "kind": "on_hold",  "position": 7, "is_new_default": false, "is_reopen_target": false },
+  { "key": "closed",            "name": "Closed",                "kind": "closed",   "position": 8, "is_new_default": false, "is_reopen_target": false }
 ] %}
 {% liquid
   assign statuses_created = 0

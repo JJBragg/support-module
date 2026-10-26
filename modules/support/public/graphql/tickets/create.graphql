@@ -10,6 +10,8 @@ mutation (
   $opened_at: String
   $last_message_at: String
   $last_message_direction: String
+  $needs_reply: Boolean
+  $channel: String
   $c__search: String
 ) {
   record: record_create(
@@ -27,6 +29,8 @@ mutation (
         { name: "opened_at", value: $opened_at }
         { name: "last_message_at", value: $last_message_at }
         { name: "last_message_direction", value: $last_message_direction }
+        { name: "needs_reply", value_boolean: $needs_reply }
+        { name: "channel", value: $channel }
         { name: "c__search", value: $c__search }
       ]
     }

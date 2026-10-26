@@ -15,6 +15,8 @@ mutation (
   $references: [String]
   $provider_message_id: String
   $delivery_status: String
+  $match_reason: String
+  $raw_headers: String
 ) {
   record: record_create(
     record: {
@@ -36,6 +38,8 @@ mutation (
         { name: "references", value_array: $references }
         { name: "provider_message_id", value: $provider_message_id }
         { name: "delivery_status", value: $delivery_status }
+        { name: "match_reason", value: $match_reason }
+        { name: "raw_headers", value: $raw_headers }
       ]
     }
   ) {

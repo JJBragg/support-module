@@ -5,6 +5,7 @@ en:
     back_to_tickets: Back to tickets
     save: Save
     rename: Rename
+    apply: Apply
 
     fields:
       name: Name
@@ -43,14 +44,25 @@ en:
       name: Name
       kind: Type
       kind_for: Type for %{name}
+      kind_new: New
       kind_open: Open
+      kind_pending: Waiting on the customer
       kind_on_hold: On hold
       kind_closed: Closed
+      kind_solved: Solved
       move_up: Move %{name} up
       move_down: Move %{name} down
       is_new_default: New tickets start here
       is_reopen_target: Reopened tickets return here
-      hint: Open statuses show in the queue. On hold statuses stay open but are set aside. Closed statuses leave the queue, and a customer reply reopens the ticket.
+      # The type is the only part of a status that code reads. Names are
+      # the team's; the type is what decides behaviour, so the hint says
+      # what each one will do rather than what it is called.
+      hint: >-
+        The type decides how a status behaves, so pick it by what should
+        happen, not by the name. New and Open mean the ticket is live work.
+        Waiting on the customer and On hold both set it aside. Solved means
+        answered but not yet finished with. Closed leaves the queue, and a
+        customer reply reopens the ticket.
 
     agents:
       heading: Agents

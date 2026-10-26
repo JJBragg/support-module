@@ -1,7 +1,14 @@
+# Every variable is always supplied, including the ones that are not
+# changing. record_update clears a property given an explicit null and
+# leaves it alone when the variable is not supplied, and a Liquid graphql
+# call cannot drop an argument conditionally, so the caller re-sends the
+# value it wants kept.
 mutation (
   $id: ID!
   $last_message_at: String!
   $last_message_direction: String!
+  $needs_reply: Boolean
+  $last_customer_message_at: String
   $c__search: String
 ) {
   record: record_update(
@@ -11,6 +18,8 @@ mutation (
       properties: [
         { name: "last_message_at", value: $last_message_at }
         { name: "last_message_direction", value: $last_message_direction }
+        { name: "needs_reply", value_boolean: $needs_reply }
+        { name: "last_customer_message_at", value: $last_customer_message_at }
         { name: "c__search", value: $c__search }
       ]
     }
@@ -20,5 +29,7 @@ mutation (
 
     last_message_at: property(name: "last_message_at")
     last_message_direction: property(name: "last_message_direction")
+    needs_reply: property_boolean(name: "needs_reply")
+    last_customer_message_at: property(name: "last_customer_message_at")
   }
 }
