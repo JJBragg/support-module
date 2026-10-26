@@ -1,4 +1,4 @@
-# Four platform issues, and one question
+# Five platform issues, and one question
 
 Found while building the Support module. Each numbered item below is written to
 be filed as its own issue at <https://github.com/Platform-OS/pos-modules/issues>,
@@ -183,7 +183,59 @@ write.
 
 ---
 
-## 5. Not a bug: how should a module store a file that arrives by webhook?
+## 5. Translations resolve on some requests and not others after a deploy
+
+> Issue title to use:
+> `Instance renders "translation missing" for every module key on roughly half of requests after a deploy`
+
+### Summary
+
+After a deploy that adds a translation file, the instance serves two different
+answers to the same request. About half of page loads render every module
+translation correctly. The other half render every one of them as
+`translation missing: en.modules/support/...`, including keys that were on the
+instance and working before the deploy and were not touched by it.
+
+It is not a warm-up window. It was still alternating twenty minutes and a
+second deploy later, on a quiet instance with one person on it.
+
+The data on the instance is correct. The same keys resolve every time through
+`pos-cli exec liquid`, which suggests the translations are loaded and that it
+is the page render path, or a cache in front of it, that is losing them.
+
+### Steps to reproduce
+
+1. Deploy a module that adds a new file under `translations/en/`.
+2. Load a page of that module that renders `t` several times, with a different
+   query string each time so nothing is served from a browser cache.
+3. Repeat. Roughly half the loads render the strings and half render
+   `translation missing` for all of them, including keys from files the deploy
+   did not change.
+4. Ask for one of the same keys through `pos-cli exec liquid`. It resolves
+   every time.
+
+### Observed
+
+Six consecutive `pos-cli exec liquid` lookups of
+`modules/support/list.nav.all_open` returned `All open` six times. Over the
+same period, nine page loads of two pages that render that key gave five
+correct renders and four where every key on the page, including that one, read
+`translation missing`.
+
+### Why it matters
+
+An interface that reads correctly when you check it and reads
+`translation missing` when a customer loads it is worse than one that is
+plainly broken. There is nothing in the logs with `safe_translate: true` set,
+and nothing in the page to say which of the two answers you are looking at.
+
+### Instance
+
+`support-module.staging.oregon.platform-os.com`, 2026-10-26.
+
+---
+
+## 6. Not a bug: how should a module store a file that arrives by webhook?
 
 This one needs a conversation rather than an issue. The long version is in
 `docs/inbound-attachment-storage.md` in our repo.
