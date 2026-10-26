@@ -103,6 +103,15 @@ categories went from three to six (new, open, pending, on_hold, solved,
 closed), which is what an SLA clock and the reply rules will read.
 Nothing on screen changed: the queue still excludes only closed.
 
+**Anti-spam and the customer receipt.** A customer who writes in gets one
+acknowledgement back, threaded, sent from a consumer so the webhook is
+never held up by it, and not counted as an answer: the ticket still says
+it needs a reply. Mail sent by a machine is never answered, by RFC 3834's
+rules read off the headers. One sender gets twenty inbound emails an
+hour before the rest is dropped and logged. A blocklist refuses addresses
+and domains at the door. Spam is a ninth status, closed, and the one
+closed status a customer reply does not reopen.
+
 **Phase 5, settings.** `/support/settings`, Admins only. Departments with
 inline edit, statuses with reorder and an Open / On hold / Closed switch,
 agents with role and per-department access, and the email provider with its
@@ -136,13 +145,11 @@ allowed status transitions (answered 2026-10-25 as free movement, so
 nothing to build) and whether the latest-message ring stays orange-red or
 switches to the primary colour.
 
-**From the PRD comparison**, in rough order of how much they hurt: the
-acknowledgement email with loop and auto-reply protection and a Spam
-status with a sender blocklist, which are one piece of work because the
-ack is the thing that loops; merge and split; CCs carried forward, which
-is a correctness bug today since a reply drops everyone who was on the
-thread; the Needs reply view, now that the field exists; the SLA engine;
-organizations as a table. Four decisions are JJ's and Artur's: `/support`
+**From the PRD comparison**, in rough order of how much they hurt: merge
+and split; CCs carried forward, which is a correctness bug today since a
+reply drops everyone who was on the thread; the Needs reply view, now
+that the field exists; the SLA engine; organizations as a table; saved
+replies; search over message bodies. Four decisions are JJ's and Artur's: `/support`
 or `/admin/support`, SendGrid or Postmark, work order or SLA as the
 default sort, and whether a reply to a closed ticket reopens it or opens
 a follow-up.
@@ -179,6 +186,12 @@ known limits want writing into the README.
   without JavaScript. Drag is a Phase 6 nicety.
 - **Inbound attachments keep their name and type and lose the file**,
   pending the question with the engineers.
+- **Over the hourly limit, inbound mail is dropped rather than stored.**
+  That does lose email, and it is the lesser of two evils: twenty an hour
+  from one sender is a loop, and recording ten thousand copies is worse
+  than losing the ten thousand and first. It is logged every time.
+- **The acknowledgement promises nothing about timing.** It cannot until
+  there is an SLA to promise.
 - **The board's place in line is the place among the tickets on screen**, not
   in the whole queue, which is what the list does too. Filter the board
   differently from the list and the same ticket reads a different number on
