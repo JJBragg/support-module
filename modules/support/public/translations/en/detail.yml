@@ -20,6 +20,7 @@ en:
       hide_quoted: Hide quoted text
       attachment_not_stored: name only, file not stored
       show_headers: Show original headers
+      automatic: Automatic receipt
       # Why the threading cascade put this email on this ticket. Shown on
       # the message so a reply on the wrong ticket can be explained.
       matched:
@@ -36,6 +37,8 @@ en:
       priority: Priority
       priority_hint: Changing this moves the ticket to the top of its new priority.
       priority_locked: Only an Admin can change the work order.
+      mark_spam: Mark as spam
+      mark_spam_hint: 'Closes the ticket and stops %{email} opening new ones. Unblock from Settings.'
       status: Status
       assignee: Assignee
       unassigned: Unassigned
@@ -46,3 +49,7 @@ en:
         zero: No other tickets from this contact
         one: 1 other ticket from this contact
         other: '%{count} other tickets from this contact'
+    flash:
+      marked_spam: 'Marked as spam. %{email} can no longer open tickets.'
+      marked_spam_already: 'Marked as spam. %{email} was already blocked.'
+      no_spam_status: There is no Spam status on this instance. Add one in Settings first.

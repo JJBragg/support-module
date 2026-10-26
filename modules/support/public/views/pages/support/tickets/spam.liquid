@@ -1,0 +1,85 @@
+---
+slug: support/tickets/spam
+method: post
+---
+{%- comment -%}
+  Marks a ticket as spam and blocks the sender.
+
+  Two effects, which is why it is not a status in the dropdown. The status
+  move is reversible from the panel like any other; the block is not, and
+  is undone from Settings, where the whole blocklist is visible.
+{%- endcomment -%}
+{%- liquid
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.tickets.update', entity: null
+  # platformos-check-enable DeprecatedTag
+
+  function current_profile = 'modules/user/helpers/current_profile'
+  function statuses = 'modules/support/queries/statuses/search', kind: null
+  function ticket = 'modules/support/queries/tickets/find', id: context.params.ticket_id, number: null
+
+  assign return_to = context.params.return_to | default: '/support'
+
+  if ticket == blank
+    # platformos-check-disable DeprecatedTag
+    include 'modules/support/helpers/redirect_back', url: return_to
+    # platformos-check-enable DeprecatedTag
+  endif
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.tickets.update', entity: ticket
+  # platformos-check-enable DeprecatedTag
+
+  assign spam_status = null
+  assign previous_name = ''
+  for status in statuses
+    if status.key == 'spam'
+      assign spam_status = status
+    endif
+    if status.id == ticket.status_id
+      assign previous_name = status.name
+    endif
+  endfor
+
+  if spam_status == blank
+    assign missing = 'modules/support/detail.flash.no_spam_status' | t
+    function _ = 'modules/support/helpers/flash', message: missing, severity: 'error'
+    # platformos-check-disable DeprecatedTag
+    include 'modules/support/helpers/redirect_back', url: return_to
+    # platformos-check-enable DeprecatedTag
+  endif
+
+  function contact = 'modules/support/queries/contacts/find', id: ticket.contact_id
+  assign actor_id = current_profile.user.id
+
+  function stamps = 'modules/support/helpers/status/stamps', status: spam_status
+  graphql _ = 'modules/support/tickets/set_status', id: ticket.id, status_id: spam_status.id, closed_at: stamps.closed_at, solved_at: stamps.solved_at
+
+  assign activity = { "ticket_id": ticket.id, "actor_id": actor_id, "action": "status_changed", "from_value": previous_name, "to_value": spam_status.name }
+  function _ = 'modules/support/commands/activities/create', object: activity
+
+  comment
+    The address, never the domain. Blocking a whole domain from one
+    ticket is how a shared mail provider takes every real customer on it
+    with the spammer. Domains are blocked by hand in Settings, where
+    somebody has to type the thing out.
+  endcomment
+  assign reason = 'modules/support/settings.blocklist.from_ticket' | t: number: ticket.number
+  assign entry = { "value": contact.email, "reason": reason, "blocked_by": actor_id }
+  function blocked = 'modules/support/commands/blocked_senders/create', object: entry
+
+  if blocked.valid
+    assign notice = 'modules/support/detail.flash.marked_spam' | t: email: contact.email
+  else
+    comment
+      Already on the list. The ticket still moved, so this is worth
+      saying plainly rather than reporting as a failure.
+    endcomment
+    assign notice = 'modules/support/detail.flash.marked_spam_already' | t: email: contact.email
+  endif
+  function _ = 'modules/support/helpers/flash', message: notice, severity: 'success'
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/redirect_back', url: return_to
+  # platformos-check-enable DeprecatedTag
+-%}

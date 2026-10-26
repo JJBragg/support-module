@@ -1,0 +1,19 @@
+name: blocked_sender
+properties:
+  # Either one address or one domain, lowercased on write. Which of the
+  # two it is lives in scope, so matching never has to guess from whether
+  # there is an @ in it.
+  - name: value
+    type: string
+
+  # email or domain.
+  - name: scope
+    type: string
+
+  # Free text, shown in Settings. Usually the ticket it came from.
+  - name: reason
+    type: string
+
+  # The agent who blocked it, so an unexpected block has someone to ask.
+  - name: blocked_by
+    type: string

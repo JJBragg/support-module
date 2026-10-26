@@ -1,0 +1,41 @@
+---
+slug: support/settings/blocklist
+method: post
+---
+{%- comment -%}
+  Add or remove a blocked sender. Two operations, each its own form, so
+  both work without JavaScript.
+{%- endcomment -%}
+{%- liquid
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.settings.manage', entity: null
+  # platformos-check-enable DeprecatedTag
+
+  function current_profile = 'modules/user/helpers/current_profile'
+
+  assign return_to = '/support/settings#blocklist'
+  assign op = context.params.op
+
+  if op == 'create'
+    assign object = { "value": context.params.value, "reason": context.params.reason, "blocked_by": current_profile.user.id }
+    function result = 'modules/support/commands/blocked_senders/create', object: object
+    if result.valid
+      assign message = 'modules/support/settings.flash.blocked_added' | t: value: result.value
+      function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
+    else
+      function _ = 'modules/support/helpers/flash_errors', errors: result.errors
+      assign return_to = '/support/settings#add-blocked'
+    endif
+
+  elsif op == 'remove'
+    function removed = 'modules/support/commands/blocked_senders/remove', id: context.params.blocked_id
+    if removed
+      assign message = 'modules/support/settings.flash.blocked_removed' | t
+      function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
+    endif
+  endif
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/redirect_back', url: return_to
+  # platformos-check-enable DeprecatedTag
+-%}

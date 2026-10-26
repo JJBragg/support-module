@@ -33,6 +33,18 @@
     return result
   endif
 
+  comment
+    Blocked senders are refused before anything is written, and answered
+    200 rather than 4xx. A 4xx makes the provider retry for hours, which
+    is the provider doing the sender's work for them.
+  endcomment
+  function blocked = 'modules/support/queries/blocked_senders/find_match', email: sender.email
+  if blocked
+    log sender.email, type: 'modules/support/commands/inbound/receive: refused, sender is blocked'
+    assign result = { "ok": true, "status": 200, "blocked": true, "blocked_by_rule": blocked.value }
+    return result
+  endif
+
   function to_addresses = 'modules/support/helpers/email/parse_address_list', raw: params.to
   function cc_addresses = 'modules/support/helpers/email/parse_address_list', raw: params.cc
   assign recipients = to_addresses | concat: cc_addresses
@@ -69,7 +81,31 @@
     return result
   endunless
 
+  comment
+    A sender hammering the address is a loop, a broken integration or an
+    attack, and all three want the same answer. Twenty an hour is far
+    above anything a person types and far below what it takes to fill a
+    queue. Over it, the mail is dropped and logged rather than stored:
+    recording ten thousand copies of the same email is worse than losing
+    the ten thousand and first.
+  endcomment
+  assign inbound_per_hour = 20
+  assign hour_ago = 'now' | date: '%s' | minus: 3600 | date: '%Y-%m-%d %H:%M:%S'
+  function recent = 'modules/support/queries/messages/count_from_contact', contact_id: contact.id, since: hour_ago
+  if recent >= inbound_per_hour
+    log sender.email, type: 'modules/support/commands/inbound/receive: suspected loop, over the hourly limit for this sender'
+    assign result = { "ok": true, "status": 200, "suspected_loop": true, "recent_messages": recent }
+    return result
+  endif
+
   function headers = 'modules/support/helpers/email/parse_headers', raw: params.headers
+
+  comment
+    Whether anything may be sent back. Worked out here, where the headers
+    are, and carried on the event, because the consumer that would send
+    the receipt has no email in front of it.
+  endcomment
+  function automation = 'modules/support/helpers/email/is_automated', headers: headers, address: sender.email
   comment
     Copy the references rather than aliasing them. add_to_array mutates the
     array it is given, so appending to headers.references here would also
@@ -201,7 +237,13 @@
 
     unless is_new
       function status = 'modules/support/queries/statuses/find', id: ticket.status_id
-      if status.kind == 'closed'
+      comment
+        Spam is closed like any other finished status, and unlike any
+        other finished status it must stay shut. Reopening it would mean
+        one unblocked address could walk a spam thread back into the
+        queue by replying to it.
+      endcomment
+      if status.kind == 'closed' and status.key != 'spam'
         function _ = 'modules/support/commands/tickets/reopen', ticket: ticket
         assign reopened = true
         assign reopened_from = status.name
@@ -221,7 +263,7 @@
     touching the write path again.
   endcomment
   if is_new
-    assign created_payload = { "ticket_id": ticket.id, "number": ticket.number, "department_id": department.id, "contact_id": contact.id, "priority": ticket.priority }
+    assign created_payload = { "ticket_id": ticket.id, "number": ticket.number, "department_id": department.id, "contact_id": contact.id, "priority": ticket.priority, "automated": automation.automated, "automated_reason": automation.reason }
     function _ = 'modules/core/commands/events/publish', type: 'ticket_created', object: created_payload, delay: null, max_attempts: null
   endif
 
@@ -234,6 +276,6 @@
     function _ = 'modules/core/commands/events/publish', type: 'ticket_reopened', object: reopened_payload, delay: null, max_attempts: null
   endif
 
-  assign result = { "ok": true, "status": 200, "ticket_id": ticket.id, "ticket_number": ticket.number, "message_id": message.id, "new_ticket": is_new, "reopened": reopened, "matched_by": match_reason, "attachments": attachments_saved, "department": department.slug, "routed_by_address": routed }
+  assign result = { "ok": true, "status": 200, "ticket_id": ticket.id, "ticket_number": ticket.number, "message_id": message.id, "new_ticket": is_new, "reopened": reopened, "matched_by": match_reason, "attachments": attachments_saved, "department": department.slug, "routed_by_address": routed, "automated": automation.automated, "automated_reason": automation.reason }
   return result
 %}

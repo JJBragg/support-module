@@ -9,6 +9,6 @@
     return nil
   endif
 
-  graphql result = 'modules/support/messages/search', ticket_id: ticket_id, message_id_header: null, message_id_headers: null, id: null, limit: 200, page: 1
+  graphql result = 'modules/support/messages/search', ticket_id: ticket_id, contact_id: null, created_at_gte: null, message_id_header: null, message_id_headers: null, id: null, limit: 200, page: 1
   return result.records.results
 %}

@@ -1,0 +1,25 @@
+mutation (
+  $value: String!
+  $scope: String!
+  $reason: String
+  $blocked_by: String
+) {
+  record: record_create(
+    record: {
+      table: "modules/support/blocked_sender"
+      properties: [
+        { name: "value", value: $value }
+        { name: "scope", value: $scope }
+        { name: "reason", value: $reason }
+        { name: "blocked_by", value: $blocked_by }
+      ]
+    }
+  ) {
+    id
+    created_at
+    type: table
+
+    value: property(name: "value")
+    scope: property(name: "scope")
+  }
+}

@@ -1,0 +1,20 @@
+# Narrow: it names one property, so it cannot clear another by omission.
+mutation (
+  $id: ID!
+  $last_acknowledged_at: String!
+) {
+  record: record_update(
+    id: $id
+    record: {
+      table: "modules/support/contact"
+      properties: [
+        { name: "last_acknowledged_at", value: $last_acknowledged_at }
+      ]
+    }
+  ) {
+    id
+    type: table
+
+    last_acknowledged_at: property(name: "last_acknowledged_at")
+  }
+}

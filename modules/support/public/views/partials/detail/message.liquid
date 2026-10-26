@@ -70,6 +70,14 @@ separator, which splits the body into single characters.{% endcomment %}
           <span class="pos-support-msg-meta">{{ match_label }}</span>
         {%- endif -%}
         {%- comment -%}
+          An outbound message with no agent behind it is the automatic
+          receipt. Saying so stops it reading as a colleague's reply that
+          nobody remembers writing.
+        {%- endcomment -%}
+        {%- if message.kind == 'outbound' and message.user_id == blank -%}
+          <span class="pos-support-msg-meta">{{ 'modules/support/detail.timeline.automatic' | t }}</span>
+        {%- endif -%}
+        {%- comment -%}
           An outbound message that did not leave the building must say so
           here. "Sent" over an email that no provider ever accepted is the
           kind of lie an agent only discovers when the customer calls.

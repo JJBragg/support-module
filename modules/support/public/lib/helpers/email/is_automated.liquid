@@ -1,0 +1,71 @@
+{% doc %}
+  Was this email sent by a machine rather than by a person?
+
+  The question only has one consumer: whether to send an automatic
+  acknowledgement back. Two machines acknowledging each other is a mail
+  loop, and a mail loop is how a support address takes a mailbox down.
+  RFC 3834 exists because of it, and the rules below are its advice.
+
+  Says nothing about whether to keep the email. A holiday auto-reply is
+  still something an agent may want to see; it is only something we must
+  not answer.
+
+  Returns { automated, reason } so the caller can log why.
+
+  @param {object} headers - Parsed by helpers/email/parse_headers
+  @param {string} [address] - The sender's address
+{% enddoc %}
+{% liquid
+  assign address = address | default: '' | downcase | strip
+
+  comment
+    RFC 3834: any value other than "no" means the message was generated
+    automatically, and a responder must not reply to it.
+  endcomment
+  if headers.auto_submitted != blank and headers.auto_submitted != 'no'
+    assign result = { "automated": true, "reason": "auto-submitted" }
+    return result
+  endif
+
+  comment
+    Precedence is not a standard header, but bulk, list and junk have
+    meant "do not auto-reply" for long enough that every mailing list
+    sets one of them.
+  endcomment
+  assign bulk = 'bulk,list,junk' | split: ','
+  if bulk contains headers.precedence
+    assign result = { "automated": true, "reason": "precedence" }
+    return result
+  endif
+
+  comment
+    An empty envelope sender is how a bounce says "do not reply to me,
+    there is nobody here". Written <> on the wire, which the parser
+    strips to nothing, so an empty Return-Path on a block of headers that
+    did arrive is the signal. Headers that never arrived are not.
+  endcomment
+  if headers.present and headers.return_path == blank
+    assign result = { "automated": true, "reason": "empty-return-path" }
+    return result
+  endif
+
+  if headers.list_id != blank
+    assign result = { "automated": true, "reason": "list-id" }
+    return result
+  endif
+
+  comment
+    The local parts that mean "this mailbox is not read". Matched on the
+    part before the @ so that noreply@anything is caught, and so that a
+    person called Noreply Jones is not.
+  endcomment
+  assign local_part = address | split: '@' | first
+  assign robots = 'noreply,no-reply,donotreply,do-not-reply,mailer-daemon,postmaster,bounce,bounces,notifications,notification' | split: ','
+  if robots contains local_part
+    assign result = { "automated": true, "reason": "sender-address" }
+    return result
+  endif
+
+  assign result = { "automated": false, "reason": null }
+  return result
+%}

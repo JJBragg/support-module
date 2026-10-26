@@ -1,7 +1,9 @@
 {% doc %}
-  Pulls Message-ID, In-Reply-To and References out of the raw header block
-  SendGrid posts. Folded headers, where References continues on indented
-  lines, are joined back together before they are read.
+  Pulls the headers the module reads out of the raw block SendGrid posts:
+  Message-ID, In-Reply-To and References for threading, and the four that
+  say an email was sent by a machine rather than a person. Folded headers,
+  where References continues on indented lines, are joined back together
+  before they are read.
 
   Returns ids without angle brackets, which is how message_id_header is
   stored.
@@ -14,10 +16,18 @@
   assign message_id = ""
   assign in_reply_to = ""
   assign references = []
+  assign auto_submitted = ""
+  assign precedence = ""
+  assign return_path = ""
+  assign list_id = ""
 
   assign raw = raw | default: ""
   if raw == blank
-    assign parsed = { "message_id": message_id, "in_reply_to": in_reply_to, "references": references }
+    comment
+      No headers at all is itself suspicious, but it is not this helper's
+      job to say so. It reports what it found, and found nothing.
+    endcomment
+    assign parsed = { "message_id": message_id, "in_reply_to": in_reply_to, "references": references, "auto_submitted": auto_submitted, "precedence": precedence, "return_path": return_path, "list_id": list_id, "present": false }
     return parsed
   endif
 
@@ -60,9 +70,17 @@
           assign references = references | array_add: id
         endif
       endfor
+    elsif header.key == "auto-submitted" and auto_submitted == blank
+      assign auto_submitted = header.value | downcase | strip
+    elsif header.key == "precedence" and precedence == blank
+      assign precedence = header.value | downcase | strip
+    elsif header.key == "return-path" and return_path == blank
+      assign return_path = header.value | replace: "<", "" | replace: ">", "" | strip
+    elsif header.key == "list-id" and list_id == blank
+      assign list_id = header.value | strip
     endif
   endfor
 
-  assign parsed = { "message_id": message_id, "in_reply_to": in_reply_to, "references": references }
+  assign parsed = { "message_id": message_id, "in_reply_to": in_reply_to, "references": references, "auto_submitted": auto_submitted, "precedence": precedence, "return_path": return_path, "list_id": list_id, "present": true }
   return parsed
 %}

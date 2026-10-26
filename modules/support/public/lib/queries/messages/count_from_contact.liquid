@@ -1,0 +1,14 @@
+{% doc %}
+  How many emails this address has sent us since a given moment.
+
+  Asked once per inbound email, so it reads the count rather than the
+  rows: total_entries comes back whether or not any results are
+  requested, and a sender in a loop has thousands.
+
+  @param {string} contact_id - The sender
+  @param {string} since - A timestamp, YYYY-MM-DD HH:MM:SS
+{% enddoc %}
+{% liquid
+  graphql result = 'modules/support/messages/search', contact_id: contact_id, created_at_gte: since, kind: 'inbound', ticket_id: null, message_id_header: null, message_id_headers: null, id: null, limit: 1, page: 1
+  return result.records.total_entries
+%}

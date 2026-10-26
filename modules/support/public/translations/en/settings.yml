@@ -64,6 +64,20 @@ en:
         answered but not yet finished with. Closed leaves the queue, and a
         customer reply reopens the ticket.
 
+    blocklist:
+      heading: Blocklist
+      subtitle: Addresses and domains that cannot open a ticket. Their email is refused at the door and nothing is stored.
+      add: Block a sender
+      empty: Nothing is blocked. Marking a ticket as spam adds the sender here.
+      value: Address or domain
+      value_placeholder: someone@example.com or example.com
+      reason: Reason
+      unblock: Unblock
+      scope_email: Address
+      scope_domain: Domain
+      from_ticket: 'Marked as spam on ticket #%{number}'
+      hint: Blocking a domain stops every address at it, including people you do want to hear from. Marking a ticket as spam only ever blocks the one address.
+
     agents:
       heading: Agents
       subtitle: Agents only see tickets in the departments you give them.
@@ -110,6 +124,8 @@ en:
         If you are reading it, replies to customers will reach them too.
 
     flash:
+      blocked_added: '%{value} is blocked.'
+      blocked_removed: Unblocked.
       department_added: '%{name} added.'
       department_saved: '%{name} saved.'
       department_missing: That department no longer exists.

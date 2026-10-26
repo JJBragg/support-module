@@ -1,0 +1,10 @@
+{% doc %}
+  The whole blocklist, newest first, for the Settings screen.
+
+  @param {number} [limit] - Defaults to 200
+{% enddoc %}
+{% liquid
+  assign limit = limit | default: 200
+  graphql result = 'modules/support/blocked_senders/search', values: null, value: null, id: null, limit: limit, page: 1
+  return result.records.results
+%}

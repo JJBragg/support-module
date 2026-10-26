@@ -24,6 +24,7 @@ query (
       email: property(name: "email")
       name: property(name: "name")
       organization: property(name: "organization")
+      last_acknowledged_at: property(name: "last_acknowledged_at")
     }
   }
 }

@@ -1,0 +1,50 @@
+---
+metadata:
+  priority: default
+  max_attempts: 3
+---
+{% doc %}
+  Sends the customer their receipt, in the background.
+
+  A consumer rather than part of the inbound endpoint, because the
+  provider wants a prompt 200 and a customer's email must not fail to
+  arrive because an outbound send was slow.
+
+  Mail sent by a machine is never answered. That decision is made at the
+  door, where the headers are, and arrives here as a flag on the event.
+
+  @param {object} event - The ticket_created payload
+{% enddoc %}
+{% liquid
+  if event.automated
+    log event, type: 'modules/support/consumers/ticket_created: no receipt, the email was sent automatically'
+    return null
+  endif
+
+  function settings = 'modules/support/queries/settings/get'
+  if settings == blank
+    return null
+  endif
+
+  function ticket = 'modules/support/queries/tickets/find', id: event.ticket_id, number: null
+  if ticket == blank
+    return null
+  endif
+
+  function contact = 'modules/support/queries/contacts/find', id: event.contact_id
+  if contact == blank
+    return null
+  endif
+
+  graphql department_result = 'modules/support/departments/search', id: event.department_id, slug: null, inbound_address: null, limit: 1, page: 1
+  assign department = department_result.records.results.first
+  if department == blank
+    return null
+  endif
+
+  function result = 'modules/support/commands/notifications/acknowledge', ticket: ticket, department: department, contact: contact, settings: settings
+
+  unless result.sent
+    log result, type: 'modules/support/consumers/ticket_created: no receipt sent'
+  endunless
+%}

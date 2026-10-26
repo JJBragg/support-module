@@ -1,0 +1,25 @@
+{% doc %}
+  Is this sender blocked, by address or by the domain it came from?
+
+  Both are asked in one query. The alternative, reading the whole
+  blocklist and checking it in Liquid, works until a partner blocks a few
+  hundred domains, and then it does that on every inbound email.
+
+  @param {string} [email] - The sender's address
+{% enddoc %}
+{% liquid
+  assign address = email | default: '' | downcase | strip
+  if address == blank
+    return nil
+  endif
+
+  assign domain = address | split: '@' | last
+  assign candidates = []
+  assign candidates = candidates | array_add: address
+  if domain != blank and domain != address
+    assign candidates = candidates | array_add: domain
+  endif
+
+  graphql result = 'modules/support/blocked_senders/search', values: candidates, value: null, id: null, limit: 2, page: 1
+  return result.records.results.first
+%}

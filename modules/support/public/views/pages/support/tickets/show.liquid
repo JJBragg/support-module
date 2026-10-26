@@ -157,6 +157,18 @@ metadata:
     assign index = index | plus: 1
   endfor
 
+  comment
+    Looked up by key rather than by name, so a partner who renames it
+    keeps the behaviour, and absent rather than invented if they deleted
+    it: the panel simply does not offer the action.
+  endcomment
+  assign spam_status = null
+  for status in statuses
+    if status.key == 'spam'
+      assign spam_status = status
+    endif
+  endfor
+
   assign others_limit = 5
   function other_tickets = 'modules/support/queries/tickets/for_contact', contact_id: ticket.contact_id, exclude_id: ticket.id, limit: others_limit
   assign decorated_others = []
@@ -237,6 +249,7 @@ metadata:
       contact_initials: contact_initials,
       other_tickets: decorated_others,
       can_rerank: can_rerank,
+      spam_status: spam_status,
       return_to: return_to
     %}
   </div>

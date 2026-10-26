@@ -11,3 +11,10 @@ properties:
   # Tokenized name and organization, for contains search.
   - name: c__names
     type: string
+
+  # When this address was last sent an automatic receipt. One field rather
+  # than counting past acknowledgements, because the only question ever
+  # asked of it is "was it recently", and a loop asks that question
+  # hundreds of times an hour.
+  - name: last_acknowledged_at
+    type: datetime

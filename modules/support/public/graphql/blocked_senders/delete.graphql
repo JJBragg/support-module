@@ -1,0 +1,12 @@
+# The one delete this module ships, and it is deliberate.
+#
+# Nothing that records something which happened is ever deleted here:
+# tickets, messages and contacts stay, because deleting them loses the
+# history of a conversation. A blocklist entry is not history, it is a
+# setting, and a setting you can add but never remove is a trap. Unblock
+# has to actually unblock.
+mutation ($id: ID!) {
+  record_delete(id: $id, table: "modules/support/blocked_sender") {
+    id
+  }
+}

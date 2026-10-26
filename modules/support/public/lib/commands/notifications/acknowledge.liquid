@@ -1,0 +1,85 @@
+{% doc %}
+  Sends the customer a receipt saying their email arrived and became a
+  ticket.
+
+  Goes out through the ticket's own email provider rather than through
+  platformOS, unlike the @mention email, because this one has to thread.
+  It carries a Message-ID, In-Reply-To and the [#number] token, so when
+  the customer replies to the receipt the reply lands on the ticket
+  instead of opening a second one.
+
+  It is not an answer, and nothing here pretends otherwise: the ticket is
+  not touched, so it still says the customer is waiting, and
+  first_replied_at stays empty until a person writes something.
+
+  Refuses in three cases, each returning a reason rather than failing:
+  a department with no from address has nowhere to send from, a contact
+  acknowledged in the last day does not need another, and a ticket that
+  already has an outbound message has been answered by a human faster
+  than this job ran.
+
+  @param {object} ticket - The new ticket
+  @param {object} department - Its department
+  @param {object} contact - The customer
+  @param {object} settings - The settings record
+{% enddoc %}
+{% liquid
+  if department.from_address == blank
+    comment
+      Nothing to send from. A half configured install should go quiet
+      rather than send mail from an address nobody has verified.
+    endcomment
+    assign result = { "sent": false, "reason": "no_from_address" }
+    return result
+  endif
+
+  assign now = 'now' | date: '%Y-%m-%d %H:%M:%S'
+
+  comment
+    One receipt per address per day. Two machines acknowledging each
+    other is the loop this whole guard exists to prevent, and the
+    cheapest place to break it is here, on the second one.
+  endcomment
+  if contact.last_acknowledged_at != blank
+    assign last = contact.last_acknowledged_at | date: '%s' | plus: 0
+    assign cutoff = 'now' | date: '%s' | minus: 86400
+    if last > cutoff
+      assign result = { "sent": false, "reason": "recently_acknowledged" }
+      return result
+    endif
+  endif
+
+  function messages = 'modules/support/queries/messages/for_ticket', ticket_id: ticket.id
+  for message in messages
+    if message.kind == 'outbound'
+      assign result = { "sent": false, "reason": "already_answered" }
+      return result
+    endif
+  endfor
+
+  comment
+    Claim the slot before writing or sending anything. This runs as a
+    background job with retries, and a retry that sends a second receipt
+    to a customer is worse than a retry that does nothing.
+  endcomment
+  graphql _ = 'modules/support/contacts/set_acknowledged', id: contact.id, last_acknowledged_at: now
+
+  assign body = 'modules/support/emails.acknowledgement.body' | t: number: ticket.number
+  function email = 'modules/support/helpers/email/build_reply', ticket: ticket, department: department, contact: contact, messages: messages, body: body, cc: null
+
+  assign recipients = contact.email | split: ','
+  assign outbound = { "ticket_id": ticket.id, "kind": "outbound", "user_id": null, "from_address": email.from_address, "to_addresses": recipients, "cc_addresses": null, "subject": email.subject, "body_text": email.body, "message_id_header": email.message_id, "in_reply_to": email.in_reply_to, "references": email.references, "delivery_status": "sending" }
+
+  function message = 'modules/support/commands/messages/create', object: outbound
+  unless message.valid
+    log message.errors, type: 'ERROR: modules/support/commands/notifications/acknowledge could not record the receipt'
+    assign result = { "sent": false, "reason": "not_recorded" }
+    return result
+  endunless
+
+  function delivery = 'modules/support/commands/outbound/send', object: email, settings: settings
+  graphql _ = 'modules/support/messages/set_delivery', id: message.id, delivery_status: delivery.status, provider_message_id: delivery.provider_message_id
+
+  assign result = { "sent": delivery.sent, "reason": delivery.status, "message_id": message.id }
+  return result
+%}

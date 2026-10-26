@@ -1,0 +1,17 @@
+{% doc %}
+  Unblocks an address or a domain.
+
+  A real delete, which nothing else in this module does. A blocklist
+  entry is a setting rather than a record of something that happened, and
+  a setting you can add but never remove is a trap.
+
+  @param {string} id - The blocked_sender record
+{% enddoc %}
+{% liquid
+  if id == blank
+    return false
+  endif
+
+  graphql _ = 'modules/support/blocked_senders/delete', id: id
+  return true
+%}

@@ -3,6 +3,8 @@ query (
   $limit: Int = 50
   $id: ID
   $ticket_id: String
+  $contact_id: String
+  $created_at_gte: String
   $kind: String
   $message_id_header: String
   $message_id_headers: [String!]
@@ -14,8 +16,10 @@ query (
     filter: {
       id: { value: $id }
       table: { value: "modules/support/message" }
+      created_at: { gte: $created_at_gte }
       properties: [
         { name: "ticket_id", value: $ticket_id }
+        { name: "contact_id", value: $contact_id }
         { name: "kind", value: $kind }
         { name: "message_id_header", value: $message_id_header, value_in: $message_id_headers }
       ]

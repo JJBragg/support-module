@@ -1,5 +1,5 @@
 {% doc %}
-  Creates the records a fresh install needs: the eight statuses, one
+  Creates the records a fresh install needs: the nine statuses, one
   department, and the settings record.
 
   Idempotent by design. It creates only what is missing and never updates
@@ -22,7 +22,8 @@
   { "key": "waiting_deploy",    "name": "Waiting on deploy",     "kind": "on_hold",  "position": 5, "is_new_default": false, "is_reopen_target": false },
   { "key": "confirmation",      "name": "Confirmation",          "kind": "solved",   "position": 6, "is_new_default": false, "is_reopen_target": false },
   { "key": "on_hold",           "name": "On Hold",               "kind": "on_hold",  "position": 7, "is_new_default": false, "is_reopen_target": false },
-  { "key": "closed",            "name": "Closed",                "kind": "closed",   "position": 8, "is_new_default": false, "is_reopen_target": false }
+  { "key": "closed",            "name": "Closed",                "kind": "closed",   "position": 8, "is_new_default": false, "is_reopen_target": false },
+  { "key": "spam",              "name": "Spam",                  "kind": "closed",   "position": 9, "is_new_default": false, "is_reopen_target": false }
 ] %}
 {% liquid
   assign statuses_created = 0

@@ -1,0 +1,11 @@
+{% doc %}
+  Blocks an address or a domain from opening tickets.
+
+  @param {object} object - value, reason, blocked_by
+{% enddoc %}
+{% liquid
+  function object = 'modules/support/commands/blocked_senders/create/build', object: object
+  function object = 'modules/support/commands/blocked_senders/create/check', object: object
+  function object = 'modules/core/commands/execute', object: object, mutation_name: 'modules/support/blocked_senders/create'
+  return object
+%}

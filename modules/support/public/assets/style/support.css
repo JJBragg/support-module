@@ -576,7 +576,9 @@
 .pos-support-srow { display: grid; padding: 12px 16px; }
 .pos-support-srow-dep { grid-template-columns: 170px minmax(0, 1fr) minmax(0, 1fr) 90px; }
 .pos-support-srow-status { grid-template-columns: 70px minmax(0, 1fr) 250px; }
+.pos-support-srow-block { grid-template-columns: minmax(0, 1fr) 90px minmax(0, 1fr) auto; }
 .pos-support-srowhead.pos-support-srow-status { grid-template-columns: 70px minmax(0, 1fr) 250px; }
+.pos-support-srow-block { grid-template-columns: minmax(0, 1fr) 90px minmax(0, 1fr) auto; }
 
 /* The status type picker. A select rather than a row of buttons: six
  * categories do not fit the column, and a wrapped button row turns the

@@ -48,6 +48,21 @@
       <button type="submit" data-support-noscript>{{ 'modules/support/detail.panel.apply' | t }}</button>
     </form>
 
+    {%- comment -%}
+      Its own form and its own endpoint, not a status in the dropdown.
+      Marking spam also blocks the sender, and an action with a second
+      effect should not hide inside a menu of things that have one.
+    {%- endcomment -%}
+    {%- if spam_status and ticket.status_id != spam_status.id -%}
+      <form class="pos-support-field" method="post" action="/support/tickets/spam">
+        <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+        <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+        <input type="hidden" name="return_to" value="{{ return_to }}">
+        <button class="pos-support-danger-button" type="submit">{{ 'modules/support/detail.panel.mark_spam' | t }}</button>
+        <span class="pos-support-hint-text">{{ 'modules/support/detail.panel.mark_spam_hint' | t: email: contact.email }}</span>
+      </form>
+    {%- endif -%}
+
     <form class="pos-support-field" method="post" action="/support/tickets/update">
       <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
       <input type="hidden" name="ticket_id" value="{{ ticket.id }}">

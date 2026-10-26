@@ -1,0 +1,66 @@
+{%- comment -%}
+  Senders and domains that cannot open a ticket.
+
+  The only screen in this module with a real delete behind it, because a
+  blocklist you can add to but never remove from quietly turns a mistake
+  into a permanent one. Everything else here keeps its history.
+
+  @param {array} blocklist - Every entry, newest first
+{%- endcomment -%}
+<section class="pos-support-section" id="blocklist" aria-labelledby="pos-support-h-bl">
+  <div class="pos-support-section-head">
+    <div>
+      <h2 id="pos-support-h-bl">{{ 'modules/support/settings.blocklist.heading' | t }}</h2>
+      <span>{{ 'modules/support/settings.blocklist.subtitle' | t }}</span>
+    </div>
+    <a class="pos-support-ghost-button" href="#add-blocked">
+      {% render 'modules/support/ui/icon', path: 'M12 5v14M5 12h14', size: 13, stroke: 2.4 %}
+      {{ 'modules/support/settings.blocklist.add' | t }}
+    </a>
+  </div>
+
+  {%- if blocklist == empty -%}
+    <p class="pos-support-notice">{{ 'modules/support/settings.blocklist.empty' | t }}</p>
+  {%- else -%}
+    <ul class="pos-support-rows">
+      {%- for entry in blocklist -%}
+        {%- liquid
+          assign scope_key = 'modules/support/settings.blocklist.scope_' | append: entry.scope
+          assign scope_label = scope_key | t
+        -%}
+        <li>
+          <div class="pos-support-srow pos-support-srow-block">
+            <span class="pos-support-mono">{{ entry.value }}</span>
+            <span class="pos-support-state">{{ scope_label }}</span>
+            <span class="pos-support-hint-text">{{ entry.reason }}</span>
+            <form method="post" action="/support/settings/blocklist">
+              <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+              <input type="hidden" name="op" value="remove">
+              <input type="hidden" name="blocked_id" value="{{ entry.id }}">
+              <button class="pos-support-ghost-button" type="submit">{{ 'modules/support/settings.blocklist.unblock' | t }}</button>
+            </form>
+          </div>
+        </li>
+      {%- endfor -%}
+    </ul>
+  {%- endif -%}
+
+  <span class="pos-support-hint-text">{{ 'modules/support/settings.blocklist.hint' | t }}</span>
+
+  <form class="pos-support-editform pos-support-addform" id="add-blocked" method="post" action="/support/settings/blocklist">
+    <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+    <input type="hidden" name="op" value="create">
+    <span class="pos-support-formlegend">{{ 'modules/support/settings.blocklist.add' | t }}</span>
+    <div class="pos-support-formfield">
+      <label for="bl-value">{{ 'modules/support/settings.blocklist.value' | t }}</label>
+      <input id="bl-value" type="text" name="value" placeholder="{{ 'modules/support/settings.blocklist.value_placeholder' | t }}" required>
+    </div>
+    <div class="pos-support-formfield">
+      <label for="bl-reason">{{ 'modules/support/settings.blocklist.reason' | t }}</label>
+      <input id="bl-reason" type="text" name="reason">
+    </div>
+    <div class="pos-support-formfoot">
+      <button class="pos-support-primary-button" type="submit">{{ 'modules/support/settings.blocklist.add' | t }}</button>
+    </div>
+  </form>
+</section>

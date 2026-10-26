@@ -1,0 +1,24 @@
+{% doc %}
+  @param {object} object - The raw input
+{% enddoc %}
+{% liquid
+  assign value = object.value | default: '' | downcase | strip | remove: '<' | remove: '>'
+
+  comment
+    An entry with an @ in it is one address. Anything else is a domain,
+    and a domain written @example.com or example.com means the same
+    thing to the person typing it, so both are stored the same way.
+  endcomment
+  assign scope = 'domain'
+  if value contains '@'
+    assign at_index = value | split: '@' | first
+    if at_index == blank
+      assign value = value | remove_first: '@'
+    else
+      assign scope = 'email'
+    endif
+  endif
+
+  assign data = { "value": value, "scope": scope, "reason": object.reason, "blocked_by": object.blocked_by }
+  return data
+%}

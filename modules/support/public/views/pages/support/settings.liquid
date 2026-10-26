@@ -28,6 +28,7 @@ metadata:
   function statuses = 'modules/support/queries/statuses/search', kind: null
   function all_agents = 'modules/support/queries/agents/all'
   function last_inbound = 'modules/support/queries/messages/last_inbound'
+  function blocklist = 'modules/support/queries/blocked_senders/all', limit: 200
 
   assign brand = settings.brand_name | default: 'Support'
 
@@ -107,4 +108,5 @@ metadata:
     secret_display: secret_display,
     reveal: reveal
   %}
+  {% render 'modules/support/settings/blocklist', blocklist: blocklist %}
 </main>

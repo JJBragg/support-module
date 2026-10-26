@@ -1,0 +1,36 @@
+# values is how the inbound check asks the question: it hands over the
+# sender's address and its domain together and lets the database answer in
+# one round trip, rather than reading the whole blocklist on every email.
+query (
+  $page: Int = 1
+  $limit: Int = 200
+  $id: ID
+  $value: String
+  $values: [String!]
+  $sort: RecordsSortInput = { created_at: { order: DESC } }
+) {
+  records(
+    page: $page
+    per_page: $limit
+    filter: {
+      id: { value: $id }
+      table: { value: "modules/support/blocked_sender" }
+      properties: [
+        { name: "value", value: $value, value_in: $values }
+      ]
+    }
+    sort: [$sort]
+  ) {
+    total_entries
+    results {
+      id
+      created_at
+      type: table
+
+      value: property(name: "value")
+      scope: property(name: "scope")
+      reason: property(name: "reason")
+      blocked_by: property(name: "blocked_by")
+    }
+  }
+}

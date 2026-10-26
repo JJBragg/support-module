@@ -21,3 +21,5 @@ en:
     invite_email_missing: Enter the email address of the person you want to add.
     invite_no_account: 'There is no account for %{email} on this site yet. Ask them to sign up first, then add them here.'
     invite_already_agent: 'That account already has access to the support queue: %{email}.'
+    blocked_value: does not look like an address or a domain
+    blocked_duplicate: is already blocked

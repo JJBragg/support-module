@@ -1,6 +1,16 @@
 en:
   emails:
     from_email: noreply@platformos.com
+    # The receipt a customer gets when their email becomes a ticket. It
+    # promises nothing about timing, because nothing in the module
+    # measures timing yet, and a promise the software cannot keep is
+    # worse than no promise.
+    acknowledgement:
+      body: |-
+        Thanks for writing in. Your message reached our support team and is now ticket #%{number}.
+
+        If you have anything to add, reply to this email and it will stay on the same ticket. There is nothing else you need to do.
+
     mention:
       subject: '%{subject} (#%{number}): you were mentioned in a note'
       greeting: Hello %{name},
