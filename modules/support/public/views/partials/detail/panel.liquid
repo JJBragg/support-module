@@ -8,7 +8,7 @@
       is Admin only, so these buttons are too, and an agent sees why
       rather than a control that does nothing.
     {%- endcomment -%}
-    <form class="pos-support-field" method="post" action="/support/tickets/update">
+    <form class="pos-support-field" method="post" action="/admin/support/tickets/update">
       <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
       <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
       <input type="hidden" name="return_to" value="{{ return_to }}">
@@ -35,7 +35,7 @@
       {%- endif -%}
     </form>
 
-    <form class="pos-support-field" method="post" action="/support/tickets/update">
+    <form class="pos-support-field" method="post" action="/admin/support/tickets/update">
       <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
       <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
       <input type="hidden" name="return_to" value="{{ return_to }}">
@@ -54,7 +54,7 @@
       effect should not hide inside a menu of things that have one.
     {%- endcomment -%}
     {%- if spam_status and ticket.status_id != spam_status.id -%}
-      <form class="pos-support-field" method="post" action="/support/tickets/spam">
+      <form class="pos-support-field" method="post" action="/admin/support/tickets/spam">
         <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
         <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
         <input type="hidden" name="return_to" value="{{ return_to }}">
@@ -63,7 +63,7 @@
       </form>
     {%- endif -%}
 
-    <form class="pos-support-field" method="post" action="/support/tickets/update">
+    <form class="pos-support-field" method="post" action="/admin/support/tickets/update">
       <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
       <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
       <input type="hidden" name="return_to" value="{{ return_to }}">
@@ -77,7 +77,7 @@
       <button type="submit" data-support-noscript>{{ 'modules/support/detail.panel.apply' | t }}</button>
     </form>
 
-    <form class="pos-support-field" method="post" action="/support/tickets/update">
+    <form class="pos-support-field" method="post" action="/admin/support/tickets/update">
       <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
       <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
       <input type="hidden" name="return_to" value="{{ return_to }}">
@@ -108,7 +108,7 @@
   <div>
     <h2>{{ 'modules/support/detail.panel.other_tickets' | t: count: other_tickets.size }}</h2>
     {%- for other in other_tickets -%}
-      <a class="pos-support-other" href="/support/tickets/{{ other.number }}">
+      <a class="pos-support-other" href="/admin/support/tickets/{{ other.number }}">
         {% render 'modules/support/tags/priority', priority: other.priority_token %}
         <span style="min-width: 0">
           <span class="pos-support-other-subject" title="{{ other.subject }}">{{ other.subject }}</span>

@@ -1,5 +1,5 @@
 ---
-slug: support/tickets/bulk
+slug: admin/support/tickets/bulk
 method: post
 ---
 {%- comment -%}
@@ -19,7 +19,7 @@ method: post
   function current_profile = 'modules/user/helpers/current_profile'
   function statuses = 'modules/support/queries/statuses/search', kind: null
 
-  assign return_to = context.params.return_to | default: '/support'
+  assign return_to = context.params.return_to | default: '/admin/support'
   assign ticket_ids = context.params.ticket_ids
 
   assign assignee_id = context.params.assignee_id

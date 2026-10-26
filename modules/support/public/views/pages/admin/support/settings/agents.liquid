@@ -1,5 +1,5 @@
 ---
-slug: support/settings/agents
+slug: admin/support/settings/agents
 method: post
 ---
 {%- comment -%}
@@ -13,7 +13,7 @@ method: post
   include 'modules/support/helpers/require_permission', do: 'support.settings.manage', entity: null
   # platformos-check-enable DeprecatedTag
 
-  assign return_to = '/support/settings#agents'
+  assign return_to = '/admin/support/settings#agents'
   assign op = context.params.op
 
   if op == 'invite'
@@ -24,7 +24,7 @@ method: post
       function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
     else
       function _ = 'modules/support/helpers/flash_errors', errors: result.errors
-      assign return_to = '/support/settings#add-agent'
+      assign return_to = '/admin/support/settings#add-agent'
     endif
 
   else

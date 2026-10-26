@@ -38,8 +38,8 @@
             <span class="pos-support-srow-value">{{ from_display }}</span>
           </span>
           {%- liquid
-            assign edit_url = '/support/settings?department=' | append: department.id | append: '#departments'
-            assign close_url = '/support/settings#departments'
+            assign edit_url = '/admin/support/settings?department=' | append: department.id | append: '#departments'
+            assign close_url = '/admin/support/settings#departments'
             assign toggle_url = edit_url
             assign toggle_label = 'modules/support/settings.departments.edit' | t
             if department.is_open
@@ -51,7 +51,7 @@
         </div>
 
         {%- if department.is_open -%}
-          <form class="pos-support-editform" method="post" action="/support/settings/departments">
+          <form class="pos-support-editform" method="post" action="/admin/support/settings/departments">
             <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
             <input type="hidden" name="op" value="update">
             <input type="hidden" name="department_id" value="{{ department.id }}">
@@ -87,7 +87,7 @@
     {%- endfor -%}
   </ul>
 
-  <form class="pos-support-editform pos-support-addform" id="add-department" method="post" action="/support/settings/departments">
+  <form class="pos-support-editform pos-support-addform" id="add-department" method="post" action="/admin/support/settings/departments">
     <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
     <input type="hidden" name="op" value="create">
     <span class="pos-support-formlegend">{{ 'modules/support/settings.departments.add' | t }}</span>

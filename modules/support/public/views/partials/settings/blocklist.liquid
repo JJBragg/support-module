@@ -33,7 +33,7 @@
             <span class="pos-support-mono">{{ entry.value }}</span>
             <span class="pos-support-state">{{ scope_label }}</span>
             <span class="pos-support-hint-text">{{ entry.reason }}</span>
-            <form method="post" action="/support/settings/blocklist">
+            <form method="post" action="/admin/support/settings/blocklist">
               <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
               <input type="hidden" name="op" value="remove">
               <input type="hidden" name="blocked_id" value="{{ entry.id }}">
@@ -47,7 +47,7 @@
 
   <span class="pos-support-hint-text">{{ 'modules/support/settings.blocklist.hint' | t }}</span>
 
-  <form class="pos-support-editform pos-support-addform" id="add-blocked" method="post" action="/support/settings/blocklist">
+  <form class="pos-support-editform pos-support-addform" id="add-blocked" method="post" action="/admin/support/settings/blocklist">
     <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
     <input type="hidden" name="op" value="create">
     <span class="pos-support-formlegend">{{ 'modules/support/settings.blocklist.add' | t }}</span>

@@ -36,7 +36,7 @@ or the example app, is the only other place any of it exists.
 | --- | --- |
 | This repo | `~/Desktop/pos-module-support`, git `main`, 32 commits, no remote |
 | Staging instance | <https://support-module.staging.oregon.platform-os.com> |
-| Agent interface | `/support`, board at `/support/board`, settings at `/support/settings` |
+| Agent interface | `/admin/support`, board at `/admin/support/board`, settings at `/admin/support/settings` |
 | Build spec | `~/Desktop/docs:support-module/BUILD-SPEC.md` |
 | Designs | `~/Desktop/docs:support-module:design:/*.dc.html` |
 | Test logins | `.dev-test-accounts.txt`, gitignored, in this directory |
@@ -68,12 +68,12 @@ reopens closed tickets, splits quoted history. All the writes are in one
 transaction. Attachments keep their name and type and lose the file, pending
 the question with the engineers.
 
-**Phase 3, ticket list.** `/support`, on the module's own layout and
+**Phase 3, ticket list.** `/admin/support`, on the module's own layout and
 stylesheet. Filters, counts, grouping, top three per group, bulk actions, and
 drag reordering against a rank shared by the whole team. Filters live in the
 query string. Everything except multi-select works with JavaScript off.
 
-**Phase 4, ticket detail and composer.** `/support/tickets/:number`. The
+**Phase 4, ticket detail and composer.** `/admin/support/tickets/:number`. The
 timeline, private notes with four signals that they are not emailed,
 quoted history behind a disclosure, the properties panel, and the composer
 with send-and-set-status. Replies build real threading headers: a generated
@@ -81,7 +81,7 @@ Message-ID, In-Reply-To, a References chain and `[#n]` in the subject.
 @mentions in a note publish `note_mentioned` and a consumer emails the
 person named.
 
-**Phase 3b, board view.** `/support/board`, one column per status, with the
+**Phase 3b, board view.** `/admin/support/board`, one column per status, with the
 List and Board switch in both headers. Cards sort by priority then by the
 shared work order, and there is no reordering inside a column: a status column
 mixes priorities, so a drag up the column would be asking to reorder two work
@@ -112,7 +112,7 @@ hour before the rest is dropped and logged. A blocklist refuses addresses
 and domains at the door. Spam is a ninth status, closed, and the one
 closed status a customer reply does not reopen.
 
-**Phase 5, settings.** `/support/settings`, Admins only. Departments with
+**Phase 5, settings.** `/admin/support/settings`, Admins only. Departments with
 inline edit, statuses with reorder and an Open / On hold / Closed switch,
 agents with role and per-department access, and the email provider with its
 connection state, a test send, the inbound endpoint URL and the webhook
@@ -149,10 +149,8 @@ switches to the primary colour.
 and split; CCs carried forward, which is a correctness bug today since a
 reply drops everyone who was on the thread; the Needs reply view, now
 that the field exists; the SLA engine; organizations as a table; saved
-replies; search over message bodies. Four decisions are JJ's and Artur's: `/support`
-or `/admin/support`, SendGrid or Postmark, work order or SLA as the
-default sort, and whether a reply to a closed ticket reopens it or opens
-a follow-up.
+replies; search over message bodies. One decision is still open: work
+order or SLA as the default sort once there is an SLA to sort by.
 
 **Opening the provider seam.** Ticket logic already knows nothing about
 the provider: outbound goes through `commands/outbound/send`, inbound
@@ -187,6 +185,11 @@ Recorded here so the next person, and Artur, do not reopen them.
 - **SendGrid is the provider we run on** (2026-10-26, JJ), and partners
   must be able to use their own. The seam is real but it is not open yet:
   see the provider note below.
+- **The agent interface lives under `/admin/support`** (2026-10-26, JJ,
+  confirmed with a platformOS developer as the convention for modules).
+  The inbound webhook stays at `/support/inbound/sendgrid/:token`: it is
+  the provider's URL, not a staff screen, and putting it behind an admin
+  path would be wrong in a way nobody notices until mail stops.
 
 ## Waiting on someone else
 

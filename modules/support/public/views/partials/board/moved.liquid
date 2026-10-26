@@ -14,7 +14,7 @@
 <div class="pos-support-moved" role="status">
   {% render 'modules/support/ui/icon', path: tokens.icons.check, size: 14, stroke: 2.4 %}
   <span class="pos-support-moved-text">{{ 'modules/support/board.moved' | t: number: ticket.number, status: status.name }}</span>
-  <form method="post" action="/support/board/move">
+  <form method="post" action="/admin/support/board/move">
     <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
     <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
     <input type="hidden" name="status_id" value="{{ from_status_id }}">

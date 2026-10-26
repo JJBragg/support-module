@@ -1,5 +1,5 @@
 ---
-slug: support/tickets/:number
+slug: admin/support/tickets/:number
 layout: modules/support/agent
 metadata:
   title: Ticket
@@ -196,8 +196,8 @@ metadata:
   assign composer_mode = context.params.composer | default: 'reply'
 
   assign opened_at = ticket.opened_at | date: '%b %-d, %I:%M %p'
-  assign back_url = '/support'
-  assign return_to = '/support/tickets/' | append: ticket.number
+  assign back_url = '/admin/support'
+  assign return_to = '/admin/support/tickets/' | append: ticket.number
 -%}
 <div class="pos-support-detail">
   {% render 'modules/support/detail/header',

@@ -1,5 +1,5 @@
 ---
-slug: support/settings/departments
+slug: admin/support/settings/departments
 method: post
 ---
 {%- comment -%}
@@ -11,7 +11,7 @@ method: post
   include 'modules/support/helpers/require_permission', do: 'support.settings.manage', entity: null
   # platformos-check-enable DeprecatedTag
 
-  assign return_to = '/support/settings#departments'
+  assign return_to = '/admin/support/settings#departments'
   assign object = { "name": context.params.name, "inbound_address": context.params.inbound_address, "from_address": context.params.from_address, "from_name": context.params.from_name, "signature": context.params.signature }
 
   if context.params.op == 'create'
@@ -21,7 +21,7 @@ method: post
       function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
     else
       function _ = 'modules/support/helpers/flash_errors', errors: result.errors
-      assign return_to = '/support/settings#add-department'
+      assign return_to = '/admin/support/settings#add-department'
     endif
 
   elsif context.params.op == 'update'
@@ -38,7 +38,7 @@ method: post
         function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
       else
         function _ = 'modules/support/helpers/flash_errors', errors: result.errors
-        assign return_to = '/support/settings?department=' | append: department.id | append: '#departments'
+        assign return_to = '/admin/support/settings?department=' | append: department.id | append: '#departments'
       endif
     endif
   endif

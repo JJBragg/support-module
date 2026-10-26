@@ -4,7 +4,7 @@
     assign is_note = true
   endif
 
-  assign ticket_path = '/support/tickets/' | append: ticket.number
+  assign ticket_path = '/admin/support/tickets/' | append: ticket.number
   assign note_path = ticket_path | append: '?composer=note'
 
   assign classes = 'pos-support-composer'
@@ -20,7 +20,7 @@
 -%}
 <div class="pos-support-dock">
   {%- if is_note -%}
-    <form class="{{ classes }}" method="post" action="/support/tickets/note" aria-label="{{ 'modules/support/composer.note_label' | t }}">
+    <form class="{{ classes }}" method="post" action="/admin/support/tickets/note" aria-label="{{ 'modules/support/composer.note_label' | t }}">
       <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
       <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
       <input type="hidden" name="return_to" value="{{ ticket_path }}">
@@ -42,7 +42,7 @@
       </div>
     </form>
   {%- else -%}
-    <form class="{{ classes }}" method="post" action="/support/tickets/reply" aria-label="{{ 'modules/support/composer.reply_label' | t }}">
+    <form class="{{ classes }}" method="post" action="/admin/support/tickets/reply" aria-label="{{ 'modules/support/composer.reply_label' | t }}">
       <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
       <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
       <input type="hidden" name="return_to" value="{{ ticket_path }}">

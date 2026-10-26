@@ -1,5 +1,5 @@
 ---
-slug: support/board/move
+slug: admin/support/board/move
 method: post
 ---
 {%- comment -%}
@@ -30,7 +30,7 @@ method: post
   function statuses = 'modules/support/queries/statuses/search', kind: null
   function ticket = 'modules/support/queries/tickets/find', id: context.params.ticket_id, number: null
 
-  assign return_to = context.params.return_to | default: '/support/board'
+  assign return_to = context.params.return_to | default: '/admin/support/board'
 
   if ticket == blank
     # platformos-check-disable DeprecatedTag

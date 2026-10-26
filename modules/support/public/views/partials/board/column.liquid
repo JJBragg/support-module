@@ -31,7 +31,7 @@
   assign label = 'modules/support/board.column.label' | t: name: status.name, n: count_shown
 -%}
 <section class="{{ classes }}" data-status-id="{{ status.id }}" aria-label="{{ label }}">
-  <form class="pos-support-bcol-toggle" method="post" action="/support/board/columns">
+  <form class="pos-support-bcol-toggle" method="post" action="/admin/support/board/columns">
     <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
     <input type="hidden" name="collapsed" value="{{ column.toggle_value }}">
     <input type="hidden" name="return_to" value="{{ return_to_bare }}">

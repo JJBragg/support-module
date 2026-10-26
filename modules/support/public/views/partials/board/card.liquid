@@ -45,7 +45,7 @@
     {%- endif -%}
   </div>
 
-  <a class="pos-support-bcard-subject" href="/support/tickets/{{ row.number }}" title="{{ row.subject }}">{{ row.subject }}</a>
+  <a class="pos-support-bcard-subject" href="/admin/support/tickets/{{ row.number }}" title="{{ row.subject }}">{{ row.subject }}</a>
 
   <div class="pos-support-bcard-foot">
     {% render 'modules/support/tags/department', department: row.department %}
@@ -55,7 +55,7 @@
   {%- if can_update -%}
     <details class="pos-support-cardmove">
       <summary>{{ 'modules/support/board.card.move' | t }}</summary>
-      <form method="post" action="/support/board/move">
+      <form method="post" action="/admin/support/board/move">
         <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
         <input type="hidden" name="ticket_id" value="{{ row.id }}">
         <input type="hidden" name="return_to" value="{{ return_to }}">

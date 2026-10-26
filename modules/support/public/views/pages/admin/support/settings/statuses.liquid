@@ -1,5 +1,5 @@
 ---
-slug: support/settings/statuses
+slug: admin/support/settings/statuses
 method: post
 ---
 {%- comment -%}
@@ -12,7 +12,7 @@ method: post
   include 'modules/support/helpers/require_permission', do: 'support.settings.manage', entity: null
   # platformos-check-enable DeprecatedTag
 
-  assign return_to = '/support/settings#statuses'
+  assign return_to = '/admin/support/settings#statuses'
   assign op = context.params.op
 
   if op == 'create'
@@ -23,7 +23,7 @@ method: post
       function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
     else
       function _ = 'modules/support/helpers/flash_errors', errors: result.errors
-      assign return_to = '/support/settings#add-status'
+      assign return_to = '/admin/support/settings#add-status'
     endif
 
   elsif op == 'reorder'

@@ -41,7 +41,7 @@
             </td>
             <td class="pos-support-agent-email">{{ agent.email }}</td>
             <td>
-              <form method="post" action="/support/settings/agents">
+              <form method="post" action="/admin/support/settings/agents">
                 <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
                 <input type="hidden" name="op" value="role">
                 <input type="hidden" name="agent_id" value="{{ agent.id }}">
@@ -58,7 +58,7 @@
               {%- if agent.role == 'admin' -%}
                 <span class="pos-support-hint-text">{{ 'modules/support/settings.agents.admin_sees_all' | t }}</span>
               {%- else -%}
-                <form class="pos-support-dept-toggles" method="post" action="/support/settings/agents">
+                <form class="pos-support-dept-toggles" method="post" action="/admin/support/settings/agents">
                   <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
                   <input type="hidden" name="op" value="department">
                   <input type="hidden" name="agent_id" value="{{ agent.id }}">
@@ -89,7 +89,7 @@
 
   <span class="pos-support-hint-text">{{ 'modules/support/settings.agents.hint' | t }}</span>
 
-  <form class="pos-support-editform pos-support-addform" id="add-agent" method="post" action="/support/settings/agents">
+  <form class="pos-support-editform pos-support-addform" id="add-agent" method="post" action="/admin/support/settings/agents">
     <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
     <input type="hidden" name="op" value="invite">
     <span class="pos-support-formlegend">{{ 'modules/support/settings.agents.add' | t }}</span>

@@ -48,7 +48,7 @@
 
   <div class="pos-support-card">
     <div class="pos-support-card-row">
-      <form class="pos-support-formfield" method="post" action="/support/settings/email">
+      <form class="pos-support-formfield" method="post" action="/admin/support/settings/email">
         <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
         <input type="hidden" name="op" value="provider">
         <label for="em-provider">{{ 'modules/support/settings.email.provider' | t }}</label>
@@ -65,7 +65,7 @@
         <span>{{ state_detail }}</span>
       </div>
 
-      <form method="post" action="/support/settings/email">
+      <form method="post" action="/admin/support/settings/email">
         <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
         <input type="hidden" name="op" value="test">
         <button class="pos-support-ghost-button" type="submit">{{ 'modules/support/settings.email.send_test' | t }}</button>
@@ -79,7 +79,7 @@
         {%- if reveal -%}
           <button class="pos-support-ghost-button" type="button" data-support-copy data-copied="{{ 'modules/support/settings.email.copied' | t }}">{{ 'modules/support/settings.email.copy' | t }}</button>
         {%- else -%}
-          <a class="pos-support-ghost-button" href="/support/settings?reveal=1#email">{{ 'modules/support/settings.email.reveal' | t }}</a>
+          <a class="pos-support-ghost-button" href="/admin/support/settings?reveal=1#email">{{ 'modules/support/settings.email.reveal' | t }}</a>
         {%- endif -%}
       </div>
       <span class="pos-support-hint-text">{{ 'modules/support/settings.email.endpoint_hint' | t }}</span>
@@ -90,11 +90,11 @@
       <div class="pos-support-inline">
         <input id="em-secret" class="pos-support-mono" type="text" readonly value="{{ secret_display }}">
         {%- if reveal -%}
-          <a class="pos-support-ghost-button" href="/support/settings#email">{{ 'modules/support/settings.email.hide' | t }}</a>
+          <a class="pos-support-ghost-button" href="/admin/support/settings#email">{{ 'modules/support/settings.email.hide' | t }}</a>
         {%- else -%}
-          <a class="pos-support-ghost-button" href="/support/settings?reveal=1#email">{{ 'modules/support/settings.email.reveal' | t }}</a>
+          <a class="pos-support-ghost-button" href="/admin/support/settings?reveal=1#email">{{ 'modules/support/settings.email.reveal' | t }}</a>
         {%- endif -%}
-        <form method="post" action="/support/settings/email" onsubmit="return confirm('{{ 'modules/support/settings.email.regenerate_confirm' | t }}')">
+        <form method="post" action="/admin/support/settings/email" onsubmit="return confirm('{{ 'modules/support/settings.email.regenerate_confirm' | t }}')">
           <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
           <input type="hidden" name="op" value="regenerate">
           <button class="pos-support-danger-button" type="submit">{{ 'modules/support/settings.email.regenerate' | t }}</button>

@@ -1,5 +1,5 @@
 ---
-slug: support/board/columns
+slug: admin/support/board/columns
 method: post
 ---
 {%- comment -%}
@@ -18,7 +18,7 @@ method: post
 
   function agent = 'modules/support/helpers/current_agent'
 
-  assign return_to = context.params.return_to | default: '/support/board'
+  assign return_to = context.params.return_to | default: '/admin/support/board'
 
   comment
     The form sends the whole list, and the word none when the list is

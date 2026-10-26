@@ -18,7 +18,7 @@
       {%- if grouping_by_priority -%}
         <span>{{ position }}</span>
         {%- if can_rerank -%}
-          <form class="pos-support-move" method="post" action="/support/tickets/move">
+          <form class="pos-support-move" method="post" action="/admin/support/tickets/move">
             <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
             <input type="hidden" name="ticket_id" value="{{ row.id }}">
             <input type="hidden" name="return_to" value="{{ return_to }}">
@@ -34,7 +34,7 @@
   <td class="pos-support-number">#{{ row.number }}</td>
   <td>{% render 'modules/support/tags/department', department: row.department %}</td>
   <td>
-    <a class="pos-support-subject" href="/support/tickets/{{ row.number }}" title="{{ row.subject }}">{{ row.subject }}</a>
+    <a class="pos-support-subject" href="/admin/support/tickets/{{ row.number }}" title="{{ row.subject }}">{{ row.subject }}</a>
   </td>
   <td>
     <div class="pos-support-contact-name">{{ row.contact.name | default: row.contact.email }}</div>

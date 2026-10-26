@@ -1,5 +1,5 @@
 ---
-slug: support/board
+slug: admin/support/board
 layout: modules/support/agent
 metadata:
   title: Support board
@@ -457,7 +457,7 @@ metadata:
     subtitle: subtitle,
     tokens: tokens,
     search_query: context.params.q,
-    base: '/support/board',
+    base: '/admin/support/board',
     screen: 'board'
   %}
   {% render 'modules/support/board/toolbar',
@@ -484,7 +484,7 @@ metadata:
   {% render 'modules/support/board/tabs', columns: prepared_columns, current_column: current_column %}
 
   {%- if can_update -%}
-    <form method="post" action="/support/board/move" data-support-board-move-form hidden>
+    <form method="post" action="/admin/support/board/move" data-support-board-move-form hidden>
       <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
       <input type="hidden" name="ticket_id" value="">
       <input type="hidden" name="status_id" value="">

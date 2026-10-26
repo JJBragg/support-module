@@ -1,5 +1,5 @@
 ---
-slug: support/tickets/reply
+slug: admin/support/tickets/reply
 method: post
 ---
 {%- comment -%}
@@ -25,7 +25,7 @@ method: post
   function statuses = 'modules/support/queries/statuses/search', kind: null
   function ticket = 'modules/support/queries/tickets/find', id: context.params.ticket_id, number: null
 
-  assign return_to = context.params.return_to | default: '/support'
+  assign return_to = context.params.return_to | default: '/admin/support'
 
   if ticket == blank
     # platformos-check-disable DeprecatedTag

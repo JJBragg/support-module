@@ -35,7 +35,7 @@
           <span class="pos-support-sorder">
             <span class="pos-support-sorder-number">{{ forloop.index }}</span>
             <span class="pos-support-sorder-moves">
-              <form method="post" action="/support/settings/statuses">
+              <form method="post" action="/admin/support/settings/statuses">
                 <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
                 <input type="hidden" name="op" value="reorder">
                 <input type="hidden" name="status_id" value="{{ status.id }}">
@@ -49,7 +49,7 @@
             </span>
           </span>
 
-          <form class="pos-support-status-name" method="post" action="/support/settings/statuses">
+          <form class="pos-support-status-name" method="post" action="/admin/support/settings/statuses">
             <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
             <input type="hidden" name="op" value="rename">
             <input type="hidden" name="status_id" value="{{ status.id }}">
@@ -78,7 +78,7 @@
             wall. The script submits it on change and hides the Apply
             button, which is there for anyone without one.
           {%- endcomment -%}
-          <form class="pos-support-kindpick" method="post" action="/support/settings/statuses">
+          <form class="pos-support-kindpick" method="post" action="/admin/support/settings/statuses">
             <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
             <input type="hidden" name="op" value="kind">
             <input type="hidden" name="status_id" value="{{ status.id }}">
@@ -98,7 +98,7 @@
 
   <span class="pos-support-hint-text">{{ 'modules/support/settings.statuses.hint' | t }}</span>
 
-  <form class="pos-support-editform pos-support-addform" id="add-status" method="post" action="/support/settings/statuses">
+  <form class="pos-support-editform pos-support-addform" id="add-status" method="post" action="/admin/support/settings/statuses">
     <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
     <input type="hidden" name="op" value="create">
     <span class="pos-support-formlegend">{{ 'modules/support/settings.statuses.add' | t }}</span>

@@ -18,13 +18,13 @@
   @param {string} [url] - Where to go. Defaults to the queue
 {% enddoc %}
 {% liquid
-  assign target = url | default: '/support'
+  assign target = url | default: '/admin/support'
 
   assign leading = target | slice: 0, 1
   assign protocol_relative = target | slice: 0, 2
 
   if leading != '/' or protocol_relative == '//'
-    assign target = '/support'
+    assign target = '/admin/support'
   endif
 
   redirect_to target

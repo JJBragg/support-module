@@ -3,7 +3,7 @@
   JavaScript the checkboxes do nothing, which is the one place in this
   screen that needs it: reordering, filtering and search all work without.
 {%- endcomment -%}
-<form class="pos-support-bulk" id="pos-support-bulk-form" method="post" action="/support/tickets/bulk" data-support-bulk aria-label="{{ 'modules/support/list.bulk.region' | t }}" hidden>
+<form class="pos-support-bulk" id="pos-support-bulk-form" method="post" action="/admin/support/tickets/bulk" data-support-bulk aria-label="{{ 'modules/support/list.bulk.region' | t }}" hidden>
   <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
   <input type="hidden" name="return_to" value="{{ return_to }}">
   {%- comment -%}

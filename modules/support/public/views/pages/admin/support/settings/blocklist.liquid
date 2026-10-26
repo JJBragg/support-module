@@ -1,5 +1,5 @@
 ---
-slug: support/settings/blocklist
+slug: admin/support/settings/blocklist
 method: post
 ---
 {%- comment -%}
@@ -13,7 +13,7 @@ method: post
 
   function current_profile = 'modules/user/helpers/current_profile'
 
-  assign return_to = '/support/settings#blocklist'
+  assign return_to = '/admin/support/settings#blocklist'
   assign op = context.params.op
 
   if op == 'create'
@@ -24,7 +24,7 @@ method: post
       function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
     else
       function _ = 'modules/support/helpers/flash_errors', errors: result.errors
-      assign return_to = '/support/settings#add-blocked'
+      assign return_to = '/admin/support/settings#add-blocked'
     endif
 
   elsif op == 'remove'

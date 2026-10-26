@@ -10,7 +10,7 @@
   endif
 -%}
 {%- if can_rerank -%}
-  <form method="post" action="/support/tickets/move" data-support-move-form hidden>
+  <form method="post" action="/admin/support/tickets/move" data-support-move-form hidden>
     <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
     <input type="hidden" name="ticket_id" value="">
     <input type="hidden" name="priority" value="">

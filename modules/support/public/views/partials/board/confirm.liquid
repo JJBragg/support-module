@@ -19,7 +19,7 @@
     <p>{{ 'modules/support/board.confirm.body' | t: status: reopen_name }}</p>
     <div class="pos-support-dialog-actions">
       <a class="pos-support-ghost-button" href="{{ cancel_url }}">{{ 'modules/support/board.confirm.cancel' | t }}</a>
-      <form method="post" action="/support/board/move">
+      <form method="post" action="/admin/support/board/move">
         <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
         <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
         <input type="hidden" name="status_id" value="{{ status.id }}">

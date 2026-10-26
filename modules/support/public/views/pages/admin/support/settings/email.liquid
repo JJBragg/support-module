@@ -1,5 +1,5 @@
 ---
-slug: support/settings/email
+slug: admin/support/settings/email
 method: post
 ---
 {%- comment -%}
@@ -19,7 +19,7 @@ method: post
   function current_profile = 'modules/user/helpers/current_profile'
   function settings = 'modules/support/queries/settings/get'
 
-  assign return_to = '/support/settings#email'
+  assign return_to = '/admin/support/settings#email'
   assign op = context.params.op
 
   if op == 'provider'
@@ -37,7 +37,7 @@ method: post
     if secret
       assign message = 'modules/support/settings.flash.secret_regenerated' | t
       function _ = 'modules/support/helpers/flash', message: message, severity: 'success'
-      assign return_to = '/support/settings?reveal=1#email'
+      assign return_to = '/admin/support/settings?reveal=1#email'
     else
       assign message = 'modules/support/settings.flash.secret_failed' | t
       function _ = 'modules/support/helpers/flash', message: message, severity: 'error'

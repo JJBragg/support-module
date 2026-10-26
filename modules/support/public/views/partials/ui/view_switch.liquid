@@ -10,8 +10,8 @@
   @param {string} current - list or board
 {%- endcomment -%}
 {%- liquid
-  function url_list = 'modules/support/helpers/ui/queue_url', base: '/support', overrides: { "collapsed": "", "column": "" }
-  function url_board = 'modules/support/helpers/ui/queue_url', base: '/support/board', overrides: { "collapsed": "", "group": "", "expand": "", "status": "" }
+  function url_list = 'modules/support/helpers/ui/queue_url', base: '/admin/support', overrides: { "collapsed": "", "column": "" }
+  function url_board = 'modules/support/helpers/ui/queue_url', base: '/admin/support/board', overrides: { "collapsed": "", "group": "", "expand": "", "status": "" }
 -%}
 <div class="pos-support-segment" role="group" aria-label="{{ 'modules/support/board.switch.label' | t }}">
   {%- if current == 'board' -%}

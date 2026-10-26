@@ -18,11 +18,11 @@
   @param {string} [base] - The screen to link to; defaults to the current one
 {% enddoc %}
 {% liquid
-  assign board_path = '/support/board'
+  assign board_path = '/admin/support/board'
 
   assign screen = base
   if screen == blank
-    assign screen = '/support'
+    assign screen = '/admin/support'
     if context.location.pathname == board_path
       assign screen = board_path
     endif
