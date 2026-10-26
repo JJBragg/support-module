@@ -1,8 +1,15 @@
 {%- comment -%}
-  Two different refusals wear the same 403. Someone with no agent record
-  cannot reach support at all and needs to be added. An agent who walked
-  into an Admin screen has access to support and needs to know it is this
-  screen that is closed, not the whole queue.
+  Three different refusals wear the same 403, and telling someone the
+  wrong one sends them to argue with the wrong person.
+
+  Someone with no agent record cannot reach support at all and needs to
+  be added. An agent who walked into an Admin screen has access to
+  support and needs to know it is this screen that is shut. An agent
+  looking at a ticket in a department they do not cover is not being told
+  about settings at all, which is what the middle message used to say to
+  them.
+
+  @param {object} [forbidden_entity] - The ticket it was asked about, if any
 {%- endcomment -%}
 {%- liquid
   function agent = 'modules/support/helpers/current_agent'
@@ -10,6 +17,13 @@
   if agent == blank
     assign title = 'modules/support/authorization.forbidden_title' | t
     assign body = 'modules/support/authorization.forbidden_body' | t
+  elsif forbidden_entity != blank
+    comment
+      There was a ticket in hand and the agent still failed the check, so
+      the only thing it can be is the department.
+    endcomment
+    assign title = 'modules/support/authorization.department_title' | t
+    assign body = 'modules/support/authorization.department_body' | t
   else
     assign title = 'modules/support/authorization.admin_only_title' | t
     assign body = 'modules/support/authorization.admin_only_body' | t

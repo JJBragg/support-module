@@ -28,9 +28,15 @@
       redirect_to '/sessions/new'
       break
     else
+      comment
+        The ticket is handed over explicitly rather than left to the
+        shared scope an include happens to give, so the page can say
+        which of the three refusals this is instead of guessing from
+        what it can see.
+      endcomment
       response_status 403
       # platformos-check-disable DeprecatedTag
-      include 'modules/support/authorization/forbidden'
+      include 'modules/support/authorization/forbidden', forbidden_entity: entity
       # platformos-check-enable DeprecatedTag
       break
     endif

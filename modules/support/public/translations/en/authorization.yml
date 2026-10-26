@@ -5,3 +5,7 @@ en:
     forbidden_body: Your account does not have access to the support queue. Ask a support Admin to add you as an agent.
     admin_only_title: Admins only
     admin_only_body: This screen is for support Admins. Your agent account can work the queue, but not change how it is set up.
+    department_title: Not one of your departments
+    department_body: This ticket belongs to a department your account does not cover. Ask a support Admin if you need access to it.
+    no_departments_title: No departments yet
+    no_departments_body: Your account has no departments, so there is nothing for you to see here. Ask a support Admin to give you one.

@@ -20,7 +20,6 @@ en:
     then_keep: Send, keep the status
     then_set: Send and set %{status}
     send: Send
-    sent_one: Reply sent
     note_added: Note added
     note_added_mentions:
       one: Note added, 1 agent notified

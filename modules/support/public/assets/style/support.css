@@ -415,8 +415,7 @@
   background: var(--bg); font-weight: 700; font-size: 12px;
 }
 .pos-support-hint-text { color: var(--mut); font-size: 11.5px; }
-.pos-support-panel select,
-.pos-support-panel-button {
+.pos-support-panel select {
   width: 100%; height: 32px; padding: 0 8px;
   border: 1px solid var(--bd); border-radius: 6px;
   background: var(--bg); text-align: left;

@@ -17,7 +17,6 @@ en:
       show_quoted:
         one: Show quoted text, 1 earlier message
         other: Show quoted text, %{count} earlier messages
-      hide_quoted: Hide quoted text
       attachment_not_stored: name only, file not stored
       show_headers: Show original headers
       automatic: Automatic receipt

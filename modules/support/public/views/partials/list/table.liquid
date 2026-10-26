@@ -98,7 +98,10 @@
 
   {%- if shown_total == 0 -%}
     <div class="pos-support-empty">
-      {%- if count_all == 0 -%}
+      {%- if no_departments -%}
+        <div class="pos-support-empty-title">{{ 'modules/support/authorization.no_departments_title' | t }}</div>
+        <div class="pos-support-empty-body">{{ 'modules/support/authorization.no_departments_body' | t }}</div>
+      {%- elsif count_all == 0 -%}
         <div class="pos-support-empty-title">{{ 'modules/support/list.empty.caught_up_title' | t }}</div>
         <div class="pos-support-empty-body">{{ 'modules/support/list.empty.caught_up_body' | t }}</div>
       {%- else -%}

@@ -14,11 +14,14 @@
   function previous = 'modules/support/queries/statuses/find', id: ticket.status_id
 
   comment
-    closed_at is passed as null deliberately. record_update treats a null
-    argument as "clear this property", which is exactly what reopening
-    means here.
+    Through the same helper every other status change uses, so that a
+    reopened ticket forgets both stamps rather than one. Naming only
+    closed_at here left solved_at alone, which meant a ticket that went
+    Confirmation, Closed, then reopened by a customer still claimed to
+    have been solved at a time it was now very much not.
   endcomment
-  graphql updated = 'modules/support/tickets/set_status', id: ticket.id, status_id: target.id, closed_at: null
+  function stamps = 'modules/support/helpers/status/stamps', status: target
+  graphql updated = 'modules/support/tickets/set_status', id: ticket.id, status_id: target.id, closed_at: stamps.closed_at, solved_at: stamps.solved_at
 
   assign activity = { "ticket_id": ticket.id, "actor_id": null, "action": "reopened", "from_value": previous.name, "to_value": target.name }
   function _ = 'modules/support/commands/activities/create', object: activity

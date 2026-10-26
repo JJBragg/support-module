@@ -48,10 +48,22 @@ metadata:
   function contacts = 'modules/support/queries/contacts/by_ids', ids: contact_ids
 
   assign status_by_id = {}
+  comment
+    The sidebar lists only the statuses a ticket in this queue can be in.
+    The queue holds nothing closed, so a closed status there could never
+    read anything but zero, and clicking it would land on "Nothing in
+    this view", which reads like a broken filter rather than an empty
+    one. The board is where closed tickets are reached, behind Show
+    Closed.
+  endcomment
+  assign sidebar_statuses = []
   for status in statuses
     assign token = tokens.statuses[status.key] | default: tokens.status_fallback
     assign status.token = token
     assign status_by_id[status.id] = status
+    unless status.kind == 'closed'
+      assign sidebar_statuses = sidebar_statuses | array_add: status
+    endunless
   endfor
 
   assign department_by_id = {}
@@ -319,6 +331,16 @@ metadata:
   assign brand = settings.brand_name | default: 'Support'
 
   comment
+    An agent with no departments sees an empty queue for a reason that
+    has nothing to do with being on top of the work, and "All caught up"
+    is the wrong congratulations.
+  endcomment
+  assign no_departments = false
+  if agent != blank and agent.role != 'admin' and agent.department_ids == blank
+    assign no_departments = true
+  endif
+
+  comment
     Where the POST endpoints send the agent back to. A path, not a full
     URL: helpers/redirect_back refuses anything that is not a path on this
     site, so that a crafted form field cannot become an open redirect.
@@ -328,7 +350,7 @@ metadata:
 {% render 'modules/support/list/sidebar',
   brand: brand,
   tokens: tokens,
-  statuses: statuses,
+  statuses: sidebar_statuses,
   departments: departments,
   status_counts: status_counts,
   department_counts: department_counts,
@@ -369,6 +391,7 @@ metadata:
     can_rerank: can_rerank,
     shown_total: shown_total,
     count_all: count_all,
+    no_departments: no_departments,
     return_to: return_to
   %}
 </main>

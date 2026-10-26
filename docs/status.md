@@ -2,7 +2,7 @@
 
 Living file. Update it at the end of a working session, do not date it.
 
-Last updated 2026-10-26.
+Last updated 2026-10-26, after a full QA pass.
 
 ## The short version
 
@@ -186,6 +186,9 @@ known limits want writing into the README.
   without JavaScript. Drag is a Phase 6 nicety.
 - **Inbound attachments keep their name and type and lose the file**,
   pending the question with the engineers.
+- **The list has no route to closed tickets.** The sidebar used to list
+  Closed, which could only ever read zero, and that is gone. The board has
+  Show Closed; the list wants the same treatment.
 - **Over the hourly limit, inbound mail is dropped rather than stored.**
   That does lose email, and it is the lesser of two evils: twenty an hour
   from one sender is a loop, and recording ten thousand copies is worse
@@ -228,6 +231,11 @@ and in commit messages. The short list:
   Assign to a different name.
 - `pos-cli` cannot prompt for a 2FA code when it has no terminal. Pass
   `--otp-code`; the session then lasts eight hours.
+- `comment x endcomment` on one line inside `{% liquid %}` is "comment tag
+  was never closed". Use `#`.
+- A `capture` block escapes what is echoed into it, so building test data
+  that way quietly double escapes it. It cost half an hour of chasing an
+  XSS bug that was in the test, not the page.
 - YAML reads an unquoted hash after a space as a comment, so
   `title: Close #%{number}?` silently becomes `Close`. Ticket numbers are
   written with a hash all over this interface. Quote any value with one in it.
