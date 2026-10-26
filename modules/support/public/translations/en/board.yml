@@ -1,0 +1,32 @@
+en:
+  board:
+    switch:
+      label: Layout
+      list: List
+      board: Board
+    show_closed: Show Closed
+    hint: Drag a card to another column to change its status. Cards sort by priority, then work order.
+    moved: '#%{number} moved to %{status}.'
+    undo: Undo
+    no_columns_title: No statuses yet
+    no_columns_body: The board draws one column per status. Add a status in Settings and it will appear here.
+    column:
+      # n rather than count: t reserves count for pluralisation and insists
+      # it be a number, and a capped column reports its count as 50+.
+      label: '%{name}, %{n} tickets'
+      collapse: Collapse %{name}
+      expand: Expand %{name}
+      empty: Drop a ticket here
+      empty_closed: No closed tickets in this view
+      capped: 'Showing the %{n} most recently closed.'
+    card:
+      assigned_to: Assigned to %{name}
+      place_title: Place in line within %{key}
+      move: Move
+      move_label: Move ticket %{number} to another status
+      move_submit: Move
+    confirm:
+      title: Close #%{number}?
+      body: The ticket leaves the queue. If the customer replies, it reopens to %{status}.
+      cancel: Cancel
+      submit: Close ticket

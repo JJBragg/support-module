@@ -32,6 +32,7 @@ query (
       role: property(name: "role")
       department_ids: property_array(name: "department_ids")
       title: property(name: "title")
+      board_collapsed: property(name: "board_collapsed")
     }
   }
 }

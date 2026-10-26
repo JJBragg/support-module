@@ -41,13 +41,13 @@
         unless group.is_collapsed
           assign collapsed_now = group.key
         endunless
-        function url_toggle = 'modules/support/helpers/ui/list_url', overrides: { "collapsed": collapsed_now }
+        function url_toggle = 'modules/support/helpers/ui/queue_url', overrides: { "collapsed": collapsed_now }
 
         assign expand_now = group.key
         if group.is_expanded
           assign expand_now = ''
         endif
-        function url_more = 'modules/support/helpers/ui/list_url', overrides: { "expand": expand_now }
+        function url_more = 'modules/support/helpers/ui/queue_url', overrides: { "expand": expand_now }
 
         assign more_label = 'modules/support/list.group.see_all' | t: count: group.total
         if group.is_expanded

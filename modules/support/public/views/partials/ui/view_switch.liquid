@@ -1,0 +1,36 @@
+{%- comment -%}
+  List or Board. The same queue, two shapes.
+
+  Switching carries the filters the other screen understands and drops the
+  rest: the list's grouping means nothing on the board, and the board's
+  collapsed columns mean nothing in the list. queue_url does that sorting
+  out, which is why each side is built with the other screen as its base.
+
+  @param {object} tokens - The visual vocabulary
+  @param {string} current - list or board
+{%- endcomment -%}
+{%- liquid
+  function url_list = 'modules/support/helpers/ui/queue_url', base: '/support', overrides: { "collapsed": "", "column": "" }
+  function url_board = 'modules/support/helpers/ui/queue_url', base: '/support/board', overrides: { "collapsed": "", "group": "", "expand": "", "status": "" }
+-%}
+<div class="pos-support-segment" role="group" aria-label="{{ 'modules/support/board.switch.label' | t }}">
+  {%- if current == 'board' -%}
+    <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_list }}">
+      {% render 'modules/support/ui/icon', path: tokens.icons.list, size: 13, stroke: 2.2 %}
+      <span>{{ 'modules/support/board.switch.list' | t }}</span>
+    </a>
+    <span class="pos-support-navitem" style="height: 28px; width: auto" aria-current="page">
+      {% render 'modules/support/ui/icon', path: tokens.icons.board, size: 13, stroke: 2.2 %}
+      <span>{{ 'modules/support/board.switch.board' | t }}</span>
+    </span>
+  {%- else -%}
+    <span class="pos-support-navitem" style="height: 28px; width: auto" aria-current="page">
+      {% render 'modules/support/ui/icon', path: tokens.icons.list, size: 13, stroke: 2.2 %}
+      <span>{{ 'modules/support/board.switch.list' | t }}</span>
+    </span>
+    <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_board }}">
+      {% render 'modules/support/ui/icon', path: tokens.icons.board, size: 13, stroke: 2.2 %}
+      <span>{{ 'modules/support/board.switch.board' | t }}</span>
+    </a>
+  {%- endif -%}
+</div>

@@ -1,3 +1,10 @@
+{%- comment -%}
+  The queue sidebar, on both the list and the board.
+
+  The board leaves the Status section out: its columns are the statuses,
+  so a second set of status filters beside them would be two controls for
+  one thing, pointing in different directions.
+{%- endcomment -%}
 {%- liquid
   assign profile_name = current_profile.name | default: current_profile.email
   assign first_initial = current_profile.first_name | slice: 0, 1
@@ -7,9 +14,9 @@
     assign viewer_initials = profile_name | slice: 0, 2 | upcase
   endif
 
-  function url_mine = 'modules/support/helpers/ui/list_url', overrides: { "view": "mine", "status": "", "department": "", "expand": "", "collapsed": "" }
-  function url_unassigned = 'modules/support/helpers/ui/list_url', overrides: { "view": "unassigned", "status": "", "department": "", "expand": "", "collapsed": "" }
-  function url_all = 'modules/support/helpers/ui/list_url', overrides: { "view": "all", "status": "", "department": "", "expand": "", "collapsed": "" }
+  function url_mine = 'modules/support/helpers/ui/queue_url', overrides: { "view": "mine", "status": "", "department": "", "expand": "", "collapsed": "" }
+  function url_unassigned = 'modules/support/helpers/ui/queue_url', overrides: { "view": "unassigned", "status": "", "department": "", "expand": "", "collapsed": "" }
+  function url_all = 'modules/support/helpers/ui/queue_url', overrides: { "view": "all", "status": "", "department": "", "expand": "", "collapsed": "" }
 -%}
 <nav class="pos-support-nav" aria-label="{{ 'modules/support/list.nav.queues' | t }}">
   <div class="pos-support-brand">
@@ -37,6 +44,7 @@
     </a>
   </div>
 
+  {%- if show_statuses -%}
   <div class="pos-support-group">
     <div class="pos-support-group-label">{{ 'modules/support/list.nav.status' | t }}</div>
     {%- for status in statuses -%}
@@ -50,7 +58,7 @@
         if is_on
           assign next_status = ''
         endif
-        function url_status = 'modules/support/helpers/ui/list_url', overrides: { "status": next_status, "expand": "", "collapsed": "" }
+        function url_status = 'modules/support/helpers/ui/queue_url', overrides: { "status": next_status, "expand": "", "collapsed": "" }
         assign count = status_counts[status.key] | default: 0
       -%}
       <a class="pos-support-navitem" href="{{ url_status }}" {% if is_on %}aria-current="true"{% endif %}>
@@ -60,6 +68,7 @@
       </a>
     {%- endfor -%}
   </div>
+  {%- endif -%}
 
   <div class="pos-support-group">
     <div class="pos-support-group-label">{{ 'modules/support/list.nav.departments' | t }}</div>
@@ -74,7 +83,7 @@
         if is_on
           assign next_department = ''
         endif
-        function url_department = 'modules/support/helpers/ui/list_url', overrides: { "department": next_department, "view": "all", "expand": "", "collapsed": "" }
+        function url_department = 'modules/support/helpers/ui/queue_url', overrides: { "department": next_department, "view": "all", "expand": "", "collapsed": "" }
         assign count = department_counts[department.slug] | default: 0
       -%}
       <a class="pos-support-navitem" href="{{ url_department }}" {% if is_on %}aria-current="true"{% endif %}>

@@ -323,7 +323,7 @@ metadata:
     URL: helpers/redirect_back refuses anything that is not a path on this
     site, so that a crafted form field cannot become an open redirect.
   endcomment
-  function return_to = 'modules/support/helpers/ui/list_url', overrides: {}
+  function return_to = 'modules/support/helpers/ui/queue_url', overrides: {}
 -%}
 {% render 'modules/support/list/sidebar',
   brand: brand,
@@ -339,14 +339,17 @@ metadata:
   status_filter: status_filter,
   department_filter: department_filter,
   can_manage_settings: can_manage_settings,
-  current_profile: current_profile
+  current_profile: current_profile,
+  show_statuses: true
 %}
 <main class="pos-support-main">
   {% render 'modules/support/list/header',
     heading: heading,
     subtitle: subtitle,
     tokens: tokens,
-    search_query: context.params.q
+    search_query: context.params.q,
+    base: '/support',
+    screen: 'list'
   %}
   {% render 'modules/support/list/toolbar',
     tokens: tokens,

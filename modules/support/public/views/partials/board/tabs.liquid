@@ -1,0 +1,27 @@
+{%- comment -%}
+  The phone's status tabs. Hidden by CSS above phone width, where all the
+  columns are on screen at once and there is nothing to choose between.
+
+  Links, so the one column on screen is part of the URL like every other
+  filter, and so this works before any script has run.
+
+  @param {array} columns - Every shown column
+  @param {string} current_column - The status key on screen
+{%- endcomment -%}
+<div class="pos-support-btabs" role="group" aria-label="{{ 'modules/support/list.nav.status' | t }}">
+  {%- for column in columns -%}
+    {%- liquid
+      assign status = column.status
+      function url_column = 'modules/support/helpers/ui/queue_url', overrides: { "column": status.key }
+      assign is_on = false
+      if current_column == status.key
+        assign is_on = true
+      endif
+    -%}
+    <a class="pos-support-btab" href="{{ url_column }}" aria-pressed="{{ is_on }}">
+      <span style="color: {{ status.token.fg }}; display: flex">{% render 'modules/support/ui/icon', path: status.token.icon, size: 13, stroke: 2.4 %}</span>
+      <span>{{ status.name }}</span>
+      <span class="pos-support-count">{{ column.count }}</span>
+    </a>
+  {%- endfor -%}
+</div>

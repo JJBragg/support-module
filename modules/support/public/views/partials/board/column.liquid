@@ -1,0 +1,83 @@
+{%- comment -%}
+  One status column.
+
+  Collapsing is a form rather than a link because it is remembered on the
+  agent record, which is a write. It still works with JavaScript off, and
+  it still ends up in the URL afterwards, so a collapsed board can be
+  linked to as well as remembered.
+
+  @param {object} column - status, cards, count, is_collapsed, toggle_value, is_current, is_capped
+  @param {object} tokens - The visual vocabulary
+  @param {array} statuses - Every status, for each card's Move to menu
+  @param {string} return_to - Where a move posts back to
+  @param {string} return_to_bare - The board URL without the collapsed filter
+  @param {boolean} can_update - Whether this agent may change a status
+{%- endcomment -%}
+{%- liquid
+  assign status = column.status
+  assign classes = 'pos-support-bcol'
+  if column.is_collapsed
+    assign classes = classes | append: ' is-collapsed'
+  endif
+  if column.is_current
+    assign classes = classes | append: ' is-current'
+  endif
+
+  assign count_shown = column.count
+  if column.is_capped
+    assign count_shown = column.count | append: '+'
+  endif
+
+  assign label = 'modules/support/board.column.label' | t: name: status.name, n: count_shown
+-%}
+<section class="{{ classes }}" data-status-id="{{ status.id }}" aria-label="{{ label }}">
+  <form class="pos-support-bcol-toggle" method="post" action="/support/board/columns">
+    <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+    <input type="hidden" name="collapsed" value="{{ column.toggle_value }}">
+    <input type="hidden" name="return_to" value="{{ return_to_bare }}">
+
+    {%- if column.is_collapsed -%}
+      <button type="submit" class="pos-support-bcol-strip" aria-expanded="false" aria-label="{{ 'modules/support/board.column.expand' | t: name: status.name }}">
+        <span class="pos-support-bcol-icon" aria-hidden="true" style="background: {{ status.token.bg }}; color: {{ status.token.fg }}">{% render 'modules/support/ui/icon', path: status.token.icon, size: 12, stroke: 2.4 %}</span>
+        <span class="pos-support-bcol-count">{{ count_shown }}</span>
+        <span class="pos-support-bcol-vertical">{{ status.name }}</span>
+      </button>
+    {%- else -%}
+      <div class="pos-support-bcol-head">
+        <span class="pos-support-bcol-icon" aria-hidden="true" style="background: {{ status.token.bg }}; color: {{ status.token.fg }}">{% render 'modules/support/ui/icon', path: status.token.icon, size: 12, stroke: 2.4 %}</span>
+        <h2>{{ status.name }}</h2>
+        <span class="pos-support-bcol-count">{{ count_shown }}</span>
+        <button type="submit" class="pos-support-bcol-button" aria-expanded="true" aria-label="{{ 'modules/support/board.column.collapse' | t: name: status.name }}">
+          {% render 'modules/support/ui/icon', path: tokens.icons.collapse, size: 13, stroke: 2.4 %}
+        </button>
+      </div>
+    {%- endif -%}
+  </form>
+
+  {%- unless column.is_collapsed -%}
+    <ul class="pos-support-bcol-cards">
+      {%- for row in column.cards -%}
+        {% render 'modules/support/board/card',
+          row: row,
+          statuses: statuses,
+          return_to: return_to,
+          can_update: can_update
+        %}
+      {%- endfor -%}
+
+      {%- if column.cards == empty -%}
+        <li class="pos-support-bempty">
+          {%- if status.kind == 'closed' -%}
+            {{ 'modules/support/board.column.empty_closed' | t }}
+          {%- else -%}
+            {{ 'modules/support/board.column.empty' | t }}
+          {%- endif -%}
+        </li>
+      {%- endif -%}
+
+      {%- if column.is_capped -%}
+        <li class="pos-support-bcapped">{{ 'modules/support/board.column.capped' | t: n: column.count }}</li>
+      {%- endif -%}
+    </ul>
+  {%- endunless -%}
+</section>

@@ -1,0 +1,26 @@
+{%- comment -%}
+  What just happened, and the way back out of it.
+
+  Read off the URL rather than the flash, because it needs a form in it
+  and a flash message is one escaped string. It also means the banner
+  survives the redirect without a session write.
+
+  @param {object} ticket - The ticket that moved
+  @param {object} status - The status it is in now
+  @param {string} from_status_id - The status it was in
+  @param {object} tokens - The visual vocabulary
+  @param {string} return_to - Where Undo posts back to
+{%- endcomment -%}
+<div class="pos-support-moved" role="status">
+  {% render 'modules/support/ui/icon', path: tokens.icons.check, size: 14, stroke: 2.4 %}
+  <span class="pos-support-moved-text">{{ 'modules/support/board.moved' | t: number: ticket.number, status: status.name }}</span>
+  <form method="post" action="/support/board/move">
+    <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+    <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+    <input type="hidden" name="status_id" value="{{ from_status_id }}">
+    <input type="hidden" name="return_to" value="{{ return_to }}">
+    <input type="hidden" name="undo" value="1">
+    <input type="hidden" name="confirmed" value="1">
+    <button type="submit" class="pos-support-ghost-button">{{ 'modules/support/board.undo' | t }}</button>
+  </form>
+</div>

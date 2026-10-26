@@ -1,0 +1,32 @@
+{%- comment -%}
+  Closing a ticket is asked about, not just done.
+
+  Server side rather than a dialog the script opens, so the keyboard and
+  no JavaScript paths get the same question the drag does. The board
+  renders this when the move endpoint sends the agent back with a ticket
+  and a target status instead of a change.
+
+  @param {object} ticket - The ticket about to be closed
+  @param {object} status - The closed status it would move to
+  @param {string} reopen_name - The status a customer reply reopens it to
+  @param {string} cancel_url - The board without this question on it
+  @param {string} return_to - Where confirming posts back to
+{%- endcomment -%}
+<div class="pos-support-modal">
+  <div class="pos-support-dialog" role="dialog" aria-modal="true" aria-labelledby="pos-support-confirm-title">
+    <h2 id="pos-support-confirm-title">{{ 'modules/support/board.confirm.title' | t: number: ticket.number }}</h2>
+    <p class="pos-support-dialog-sub">{{ ticket.subject }}</p>
+    <p>{{ 'modules/support/board.confirm.body' | t: status: reopen_name }}</p>
+    <div class="pos-support-dialog-actions">
+      <a class="pos-support-ghost-button" href="{{ cancel_url }}">{{ 'modules/support/board.confirm.cancel' | t }}</a>
+      <form method="post" action="/support/board/move">
+        <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+        <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+        <input type="hidden" name="status_id" value="{{ status.id }}">
+        <input type="hidden" name="return_to" value="{{ return_to }}">
+        <input type="hidden" name="confirmed" value="1">
+        <button type="submit" class="pos-support-primary-button">{{ 'modules/support/board.confirm.submit' | t }}</button>
+      </form>
+    </div>
+  </div>
+</div>

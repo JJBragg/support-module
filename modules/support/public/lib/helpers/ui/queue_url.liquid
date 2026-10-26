@@ -1,0 +1,59 @@
+{% doc %}
+  A URL for the queue screen the agent is on, list or board, with some
+  filters changed and the rest kept.
+
+  Every filter lives in the query string rather than in a session, so a
+  view can be linked to, opened in a second tab and shared with the agent
+  sitting next to you. Pass an empty string to drop a filter.
+
+  The two screens carry different filters. The list groups rows and
+  collapses groups; the board collapses columns, shows or hides Closed
+  and, on a phone, names the one column on screen. Which set is in play is
+  read off the path, so the sidebar and the toolbar, which both screens
+  render, do not have to be told which screen they are on. Pass base to
+  link from one screen to the other: the filters the target screen knows
+  about carry over and the rest fall away.
+
+  @param {object} overrides - Filters to change
+  @param {string} [base] - The screen to link to; defaults to the current one
+{% enddoc %}
+{% liquid
+  assign board_path = '/support/board'
+
+  assign screen = base
+  if screen == blank
+    assign screen = '/support'
+    if context.location.pathname == board_path
+      assign screen = board_path
+    endif
+  endif
+
+  if screen == board_path
+    assign keys = 'view,department,priority,q,assignee,closed,collapsed,column' | split: ','
+  else
+    assign keys = 'view,status,department,priority,group,q,assignee,expand,collapsed' | split: ','
+  endif
+
+  assign parts = []
+
+  for key in keys
+    assign value = context.params[key]
+    if overrides[key] != null
+      assign value = overrides[key]
+    endif
+
+    if value != blank
+      assign encoded = value | url_encode
+      assign part = key | append: '=' | append: encoded
+      assign parts = parts | array_add: part
+    endif
+  endfor
+
+  if parts == empty
+    return screen
+  endif
+
+  assign query = parts | join: '&'
+  assign url = screen | append: '?' | append: query
+  return url
+%}

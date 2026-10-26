@@ -1,0 +1,525 @@
+---
+slug: support/board
+layout: modules/support/agent
+metadata:
+  title: Support board
+---
+{%- comment -%}
+  The board: the same queue as the list, laid out as one column per
+  status. A controller, like the list. It gathers, counts and buckets, and
+  hands finished columns to the partials.
+
+  Two things about it are deliberate and easy to undo by accident.
+
+  Cards sort by priority and then by the shared work order, and agents
+  cannot reorder inside a column. A status column mixes priorities, so
+  dragging a card up a column would be asking to reorder two work queues
+  at once, and whatever the server did with it would be a surprise.
+  Reordering stays in the list, where a group is one priority.
+
+  Closed tickets are the one unbounded part of the data, so they are
+  loaded by a separate query with its own small cap, only when the agent
+  asks for them, and the column says when it is showing a slice.
+{%- endcomment -%}
+{%- liquid
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.access', entity: null
+  # platformos-check-enable DeprecatedTag
+
+  function tokens = 'modules/support/helpers/ui/tokens'
+  function current_profile = 'modules/user/helpers/current_profile'
+  function agent = 'modules/support/helpers/current_agent'
+  function can_update = 'modules/support/helpers/can', do: 'support.tickets.update', entity: null
+  function can_manage_settings = 'modules/support/helpers/can', do: 'support.settings.manage', entity: null
+  function settings = 'modules/support/queries/settings/get'
+  function statuses = 'modules/support/queries/statuses/search', kind: null
+  function all_agents = 'modules/support/queries/agents/all'
+
+  graphql department_result = 'modules/support/departments/search', limit: 50, page: 1, id: null, slug: null, inbound_address: null
+  assign departments = department_result.records.results
+
+  comment
+    A host superadmin with no agent record still gets in, by the same
+    break glass rule the guard uses, and sees every department.
+  endcomment
+  assign viewer = agent
+  if agent == blank
+    assign viewer = { "role": "admin", "department_ids": [] }
+  endif
+
+  assign show_closed = false
+  if context.params.closed == '1'
+    assign show_closed = true
+  endif
+
+  assign closed_cap = 50
+  function queue = 'modules/support/queries/tickets/queue', agent: viewer, statuses: statuses, limit: 500
+
+  assign closed_queue = []
+  assign closed_capped = false
+  if show_closed
+    function closed_queue = 'modules/support/queries/tickets/closed_recent', agent: viewer, statuses: statuses, limit: closed_cap
+    if closed_queue.size >= closed_cap
+      assign closed_capped = true
+    endif
+  endif
+
+  assign contact_ids = []
+  for ticket in queue
+    assign contact_ids = contact_ids | array_add: ticket.contact_id
+  endfor
+  for ticket in closed_queue
+    assign contact_ids = contact_ids | array_add: ticket.contact_id
+  endfor
+  function contacts = 'modules/support/queries/contacts/by_ids', ids: contact_ids
+
+  assign status_by_id = {}
+  for status in statuses
+    assign token = tokens.statuses[status.key] | default: tokens.status_fallback
+    assign status.token = token
+    assign status_by_id[status.id] = status
+  endfor
+
+  assign department_by_id = {}
+  assign department_position = 0
+  for department in departments
+    assign palette_index = department_position | modulo: 6
+    assign department.palette = tokens.department_palette[palette_index]
+    assign department.letter = department.name | slice: 0, 1 | upcase
+    assign department_by_id[department.id] = department
+    assign department_position = department_position | plus: 1
+  endfor
+
+  assign agent_by_user = {}
+  assign agent_position = 0
+  for one_agent in all_agents
+    assign palette_index = agent_position | modulo: 6
+    assign one_agent.palette = tokens.agent_palette[palette_index]
+    assign agent_by_user[one_agent.user_id] = one_agent
+    assign agent_position = agent_position | plus: 1
+  endfor
+
+  comment
+    Open and closed stitched in one pass, tagged by which they are, so the
+    sidebar can count the open ones and the columns can hold both.
+  endcomment
+  assign all_tickets = queue
+  for ticket in closed_queue
+    assign all_tickets = all_tickets | array_add: ticket
+  endfor
+
+  assign rows = []
+  for ticket in all_tickets
+    assign row_status = status_by_id[ticket.status_id]
+    assign ticket.contact = contacts[ticket.contact_id]
+    assign ticket.status = row_status
+    assign ticket.department = department_by_id[ticket.department_id]
+    assign ticket.assignee = agent_by_user[ticket.assignee_id]
+    assign ticket.priority_token = tokens.priorities[ticket.priority]
+    assign ticket.is_closed = false
+    if row_status.kind == 'closed'
+      assign ticket.is_closed = true
+    endif
+    assign rows = rows | array_add: ticket
+  endfor
+
+  assign view = context.params.view | default: 'all'
+  assign department_filter = context.params.department
+  assign priority_filter = context.params.priority | default: 'all'
+  assign assignee_filter = context.params.assignee
+  assign search_query = context.params.q | default: '' | strip | downcase | remove_first: '#'
+  assign current_user_id = current_profile.user.id
+
+  assign count_mine = 0
+  assign count_unassigned = 0
+  assign count_all = 0
+  assign department_counts = {}
+  assign priority_counts = {}
+  assign filtered = []
+  assign open_filtered = []
+
+  for row in rows
+    comment
+      The sidebar counts only open tickets, so its numbers are the same
+      ones the list shows. Turning Show Closed on changes what is on the
+      board, not what the queue is behind by.
+    endcomment
+    unless row.is_closed
+      assign count_all = count_all | plus: 1
+      if row.assignee_id == current_user_id and current_user_id != blank
+        assign count_mine = count_mine | plus: 1
+      endif
+      if row.assignee_id == blank
+        assign count_unassigned = count_unassigned | plus: 1
+      endif
+      assign department_key = row.department.slug
+      assign previous = department_counts[department_key] | default: 0
+      assign department_counts[department_key] = previous | plus: 1
+    endunless
+
+    assign passes = true
+    if view == 'mine' and row.assignee_id != current_user_id
+      assign passes = false
+    endif
+    if view == 'unassigned' and row.assignee_id != blank
+      assign passes = false
+    endif
+    if department_filter != blank and row.department.slug != department_filter
+      assign passes = false
+    endif
+    if assignee_filter != blank and row.assignee_id != assignee_filter
+      assign passes = false
+    endif
+    if search_query != blank
+      assign haystack = row.c__search | default: '' | downcase
+      unless haystack contains search_query
+        assign passes = false
+      endunless
+    endif
+
+    unless passes
+      continue
+    endunless
+
+    comment
+      The priority tabs count everything the other filters allow but not
+      the priority filter itself, or every tab except the chosen one would
+      read zero.
+    endcomment
+    assign priority_key = row.priority_token.key
+    assign previous = priority_counts[priority_key] | default: 0
+    assign priority_counts[priority_key] = previous | plus: 1
+
+    if priority_filter != 'all' and row.priority_token.key != priority_filter
+      continue
+    endif
+
+    assign filtered = filtered | array_add: row
+    unless row.is_closed
+      assign open_filtered = open_filtered | array_add: row
+    endunless
+  endfor
+
+  assign priority_total = 0
+  for priority_token in tokens.priorities
+    assign one_count = priority_counts[priority_token.key] | default: 0
+    assign priority_total = priority_total | plus: one_count
+  endfor
+
+  comment
+    Place in line, counted per priority over what is on the board. The
+    queue arrives in rank order, so a running count per priority is the
+    work order. Closed tickets are left out of it: they are not in line
+    any more, and their cards show the priority without a number.
+  endcomment
+  assign place_counters = {}
+  assign places = {}
+  for row in open_filtered
+    assign priority_key = row.priority_token.key
+    assign previous = place_counters[priority_key] | default: 0
+    assign place = previous | plus: 1
+    assign place_counters[priority_key] = place
+    assign places[row.id] = place
+  endfor
+
+  comment
+    Bucketed by status and priority in one pass. A column is then four
+    bucket lookups in priority order rather than a scan of every ticket,
+    which at eight columns is the difference between one pass and eight.
+  endcomment
+  assign buckets = {}
+  for row in filtered
+    assign row.place = places[row.id]
+    assign bucket_key = row.status_id | append: ':' | append: row.priority
+    assign bucket = buckets[bucket_key]
+    if bucket == blank
+      assign bucket = []
+    endif
+    assign buckets[bucket_key] = bucket | array_add: row
+  endfor
+
+  comment
+    Which columns are collapsed. The URL wins when it says anything, so a
+    collapsed board can be linked to; otherwise it comes off the agent
+    record, so the board opens the way they left it.
+  endcomment
+  assign collapsed_param = context.params.collapsed
+  if collapsed_param == 'none'
+    comment
+      An explicit nothing. The forms send this rather than an empty field,
+      so that "the agent just expanded the last column" and "the URL says
+      nothing about columns" stay two different requests.
+    endcomment
+    assign collapsed_source = ''
+  elsif collapsed_param == blank
+    assign collapsed_source = agent.board_collapsed | default: ''
+  else
+    assign collapsed_source = collapsed_param
+  endif
+  assign collapsed_keys = collapsed_source | split: ','
+
+  assign shown_statuses = []
+  assign closed_keys = []
+  for status in statuses
+    if status.kind == 'closed'
+      assign closed_keys = closed_keys | array_add: status.key
+      unless show_closed
+        continue
+      endunless
+    endif
+    assign shown_statuses = shown_statuses | array_add: status
+  endfor
+
+  comment
+    Turning Show Closed on collapses the Closed columns as it goes. A
+    finished ticket is not work, and a full column of them at the end of
+    the board reads as if it were.
+  endcomment
+  if show_closed
+    function url_toggle_closed = 'modules/support/helpers/ui/queue_url', overrides: { "closed": "" }
+  else
+    assign with_closed = collapsed_keys | join: ','
+    for key in closed_keys
+      unless collapsed_keys contains key
+        if with_closed == blank
+          assign with_closed = key
+        else
+          assign with_closed = with_closed | append: ',' | append: key
+        endif
+      endunless
+    endfor
+    function url_toggle_closed = 'modules/support/helpers/ui/queue_url', overrides: { "closed": "1", "collapsed": with_closed }
+  endif
+
+  assign columns = []
+  for status in shown_statuses
+    assign cards = []
+    for priority_token in tokens.priorities
+      assign bucket_key = status.id | append: ':' | append: forloop.index0
+      assign bucket = buckets[bucket_key]
+      for card in bucket
+        assign cards = cards | array_add: card
+      endfor
+    endfor
+
+    assign is_collapsed = false
+    if collapsed_keys contains status.key
+      assign is_collapsed = true
+    endif
+
+    comment
+      The collapsed list with this one column flipped, built as a string
+      so the form can post it back whole. Rebuilding it rather than
+      editing an array, because array_add mutates what it is given and
+      this list is still being read by every other column.
+    endcomment
+    assign toggle_value = ''
+    for key in collapsed_keys
+      unless key == status.key
+        if toggle_value == blank
+          assign toggle_value = key
+        else
+          assign toggle_value = toggle_value | append: ',' | append: key
+        endif
+      endunless
+    endfor
+    unless is_collapsed
+      if toggle_value == blank
+        assign toggle_value = status.key
+      else
+        assign toggle_value = toggle_value | append: ',' | append: status.key
+      endif
+    endunless
+    if toggle_value == blank
+      assign toggle_value = 'none'
+    endif
+
+    assign is_capped = false
+    if status.kind == 'closed' and closed_capped
+      assign is_capped = true
+    endif
+
+    assign column = { "status": status, "cards": cards, "count": cards.size, "is_collapsed": is_collapsed, "toggle_value": toggle_value, "is_capped": is_capped, "is_current": false }
+    assign columns = columns | array_add: column
+  endfor
+
+  comment
+    One column at a time on a phone. The chosen one is part of the URL,
+    and CSS does the hiding, so the same markup serves every width.
+  endcomment
+  assign current_column = context.params.column
+  assign valid_column = false
+  for column in columns
+    if column.status.key == current_column
+      assign valid_column = true
+    endif
+  endfor
+  unless valid_column
+    assign current_column = columns.first.status.key
+  endunless
+
+  assign prepared_columns = []
+  for column in columns
+    if column.status.key == current_column
+      assign column.is_current = true
+    endif
+    assign prepared_columns = prepared_columns | array_add: column
+  endfor
+
+  function return_to = 'modules/support/helpers/ui/queue_url', overrides: {}
+  function return_to_bare = 'modules/support/helpers/ui/queue_url', overrides: { "collapsed": "" }
+
+  comment
+    What just moved, and what is being asked about. Both arrive as ticket
+    ids in the query string, so both are looked up and checked against
+    this agent rather than trusted: a crafted link must not be able to
+    tell anyone that a ticket in another department exists.
+  endcomment
+  assign moved_ticket = null
+  if context.params.moved != blank
+    function moved_ticket = 'modules/support/queries/tickets/find', id: context.params.moved, number: null
+    if moved_ticket != blank
+      function can_see_moved = 'modules/support/helpers/can', do: 'support.tickets.view', entity: moved_ticket
+      unless can_see_moved
+        assign moved_ticket = null
+      endunless
+    endif
+  endif
+  assign moved_status = null
+  if moved_ticket != blank
+    assign moved_status = status_by_id[moved_ticket.status_id]
+  endif
+
+  assign confirm_ticket = null
+  assign confirm_status = null
+  if context.params.confirm != blank
+    assign confirm_status = status_by_id[context.params.to]
+    if confirm_status != blank
+      function confirm_ticket = 'modules/support/queries/tickets/find', id: context.params.confirm, number: null
+      if confirm_ticket != blank
+        function can_close = 'modules/support/helpers/can', do: 'support.tickets.update', entity: confirm_ticket
+        unless can_close
+          assign confirm_ticket = null
+        endunless
+      endif
+    endif
+  endif
+
+  assign reopen_name = ''
+  for status in statuses
+    if status.is_reopen_target == true
+      assign reopen_name = status.name
+    endif
+  endfor
+
+  assign view_label = 'modules/support/list.nav.all_open' | t
+  if view == 'mine'
+    assign view_label = 'modules/support/list.nav.my_tickets' | t
+  elsif view == 'unassigned'
+    assign view_label = 'modules/support/list.nav.unassigned' | t
+  endif
+
+  assign heading = view_label
+  if department_filter != blank
+    for department in departments
+      if department.slug == department_filter
+        assign heading = department.name
+      endif
+    endfor
+  endif
+  if priority_filter != 'all'
+    assign heading = heading | append: ' · ' | append: priority_filter
+  endif
+
+  assign subtitle = 'modules/support/list.count' | t: count: filtered.size
+  assign brand = settings.brand_name | default: 'Support'
+-%}
+{% render 'modules/support/list/sidebar',
+  brand: brand,
+  tokens: tokens,
+  statuses: statuses,
+  departments: departments,
+  status_counts: {},
+  department_counts: department_counts,
+  count_mine: count_mine,
+  count_unassigned: count_unassigned,
+  count_all: count_all,
+  view: view,
+  status_filter: null,
+  department_filter: department_filter,
+  can_manage_settings: can_manage_settings,
+  current_profile: current_profile,
+  show_statuses: false
+%}
+<main class="pos-support-main">
+  {% render 'modules/support/list/header',
+    heading: heading,
+    subtitle: subtitle,
+    tokens: tokens,
+    search_query: context.params.q,
+    base: '/support/board',
+    screen: 'board'
+  %}
+  {% render 'modules/support/board/toolbar',
+    tokens: tokens,
+    priority_counts: priority_counts,
+    priority_filter: priority_filter,
+    priority_total: priority_total,
+    all_agents: all_agents,
+    assignee_filter: assignee_filter,
+    url_toggle_closed: url_toggle_closed,
+    show_closed: show_closed
+  %}
+
+  {%- if moved_ticket -%}
+    {% render 'modules/support/board/moved',
+      ticket: moved_ticket,
+      status: moved_status,
+      from_status_id: context.params.from,
+      tokens: tokens,
+      return_to: return_to
+    %}
+  {%- endif -%}
+
+  {% render 'modules/support/board/tabs', columns: prepared_columns, current_column: current_column %}
+
+  {%- if can_update -%}
+    <form method="post" action="/support/board/move" data-support-board-move-form hidden>
+      <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+      <input type="hidden" name="ticket_id" value="">
+      <input type="hidden" name="status_id" value="">
+      <input type="hidden" name="return_to" value="{{ return_to }}">
+    </form>
+  {%- endif -%}
+
+  <div class="pos-support-board" data-support-board>
+    <div class="pos-support-board-inner">
+      {%- for column in prepared_columns -%}
+        {% render 'modules/support/board/column',
+          column: column,
+          tokens: tokens,
+          statuses: statuses,
+          return_to: return_to,
+          return_to_bare: return_to_bare,
+          can_update: can_update
+        %}
+      {%- endfor -%}
+    </div>
+  </div>
+
+  {%- if prepared_columns == empty -%}
+    <div class="pos-support-empty">
+      <div class="pos-support-empty-title">{{ 'modules/support/board.no_columns_title' | t }}</div>
+      <div class="pos-support-empty-body">{{ 'modules/support/board.no_columns_body' | t }}</div>
+    </div>
+  {%- endif -%}
+</main>
+{%- if confirm_ticket -%}
+  {% render 'modules/support/board/confirm',
+    ticket: confirm_ticket,
+    status: confirm_status,
+    reopen_name: reopen_name,
+    cancel_url: return_to,
+    return_to: return_to
+  %}
+{%- endif -%}

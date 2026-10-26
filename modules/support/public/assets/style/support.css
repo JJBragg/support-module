@@ -15,6 +15,7 @@
   --soft: color-mix(in srgb, var(--tx) 3%, var(--bg));
   --tint: color-mix(in srgb, var(--pri) 10%, var(--bg));
   --line: color-mix(in srgb, var(--tx) 8%, var(--bg));
+  --lane: color-mix(in srgb, var(--tx) 5%, var(--bg));
 
   display: flex;
   flex-wrap: wrap;
@@ -96,6 +97,13 @@
 .pos-support-navitem:hover { background: var(--line); text-decoration: none; }
 .pos-support-navitem[aria-pressed="true"],
 .pos-support-navitem[aria-current="true"] { background: var(--tint); font-weight: 600; }
+/* The List and Board switch marks the screen you are on with
+ * aria-current="page", which is the one the segment lifts out of the
+ * groove rather than tints. */
+.pos-support-segment .pos-support-navitem[aria-current="page"] {
+  background: var(--bg); font-weight: 650;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.12), 0 0 0 1px var(--bd);
+}
 .pos-support-navitem-label { flex-grow: 1; }
 .pos-support-count { color: var(--mut); font-variant-numeric: tabular-nums; }
 
@@ -674,4 +682,230 @@
 .pos-support-notice {
   margin: 0; padding: 10px 12px; border-radius: 8px;
   background: var(--soft); border: 1px solid var(--bd); color: var(--mut);
+}
+
+/* Board.
+ *
+ * One column per status, cards inside. The column widths are fixed and the
+ * board scrolls sideways rather than squeezing: a card that reflows while
+ * you drag is a card you drop in the wrong place.
+ *
+ * Every class here is its own name rather than a reuse of a list class.
+ * The two screens look alike and behave differently, and a shared class
+ * would eventually have to grow a modifier for each of them.
+ */
+
+.pos-support-filterform { display: flex; align-items: center; gap: 8px; }
+
+.pos-support-toggle { border: 1px solid var(--bd); }
+.pos-support-toggle[aria-pressed="true"] { border-color: var(--pri); background: var(--tint); }
+
+.pos-support-board-hint {
+  margin: 0 0 0 auto; color: var(--mut); font-size: 12px;
+}
+
+.pos-support-board {
+  flex-grow: 1; overflow-x: auto; background: var(--soft);
+}
+.pos-support-board-inner {
+  display: flex; align-items: stretch; gap: 12px;
+  padding: 16px 20px 24px; width: max-content; min-height: 620px;
+}
+
+.pos-support-bcol {
+  width: 272px; flex-shrink: 0;
+  display: flex; flex-direction: column;
+  border-radius: 10px;
+  background: var(--lane); border: 1px solid transparent;
+}
+.pos-support-bcol.is-collapsed { width: 48px; }
+/* The script adds this while a card is over the column. It is the only
+ * thing on the board that says where a drop will land. */
+.pos-support-bcol.is-over {
+  background: var(--tint); border-color: var(--pri);
+  box-shadow: 0 0 0 1px var(--pri);
+}
+
+.pos-support-bcol-toggle { display: flex; flex-direction: column; flex-shrink: 0; }
+.pos-support-bcol.is-collapsed .pos-support-bcol-toggle { flex-grow: 1; }
+
+.pos-support-bcol-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 8px 8px 12px;
+}
+.pos-support-bcol-head h2 {
+  margin: 0; font-size: 13px; font-weight: 650;
+  flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pos-support-bcol-icon {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  display: grid; place-items: center;
+}
+.pos-support-bcol-count {
+  min-width: 22px; height: 20px; padding: 0 6px;
+  border-radius: 10px; background: var(--bg); border: 1px solid var(--bd);
+  display: grid; place-items: center;
+  font-size: 11.5px; font-weight: 650; font-variant-numeric: tabular-nums;
+}
+.pos-support-bcol-button {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border: 0; border-radius: 6px; background: none;
+  display: grid; place-items: center; color: var(--mut);
+}
+.pos-support-bcol-button:hover { background: var(--line); }
+
+.pos-support-bcol-strip {
+  flex-grow: 1; width: 100%; padding: 12px 0;
+  border: 0; background: none;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.pos-support-bcol-vertical { writing-mode: vertical-rl; font-weight: 650; white-space: nowrap; }
+
+.pos-support-bcol-cards {
+  list-style: none; margin: 0; padding: 0 8px 10px;
+  display: flex; flex-direction: column; gap: 8px; flex-grow: 1;
+}
+
+.pos-support-bcard {
+  background: var(--bg); border: 1px solid var(--bd); border-radius: 8px;
+  padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 7px;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.05);
+}
+.pos-support-bcard[draggable="true"] { cursor: grab; }
+.pos-support-bcard.is-dragging { opacity: 0.45; }
+
+.pos-support-bcard-top {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--mut);
+}
+.pos-support-bcard-number {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.pos-support-bcard-top .pos-support-avatar { margin-left: auto; }
+
+/* Priority and place in line, in one tag. Two halves so the P number keeps
+ * its fixed meaning colour and the place does not borrow it: the place is
+ * a position, not a severity. */
+.pos-support-bplace {
+  display: inline-flex; align-items: center; height: 18px;
+  border: 1px solid var(--bd); border-radius: 4px; overflow: hidden;
+  font-size: 11px; font-weight: 750;
+}
+.pos-support-bplace-key { padding: 0 5px; height: 100%; display: grid; place-items: center; }
+.pos-support-bplace-rank {
+  padding: 0 5px; color: var(--tx); font-variant-numeric: tabular-nums;
+}
+
+.pos-support-bcard-subject {
+  font-weight: 600; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pos-support-bcard-foot { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.pos-support-bcard-foot .pos-support-tag { flex-shrink: 0; }
+.pos-support-bcard-contact {
+  font-size: 12px; color: var(--mut);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Move to, on every card. Out of the way until it is wanted, and brought
+ * back by focus as well as hover, because for anyone on a keyboard this is
+ * the whole feature rather than a shortcut. */
+.pos-support-cardmove { opacity: 0; }
+.pos-support-bcard:hover .pos-support-cardmove,
+.pos-support-cardmove:focus-within,
+.pos-support-cardmove[open] { opacity: 1; }
+.pos-support-cardmove summary {
+  display: inline-block; padding: 2px 6px; border-radius: 6px;
+  color: var(--mut); font-size: 11.5px; cursor: pointer;
+}
+.pos-support-cardmove summary:hover { background: var(--line); }
+.pos-support-cardmove form { display: flex; gap: 6px; margin-top: 6px; }
+.pos-support-cardmove select {
+  flex: 1 1 auto; min-width: 0; height: 28px;
+  border: 1px solid var(--bd); border-radius: 6px; background: var(--bg);
+}
+.pos-support-cardmove button {
+  height: 28px; padding: 0 10px; flex-shrink: 0;
+  border: 1px solid var(--bd); border-radius: 6px; background: var(--bg);
+  font-weight: 600;
+}
+
+.pos-support-bempty {
+  padding: 18px 8px; border: 1px dashed var(--bd); border-radius: 8px;
+  text-align: center; color: var(--mut); font-size: 12px;
+}
+.pos-support-bcapped { color: var(--mut); font-size: 11.5px; text-align: center; }
+
+/* What just moved, and the way back out of it. */
+.pos-support-moved {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 20px; background: var(--tint);
+  border-bottom: 1px solid var(--bd); font-weight: 600;
+}
+.pos-support-moved-text { flex-grow: 1; }
+
+/* Closing confirmation. Server rendered, so the keyboard and the no
+ * JavaScript paths get asked the same question the drag does. */
+.pos-support-modal {
+  position: fixed; inset: 0; z-index: 10;
+  display: grid; place-items: center;
+  background: rgba(17, 24, 39, 0.35);
+}
+.pos-support-dialog {
+  width: 400px; max-width: calc(100% - 32px);
+  padding: 20px; border-radius: 12px; background: var(--bg);
+  box-shadow: 0 20px 50px rgba(17, 24, 39, 0.25);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.pos-support-dialog h2 { margin: 0; font-size: 16px; font-weight: 650; }
+.pos-support-dialog p { margin: 0; }
+.pos-support-dialog-sub { color: var(--mut); }
+.pos-support-dialog-actions {
+  display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px;
+}
+
+/* Phone column tabs. One column at a time below this width, chosen in the
+ * URL, hidden by CSS above it. */
+.pos-support-btabs { display: none; }
+
+@media (max-width: 640px) {
+  .pos-support-btabs {
+    display: flex; gap: 6px; overflow-x: auto;
+    padding: 10px 16px; border-bottom: 1px solid var(--bd);
+  }
+  .pos-support-btab {
+    flex-shrink: 0; display: flex; align-items: center; gap: 6px;
+    height: 36px; padding: 0 12px;
+    border: 1px solid var(--bd); border-radius: 18px;
+    white-space: nowrap;
+  }
+  .pos-support-btab[aria-pressed="true"] { background: var(--tint); font-weight: 600; }
+
+  .pos-support-board { overflow-x: hidden; }
+  .pos-support-board-inner { width: auto; padding: 12px 16px 20px; }
+  /* One column, full width. A collapsed column stays collapsed, so an
+   * agent who hid Closed on a desktop does not find it waiting on their
+   * phone, but the tab row still reaches it. */
+  .pos-support-bcol { display: none; }
+  .pos-support-bcol.is-current { display: flex; width: 100%; }
+  .pos-support-bcol.is-current.is-collapsed { width: 100%; }
+  .pos-support-bcol.is-collapsed .pos-support-bcol-strip { flex-direction: row; justify-content: center; }
+  .pos-support-bcol-vertical { writing-mode: horizontal-tb; }
+
+  /* Drag is not a phone gesture. Move to is the whole control here, so it
+   * is always visible and sized to be tapped. */
+  .pos-support-cardmove { opacity: 1; }
+  .pos-support-cardmove summary { min-height: 44px; display: flex; align-items: center; }
+  .pos-support-cardmove select,
+  .pos-support-cardmove button { height: 44px; }
+  .pos-support-board-hint { display: none; }
+}
+
+@media (max-width: 1023px) {
+  /* Tablet: the board already scrolls sideways, so it needs nothing but
+   * room. The hint competes with the filters for a line it cannot have. */
+  .pos-support-board-hint { display: none; }
 }

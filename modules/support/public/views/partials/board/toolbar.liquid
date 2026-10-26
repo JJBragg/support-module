@@ -1,0 +1,32 @@
+{%- comment -%}
+  The board's toolbar: the same priority tabs and assignee filter the list
+  has, then Show Closed in place of the grouping switch. The board is
+  grouped by status by definition, so there is nothing to choose.
+{%- endcomment -%}
+{%- liquid
+  assign carried = 'view,department,priority,q,closed,collapsed,column' | split: ','
+-%}
+<div class="pos-support-toolbar">
+  {% render 'modules/support/ui/priority_tabs',
+    tokens: tokens,
+    priority_counts: priority_counts,
+    priority_filter: priority_filter,
+    priority_total: priority_total
+  %}
+
+  <span class="pos-support-divider" aria-hidden="true"></span>
+
+  {% render 'modules/support/ui/assignee_filter',
+    all_agents: all_agents,
+    assignee_filter: assignee_filter,
+    base: '/support/board',
+    carried: carried
+  %}
+
+  <a class="pos-support-navitem pos-support-toggle" style="height: 28px; width: auto" href="{{ url_toggle_closed }}" aria-pressed="{{ show_closed }}">
+    {% render 'modules/support/ui/icon', path: tokens.icons.check, size: 13, stroke: 2.4 %}
+    <span>{{ 'modules/support/board.show_closed' | t }}</span>
+  </a>
+
+  <p class="pos-support-board-hint">{{ 'modules/support/board.hint' | t }}</p>
+</div>

@@ -1,0 +1,102 @@
+---
+slug: support/board/move
+method: post
+---
+{%- comment -%}
+  A card changed column, which means the ticket changed status.
+
+  The same endpoint serves three callers: the drag, the card's Move to
+  menu, and Undo. It does what the properties panel does to a status, so
+  the change is logged the same way and shows up the same way everywhere
+  else.
+
+  Closing is asked about rather than done. Rather than a dialog the script
+  opens, this sends the agent back to the board with the question on it,
+  which means the keyboard and no JavaScript paths get asked too. Undo
+  carries confirmed, because reverting a change is not a new decision.
+{%- endcomment -%}
+{%- liquid
+  comment
+    Guarded twice, and the order matters. The unscoped check first, so an
+    anonymous caller is sent to log in before the page looks anything up
+    and before a missing ticket can tell them it is missing. The
+    department scoped check once there is a ticket to scope it to.
+  endcomment
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.tickets.update', entity: null
+  # platformos-check-enable DeprecatedTag
+
+  function current_profile = 'modules/user/helpers/current_profile'
+  function statuses = 'modules/support/queries/statuses/search', kind: null
+  function ticket = 'modules/support/queries/tickets/find', id: context.params.ticket_id, number: null
+
+  assign return_to = context.params.return_to | default: '/support/board'
+
+  if ticket == blank
+    # platformos-check-disable DeprecatedTag
+    include 'modules/support/helpers/redirect_back', url: return_to
+    # platformos-check-enable DeprecatedTag
+  endif
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.tickets.update', entity: ticket
+  # platformos-check-enable DeprecatedTag
+
+  comment
+    The target has to be one of this instance's statuses. The id arrives
+    in a form field, so a crafted post would otherwise be able to park a
+    ticket on a status that does not exist, where no column would show it.
+  endcomment
+  assign target = null
+  assign previous = null
+  for status in statuses
+    if status.id == context.params.status_id
+      assign target = status
+    endif
+    if status.id == ticket.status_id
+      assign previous = status
+    endif
+  endfor
+
+  if target == blank or target.id == ticket.status_id
+    # platformos-check-disable DeprecatedTag
+    include 'modules/support/helpers/redirect_back', url: return_to
+    # platformos-check-enable DeprecatedTag
+  endif
+
+  assign joiner = '?'
+  if return_to contains '?'
+    assign joiner = '&'
+  endif
+
+  if target.kind == 'closed' and context.params.confirmed != '1'
+    assign ask = return_to | append: joiner | append: 'confirm=' | append: ticket.id | append: '&to=' | append: target.id
+    # platformos-check-disable DeprecatedTag
+    include 'modules/support/helpers/redirect_back', url: ask
+    # platformos-check-enable DeprecatedTag
+  endif
+
+  assign closed_at = null
+  if target.kind == 'closed'
+    assign closed_at = 'now' | date: '%Y-%m-%d %H:%M:%S'
+  endif
+
+  graphql _ = 'modules/support/tickets/set_status', id: ticket.id, status_id: target.id, closed_at: closed_at
+
+  assign actor_id = current_profile.user.id
+  assign activity = { "ticket_id": ticket.id, "actor_id": actor_id, "action": "status_changed", "from_value": previous.name, "to_value": target.name }
+  function _ = 'modules/support/commands/activities/create', object: activity
+
+  comment
+    Undo says nothing on the way back. Offering to undo the undo is a
+    loop, and the agent already knows what they just did.
+  endcomment
+  assign done = return_to
+  unless context.params.undo == '1'
+    assign done = return_to | append: joiner | append: 'moved=' | append: ticket.id | append: '&from=' | append: ticket.status_id
+  endunless
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/redirect_back', url: done
+  # platformos-check-enable DeprecatedTag
+-%}

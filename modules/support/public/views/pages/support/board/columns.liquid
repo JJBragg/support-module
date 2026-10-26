@@ -1,0 +1,49 @@
+---
+slug: support/board/columns
+method: post
+---
+{%- comment -%}
+  Collapsing or expanding a board column.
+
+  A write rather than a link, because it is remembered on the agent record
+  and so survives the browser. It lands in the URL on the way back as
+  well, which keeps the board linkable and keeps the one break glass case
+  working: a host superadmin with no agent record has nowhere to store
+  this, and still gets a board that collapses.
+{%- endcomment -%}
+{%- liquid
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/require_permission', do: 'support.access', entity: null
+  # platformos-check-enable DeprecatedTag
+
+  function agent = 'modules/support/helpers/current_agent'
+
+  assign return_to = context.params.return_to | default: '/support/board'
+
+  comment
+    The form sends the whole list, and the word none when the list is
+    empty, so that expanding the last column is distinguishable from a URL
+    that says nothing about columns at all. The record stores the real
+    thing, which for none is nothing.
+  endcomment
+  assign incoming = context.params.collapsed | default: 'none'
+  assign stored = incoming
+  if incoming == 'none'
+    assign stored = ''
+  endif
+
+  if agent != blank
+    graphql _ = 'modules/support/agents/set_board_columns', id: agent.id, board_collapsed: stored
+  endif
+
+  assign joiner = '?'
+  if return_to contains '?'
+    assign joiner = '&'
+  endif
+  assign encoded = incoming | url_encode
+  assign url = return_to | append: joiner | append: 'collapsed=' | append: encoded
+
+  # platformos-check-disable DeprecatedTag
+  include 'modules/support/helpers/redirect_back', url: url
+  # platformos-check-enable DeprecatedTag
+-%}

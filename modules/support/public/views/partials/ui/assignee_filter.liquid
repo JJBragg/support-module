@@ -1,0 +1,26 @@
+{%- comment -%}
+  The assignee filter, on both the list and the board. A GET form, so it
+  works without JavaScript and ends up in the same query string every
+  other filter lives in.
+
+  @param {array} all_agents - Every agent, for the options
+  @param {string} assignee_filter - The user id in play, or blank
+  @param {string} base - The screen this posts back to
+  @param {array} carried - Filters to keep as hidden fields
+{%- endcomment -%}
+<form method="get" action="{{ base }}" class="pos-support-filterform">
+  {%- for key in carried -%}
+    {%- assign value = context.params[key] -%}
+    {%- if value != blank -%}
+      <input type="hidden" name="{{ key }}" value="{{ value }}">
+    {%- endif -%}
+  {%- endfor -%}
+  <label class="pos-support-toolbar-label" for="pos-support-assignee">{{ 'modules/support/list.toolbar.assignee' | t }}</label>
+  <select id="pos-support-assignee" name="assignee" style="height: 28px; border: 1px solid var(--bd); border-radius: 6px; background: var(--bg)">
+    <option value="">{{ 'modules/support/list.toolbar.anyone' | t }}</option>
+    {%- for one_agent in all_agents -%}
+      <option value="{{ one_agent.user_id }}" {% if assignee_filter == one_agent.user_id %}selected{% endif %}>{{ one_agent.name }}</option>
+    {%- endfor -%}
+  </select>
+  <button type="submit" class="pos-support-navitem" style="height: 28px; width: auto; border: 1px solid var(--bd)">{{ 'modules/support/list.toolbar.apply' | t }}</button>
+</form>

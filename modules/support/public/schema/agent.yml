@@ -17,3 +17,9 @@ properties:
   # Shown under the name on the Agents screen, e.g. Support lead.
   - name: title
     type: string
+
+  # Board columns this agent keeps collapsed, as a comma separated list of
+  # status keys. Per agent rather than per browser, so the board opens the
+  # way they left it on whichever machine they sign in from.
+  - name: board_collapsed
+    type: string

@@ -1,0 +1,24 @@
+# Which board columns this agent keeps collapsed. Narrow on purpose:
+# record_update clears a property given an explicit null, so an update
+# mutation that declares more than it means to change will wipe a field
+# the caller never mentioned.
+mutation (
+  $id: ID!
+  $board_collapsed: String
+) {
+  record: record_update(
+    id: $id
+    record: {
+      table: "modules/support/agent"
+      properties: [
+        { name: "board_collapsed", value: $board_collapsed }
+      ]
+    }
+  ) {
+    id
+    type: table
+
+    user_id: property(name: "user_id")
+    board_collapsed: property(name: "board_collapsed")
+  }
+}

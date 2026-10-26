@@ -1,0 +1,34 @@
+{%- comment -%}
+  The priority tabs, on both the list and the board. Links rather than
+  buttons: a priority is a filter, a filter is part of the URL, and an
+  agent working a P0 run should be able to keep that tab open.
+
+  @param {object} tokens - The visual vocabulary
+  @param {object} priority_counts - Count per priority key, after the other filters
+  @param {string} priority_filter - The priority in play, or all
+  @param {number} priority_total - What All priorities counts
+{%- endcomment -%}
+{%- liquid
+  function url_all_priorities = 'modules/support/helpers/ui/queue_url', overrides: { "priority": "", "expand": "", "column": "" }
+-%}
+<div class="pos-support-segment" role="group" aria-label="{{ 'modules/support/list.toolbar.priority' | t }}">
+  <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_all_priorities }}" aria-pressed="{% if priority_filter == 'all' %}true{% else %}false{% endif %}">
+    <span>{{ 'modules/support/list.toolbar.all_priorities' | t }}</span>
+    <span class="pos-support-count">{{ priority_total }}</span>
+  </a>
+  {%- for priority in tokens.priorities -%}
+    {%- liquid
+      function url_priority = 'modules/support/helpers/ui/queue_url', overrides: { "priority": priority.key, "expand": "", "column": "" }
+      assign count = priority_counts[priority.key] | default: 0
+      assign is_on = false
+      if priority_filter == priority.key
+        assign is_on = true
+      endif
+    -%}
+    <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_priority }}" aria-pressed="{{ is_on }}">
+      <span class="pos-support-prio" style="background: {{ priority.bg }}; color: {{ priority.fg }}; border-color: {{ priority.bd }}">{{ priority.key }}</span>
+      <span>{{ priority.label }}</span>
+      <span class="pos-support-count">{{ count }}</span>
+    </a>
+  {%- endfor -%}
+</div>

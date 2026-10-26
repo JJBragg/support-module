@@ -42,6 +42,69 @@
     });
   });
 
+  // Board: drag a card to another column to change its status. Every card
+  // also carries a Move to menu that posts to the same endpoint, so losing
+  // this script costs the gesture and not the feature.
+  var board = document.querySelector('[data-support-board]');
+  if (board) {
+    var card = null;
+    var overColumn = null;
+
+    var clearColumn = function () {
+      if (overColumn) overColumn.classList.remove('is-over');
+      overColumn = null;
+    };
+
+    // A card carries its own status as well, so the column is found by its
+    // own class rather than by the attribute both of them have.
+    var columnOf = function (event) {
+      var column = event.target.closest ? event.target.closest('.pos-support-bcol') : null;
+      if (!column || !card) return null;
+      if (column.dataset.statusId === card.dataset.statusId) return null;
+      return column;
+    };
+
+    board.addEventListener('dragstart', function (event) {
+      var found = event.target.closest('.pos-support-bcard[draggable="true"]');
+      if (!found) return;
+      card = found;
+      found.classList.add('is-dragging');
+      try {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', found.dataset.ticketId);
+      } catch (error) {
+        // Safari refuses setData outside a user gesture in some versions.
+      }
+    });
+
+    board.addEventListener('dragover', function (event) {
+      var column = columnOf(event);
+      if (!column) return;
+      event.preventDefault();
+      if (overColumn === column) return;
+      clearColumn();
+      overColumn = column;
+      column.classList.add('is-over');
+    });
+
+    board.addEventListener('drop', function (event) {
+      var column = columnOf(event);
+      if (!column) return;
+      event.preventDefault();
+      var form = document.querySelector('[data-support-board-move-form]');
+      if (!form) return;
+      form.querySelector('[name="ticket_id"]').value = card.dataset.ticketId;
+      form.querySelector('[name="status_id"]').value = column.dataset.statusId;
+      form.submit();
+    });
+
+    board.addEventListener('dragend', function () {
+      if (card) card.classList.remove('is-dragging');
+      clearColumn();
+      card = null;
+    });
+  }
+
   var list = document.querySelector('[data-support-list]');
   if (!list) return;
 

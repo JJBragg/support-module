@@ -1,0 +1,44 @@
+{% doc %}
+  The most recently closed tickets the viewer is allowed to see.
+
+  A separate query from the queue, with its own small cap. Closed tickets
+  are the one unbounded part of a support instance: the queue has as many
+  open tickets as the team is behind by, and as many closed ones as it has
+  ever had. Folding them into the queue's 500 would let a year of finished
+  work crowd out this morning's.
+
+  The board's Closed column is the only screen that asks for these, it
+  starts collapsed, and it says so when it is showing a capped slice.
+
+  @param {object} agent - The viewing agent; admins see every department
+  @param {array} statuses - Every status, to work out which ones are closed
+  @param {number} [limit] - Defaults to 50
+{% enddoc %}
+{% liquid
+  assign limit = limit | default: 50
+
+  assign closed_status_ids = []
+  for status in statuses
+    if status.kind == 'closed'
+      assign closed_status_ids = closed_status_ids | array_add: status.id
+    endif
+  endfor
+
+  if closed_status_ids == empty
+    return empty
+  endif
+
+  assign department_ids = null
+  unless agent.role == 'admin'
+    assign department_ids = agent.department_ids
+  endunless
+
+  comment
+    Most recently closed first. closed_at is written as YYYY-MM-DD
+    HH:MM:SS, so a plain descending sort is chronological.
+  endcomment
+  assign sort = { "properties": { "name": "closed_at", "order": "DESC" } }
+  graphql result = 'modules/support/tickets/search', status_ids: closed_status_ids, department_ids: department_ids, sort: sort, limit: limit, page: 1, id: null, number: null, department_id: null, status_id: null, contact_id: null, assignee_id: null, priority: null, query: null
+
+  return result.records.results
+%}

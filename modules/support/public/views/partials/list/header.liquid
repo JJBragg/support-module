@@ -1,7 +1,24 @@
+{%- comment -%}
+  The queue header, on both the list and the board.
+
+  @param {string} heading - The view title
+  @param {string} subtitle - The ticket count
+  @param {object} tokens - The visual vocabulary
+  @param {string} search_query - What is in the box
+  @param {string} base - The screen the search posts back to
+  @param {string} screen - list or board
+{%- endcomment -%}
 <header class="pos-support-head">
   <h1 class="pos-support-title">{{ heading }}<span class="pos-support-subtitle">{{ subtitle }}</span></h1>
-  <form class="pos-support-search" method="get" action="/support" role="search">
-    {%- assign carried = 'view,status,department,priority,group,assignee' | split: ',' -%}
+  {% render 'modules/support/ui/view_switch', tokens: tokens, current: screen %}
+  <form class="pos-support-search" method="get" action="{{ base }}" role="search">
+    {%- liquid
+      if screen == 'board'
+        assign carried = 'view,department,priority,assignee,closed,collapsed,column' | split: ','
+      else
+        assign carried = 'view,status,department,priority,group,assignee' | split: ','
+      endif
+    -%}
     {%- for key in carried -%}
       {%- assign value = context.params[key] -%}
       {%- if value != blank -%}

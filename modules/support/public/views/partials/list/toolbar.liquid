@@ -1,55 +1,34 @@
+{%- comment -%}
+  The list's toolbar: priority tabs, the assignee filter and the grouping
+  switch. The first two are shared with the board.
+{%- endcomment -%}
 {%- liquid
-  function url_all_priorities = 'modules/support/helpers/ui/list_url', overrides: { "priority": "", "expand": "", "collapsed": "" }
-  function url_group_priority = 'modules/support/helpers/ui/list_url', overrides: { "group": "", "expand": "", "collapsed": "" }
-  function url_group_status = 'modules/support/helpers/ui/list_url', overrides: { "group": "status", "expand": "", "collapsed": "" }
+  function url_group_priority = 'modules/support/helpers/ui/queue_url', overrides: { "group": "", "expand": "", "collapsed": "" }
+  function url_group_status = 'modules/support/helpers/ui/queue_url', overrides: { "group": "status", "expand": "", "collapsed": "" }
 
   assign grouping_by_priority = false
   if group_by != 'status'
     assign grouping_by_priority = true
   endif
+
+  assign carried = 'view,status,department,priority,group,q' | split: ','
 -%}
 <div class="pos-support-toolbar">
-  <div class="pos-support-segment" role="group" aria-label="{{ 'modules/support/list.toolbar.priority' | t }}">
-    <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_all_priorities }}" aria-pressed="{% if priority_filter == 'all' %}true{% else %}false{% endif %}">
-      <span>{{ 'modules/support/list.toolbar.all_priorities' | t }}</span>
-      <span class="pos-support-count">{{ priority_total }}</span>
-    </a>
-    {%- for priority in tokens.priorities -%}
-      {%- liquid
-        function url_priority = 'modules/support/helpers/ui/list_url', overrides: { "priority": priority.key, "expand": "", "collapsed": "" }
-        assign count = priority_counts[priority.key] | default: 0
-        assign is_on = false
-        if priority_filter == priority.key
-          assign is_on = true
-        endif
-      -%}
-      <a class="pos-support-navitem" style="height: 28px; width: auto" href="{{ url_priority }}" aria-pressed="{{ is_on }}">
-        <span class="pos-support-prio" style="background: {{ priority.bg }}; color: {{ priority.fg }}; border-color: {{ priority.bd }}">{{ priority.key }}</span>
-        <span>{{ priority.label }}</span>
-        <span class="pos-support-count">{{ count }}</span>
-      </a>
-    {%- endfor -%}
-  </div>
+  {% render 'modules/support/ui/priority_tabs',
+    tokens: tokens,
+    priority_counts: priority_counts,
+    priority_filter: priority_filter,
+    priority_total: priority_total
+  %}
 
   <span class="pos-support-divider" aria-hidden="true"></span>
 
-  <form method="get" action="/support" style="display: flex; align-items: center; gap: 8px">
-    {%- assign carried = 'view,status,department,priority,group,q' | split: ',' -%}
-    {%- for key in carried -%}
-      {%- assign value = context.params[key] -%}
-      {%- if value != blank -%}
-        <input type="hidden" name="{{ key }}" value="{{ value }}">
-      {%- endif -%}
-    {%- endfor -%}
-    <label class="pos-support-toolbar-label" for="pos-support-assignee">{{ 'modules/support/list.toolbar.assignee' | t }}</label>
-    <select id="pos-support-assignee" name="assignee" style="height: 28px; border: 1px solid var(--bd); border-radius: 6px; background: var(--bg)">
-      <option value="">{{ 'modules/support/list.toolbar.anyone' | t }}</option>
-      {%- for one_agent in all_agents -%}
-        <option value="{{ one_agent.user_id }}" {% if assignee_filter == one_agent.user_id %}selected{% endif %}>{{ one_agent.name }}</option>
-      {%- endfor -%}
-    </select>
-    <button type="submit" class="pos-support-navitem" style="height: 28px; width: auto; border: 1px solid var(--bd)">{{ 'modules/support/list.toolbar.apply' | t }}</button>
-  </form>
+  {% render 'modules/support/ui/assignee_filter',
+    all_agents: all_agents,
+    assignee_filter: assignee_filter,
+    base: '/support',
+    carried: carried
+  %}
 
   <div class="pos-support-segment" role="group" aria-label="{{ 'modules/support/list.toolbar.group_by' | t }}" style="margin-left: auto">
     <span class="pos-support-toolbar-label">{{ 'modules/support/list.toolbar.group_by' | t }}</span>
