@@ -1,101 +1,118 @@
-# PRD gap checklist
+# What is left to build
 
-Every difference between Artur's two PRDs of 2026-10-26 and the build, as
-one ordered list to work through. The reasoning behind each line is in
-`docs/prd-comparison-2026-10-26.md`, which keeps his requirement IDs.
+Rewritten 2026-10-27. The first version of this list treated Artur's two
+PRDs as a specification and listed every difference from it. They are not a
+specification: they are what an AI returned to a prompt, so nothing in them
+is settled and several items were work that nobody actually wants.
 
-Working rule: one item at a time, in order. Discuss the pro and the con,
-decide, then build or record the decision before moving on. Tick the box
-and write the outcome on the line when an item is closed.
+This version judges each one on whether the platformOS support team needs
+it, and says so. Artur's documents are still useful as a source of ideas,
+and the full comparison with his requirement IDs stays in
+`docs/prd-comparison-2026-10-26.md` for talking to him.
 
-The order is not severity. It is what unblocks what: decisions that change
-where code lives come first, then the ones that are cheap today and
-expensive after cutover, then correctness, then the features his MVP marks
-as Must, then polish.
+Sizes are rough: small is under a day, medium is a few days, large is a
+week or more.
 
-## A. Decisions that change where code lives
+## Closed, nothing to do
 
-- [ ] 1. Postmark or SendGrid, and how open the provider seam has to be
-- [ ] 2. Inbound: store-then-queue with idempotency (EM-2), or the
-      synchronous transaction the build uses
-- [ ] 3. Threading: add the HMAC reply token, and gate the subject token
-      on the sender being the requester, a CC or in the organization
+- [x] Reply to a closed ticket reopens it. Decided, and already how it
+      works. Artur's version opens a linked follow-up; he needs telling,
+      because it changes what resolution time means.
+- [x] Statuses move freely. Decided 2026-10-25.
+- [x] Inbound stays synchronous. Decided 2026-10-27: the volume does not
+      justify saving each email first and processing it afterwards.
+      Revisit only if attachments or real volume force it.
+- [x] Over twenty emails an hour from one sender, mail is dropped and
+      logged. Staying as it is.
 
-## B. Cheap now, expensive after cutover
+## Build, agreed
 
-A module cannot ship a migration, so anything needing a backfill has to
-exist before real tickets land.
+- [ ] 1. The two inbound bugs. A couple of refusals answer in a way
+      SendGrid may treat as permanent, so the email is deleted with no
+      bounce and no alert, and nothing stops the same email being
+      processed twice if SendGrid sends it twice. Small.
+- [ ] 2. Carry CCs forward on a reply. Today the CC box starts empty every
+      time, so a reply quietly drops everyone else on the thread. Needs a
+      place to keep a ticket's CC list, which is the one thing here that
+      cannot be reconstructed later. Small.
+- [ ] 3. Only accept a ticket number in a subject line from someone
+      already on that ticket. Today anyone who learns a ticket number can
+      post into it. Small.
+- [ ] 4. Let a contact have more than one email address. People write in
+      from a second address and become a second person. Cheap now, a data
+      clean-up later. Small.
+- [ ] 5. The missing queue views: Needs reply, Waiting, On hold, Recently
+      solved. The flag they read is already written. Small.
+- [ ] 6. Search message bodies, not just the number, subject and sender.
+      Small.
+- [ ] 7. Close a ticket seven days after it is marked resolved, unless the
+      customer replies. Needs the module's first scheduled job. Small.
+- [ ] 8. Phone and tablet layout, which is the next phase either way. The
+      sidebar is a fixed column at every width today. Medium.
 
-- [ ] 4. The columns his data model names and ours lacks: `snooze_until`,
-      `merged_into_id`, `follow_up_of_id`, `ai_state`, `legacy_number`,
-      denormalised `category` on the ticket; `raw_email_url` and `channel`
-      on the message; `customer_label`, `color`, `system` on the status;
-      `short_code`, `color`, `sla_policy_id` on the department; multiple
-      emails, `phone` and `user_id` on the contact
-- [ ] 5. The `participant` table, because CC and follower history cannot
-      be reconstructed after the fact
+## Needs your decision
 
-## C. Correctness
+- [ ] 9. SendGrid or Postmark, and how far we go to let a partner use
+      their own provider. Paused until you have spoken to Artur.
+- [ ] 10. Can agents set priority, or only Admins? Built as Admins only.
+      The agent reading the email is usually the one who knows.
+- [ ] 11. Two staff roles or three? Built as Agent and Admin, with no
+      manager tier in between. Two looks right for a team this size.
+- [ ] 12. The GitHub link: a ticket knows its issue, and the customer
+      hears when the issue moves. This is the one genuinely original idea
+      in Artur's documents and the thing his roadmap is built on. It is
+      also a product decision rather than a gap, and nothing in the module
+      points at it yet. Large.
+- [ ] 13. How much of service levels do you want? A full engine with
+      business hours and per-customer policies is a week. "This ticket
+      owed a first reply by 11:00, and it is late" is a day or two.
+- [ ] 14. Customers as companies, not just people, so tickets group by
+      customer and you can see everything from one of them. Real for
+      platformOS, where customers are organisations. Medium.
+- [ ] 15. The Zoho import. Depends entirely on how much history you want
+      to carry: open tickets only is medium, twelve months of closed
+      tickets with their threads is large.
 
-- [ ] 6. CCs carried forward on a reply (EM-12). The composer has a CC
-      field that starts empty, so a reply silently drops the thread
-- [ ] 7. Reply to a closed ticket: reopen, as the build does, or a linked
-      follow-up, as the PRD says. Changes what resolution time means
+## Later, worth doing
 
-## D. Roles and rules
+- [ ] 16. Saved replies, for the answers the team types repeatedly. Small.
+- [ ] 17. Merge two tickets, split one, and move a single message, all
+      undoable. You picked this on 2026-10-26 and we paused it. Medium.
+- [ ] 18. Show the activity log on a ticket. Every change is already
+      recorded and nothing displays it. Small.
+- [ ] 19. Show when a reply bounced or was marked as spam, and flag the
+      address. Needs SendGrid connected first. Small.
+- [ ] 20. Attachments keeping their files. Blocked on the platformOS
+      engineers, not on a decision.
+- [ ] 21. An editable subject, because customers write bad ones. Small.
+- [ ] 22. Reply templates per department, with a signature and a preview.
+      Small.
+- [ ] 23. Tests, before anyone else installs this. The ones that matter
+      are replies from Gmail, Outlook, Apple Mail and forwarded mail
+      landing on the right ticket. Medium.
 
-- [ ] 8. Two support roles or three. There is no support manager tier
-- [ ] 9. Priority: Admin only, as built, or agents too, as the PRD says
-- [ ] 10. Transition rules: never back to New (TK-2), and a status
-      category locked once a ticket uses it. Neither is enforced
-- [ ] 11. Default queue sort: the team's work order, or SLA due (WS-2)
+## Dropped
 
-## E. The PRD marks these Must and none exist
+Recorded so they stop looking like work. Any of them can come back.
 
-- [ ] 12. The GitHub issue link and the `escalation_link` table. No
-      groundwork at all, and Iteration 2 does nothing without it
-- [ ] 13. The SLA engine: policies, business hours, the clock that runs in
-      new and open and pauses in pending and on_hold, the due chip, the
-      breach notification. Needs a scheduled job, which nothing uses yet
-- [ ] 14. Confirmation auto-closing after seven days (TK-3). Same job
-- [ ] 15. Organizations as a table: domain matching, free-mail exclusion,
-      the page, the filter, the organization-level SLA
-- [ ] 16. Saved replies with variables and optional actions
-- [ ] 17. The Zoho import, with `legacy_number` and imported Message-IDs
-      so replies to old Zoho mail thread onto the imported ticket
-
-## F. Workspace gaps
-
-- [ ] 18. The missing queue views: Needs reply, Waiting, On hold, Recently
-      solved. The field is written already, so this is a filter and a rail
-      entry
-- [ ] 19. Search over message bodies and organization (WS-6)
-- [ ] 20. A read path for the activity log. Nine callers write it, nothing
-      reads it, so there is no activity panel and no report page
-- [ ] 21. Merge, split, and moving one message to another ticket, all
-      reversible for 30 days (WS-14, WS-15)
-- [ ] 22. Presence and live row updates (WS-9, WS-13). Needs the websocket
-      channel
-- [ ] 23. Keyboard shortcuts (WS-8)
-- [ ] 24. Small ticket controls: editable subject, ticket tags, snooze
-- [ ] 25. Customer-facing status labels, and email templates per
-      department with variables and a preview
-
-## G. Email polish
-
-- [ ] 26. Delivery state from provider webhooks and the hard bounce flag
-      (EM-14). The column exists, the webhook does not
-- [ ] 27. SPF, DKIM and DMARC results per message and the spoofing banner
-      (EM-9). Raw headers are kept, nothing parses them
-- [ ] 28. Over the hourly limit: drop and log, as built, or hold as
-      "Suspected loop", as the PRD says
-- [ ] 29. The acknowledgement promising an expected first-reply time
-      (NT-1). Needs item 13 first
-
-## H. Blocked or already scheduled
-
-- [ ] 30. Attachments keeping their files (EM-7). Blocked on the platform
-      question with the engineers, not on a decision
-- [ ] 31. The non-functional set: 375 px (Phase 6, next), tests with the
-      threading fixtures (Phase 7), the 500 ticket and 800 ms targets, and
-      a WCAG audit
+- A signed token in the reply address as the first threading rule. Headers
+  plus a sender-checked subject number covers it, and this needs a special
+  address per department.
+- Most of the columns the old list said to add now. That was overstated:
+  only a contact's extra email addresses and a ticket's CC list genuinely
+  need to exist before there is real data, and both are above. The rest
+  are written at the moment they are used, so they cost nothing later.
+- Seeing that a colleague is viewing or replying to a ticket, and rows
+  updating without a reload. Worth it at thirty agents, not at three.
+- Keyboard shortcuts.
+- A customer-facing label on each status, and the customer portal that
+  would show them. No portal is planned.
+- Showing whether an email passed its sender checks. We keep the headers
+  if anyone ever needs to look.
+- Holding suspected loop mail for recovery instead of dropping it.
+- Promising a first reply time in the acknowledgement. Nothing measures
+  one yet.
+- Two year retention of raw emails. Nobody asked for it, and we keep the
+  headers, which is the part that answers "why did this thread break".
+- Everything in Artur's later iterations: chat, the AI first responder,
+  AI triage into GitHub.
