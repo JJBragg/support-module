@@ -1,4 +1,12 @@
 {% doc %}
+  Finds the contact who writes in from this address, whichever of their
+  addresses it is.
+
+  Two lookups rather than one, because c__emails was added after there
+  were already contacts: a contact written before it exists has the
+  column empty and is only findable on its primary address. The fallback
+  goes away on its own once nothing predates the column.
+
   @param {string} email - Matched lowercased, which is how contacts are stored
 {% enddoc %}
 {% liquid
@@ -7,6 +15,14 @@
   endif
 
   assign needle = email | strip | downcase
-  graphql result = 'modules/support/contacts/search', email: needle, id: null, limit: 1, page: 1
+  assign token = '<' | append: needle | append: '>'
+
+  graphql result = 'modules/support/contacts/search', email_token: token, email: null, id: null, limit: 1, page: 1
+  assign found = result.records.results.first
+  if found
+    return found
+  endif
+
+  graphql result = 'modules/support/contacts/search', email: needle, email_token: null, id: null, limit: 1, page: 1
   return result.records.results.first
 %}

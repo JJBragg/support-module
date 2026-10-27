@@ -54,6 +54,7 @@ query (
 
       needs_reply: property_boolean(name: "needs_reply")
       channel: property(name: "channel")
+      cc_addresses: property_array(name: "cc_addresses")
       tags: property_array(name: "tags")
       organization_id: property(name: "organization_id")
       first_replied_at: property(name: "first_replied_at")

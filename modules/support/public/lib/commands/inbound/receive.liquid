@@ -27,22 +27,65 @@
     return result
   endif
 
+  comment
+    What the provider does with each answer, because it decides which
+    failures are recoverable. SendGrid Inbound Parse retries a 5xx for up
+    to three days and then drops the email with no bounce to the sender
+    and no alert anywhere. A 4xx it treats as final, so the email is gone
+    at once and just as quietly. There is therefore no status code that
+    means "tell someone": a refusal here either gets retried or vanishes.
+    So anything an install can fix answers 5xx, and anything no retry
+    could ever change answers 200 and is logged.
+  endcomment
   function sender = 'modules/support/helpers/email/parse_address', raw: params.from
   if sender.email == blank
-    assign result = { "ok": false, "error": "no_sender", "status": 422 }
+    comment
+      No parseable From. Retrying cannot conjure one, and with no address
+      there is nobody to reply to even if an agent wanted to, so this is
+      as far as the email goes. Logged, because an address we cannot parse
+      and should be able to is a bug in the parser.
+    endcomment
+    log params.from, type: 'modules/support/commands/inbound/receive: dropped, no sender address'
+    assign result = { "ok": false, "error": "no_sender", "status": 200 }
     return result
   endif
 
   comment
-    Blocked senders are refused before anything is written, and answered
-    200 rather than 4xx. A 4xx makes the provider retry for hours, which
-    is the provider doing the sender's work for them.
+    A blocked sender is refused before anything is written, and answered
+    200 because the refusal is permanent and deliberate. A 5xx here would
+    have the provider deliver the same blocked email every few hours for
+    three days.
   endcomment
   function blocked = 'modules/support/queries/blocked_senders/find_match', email: sender.email
   if blocked
     log sender.email, type: 'modules/support/commands/inbound/receive: refused, sender is blocked'
     assign result = { "ok": true, "status": 200, "blocked": true, "blocked_by_rule": blocked.value }
     return result
+  endif
+
+  function headers = 'modules/support/helpers/email/parse_headers', raw: params.headers
+
+  comment
+    The same email twice. A provider retries when it did not hear a 2xx,
+    and "did not hear" includes the case where everything below ran and
+    committed and only the response was lost. Without this guard that
+    retry opens a second ticket for one customer email, and the customer
+    gets two receipts.
+
+    A Message-ID is globally unique and assigned by the sender's own
+    client, so having stored one already is proof we have seen this email.
+    Mail with no Message-ID at all cannot be deduplicated and falls
+    through, which is the same position we were in before.
+  endcomment
+  if headers.message_id != blank
+    assign seen_ids = headers.message_id | split: ','
+    function already = 'modules/support/queries/messages/find_by_header_ids', message_ids: seen_ids
+    if already
+      function seen_ticket = 'modules/support/queries/tickets/find', id: already.ticket_id, number: null
+      log headers.message_id, type: 'modules/support/commands/inbound/receive: already had this Message-ID, nothing written'
+      assign result = { "ok": true, "status": 200, "duplicate": true, "ticket_id": already.ticket_id, "ticket_number": seen_ticket.number, "message_id": already.id }
+      return result
+    endif
   endif
 
   function to_addresses = 'modules/support/helpers/email/parse_address_list', raw: params.to
@@ -76,8 +119,14 @@
 
   function contact = 'modules/support/commands/contacts/find_or_create', email: sender.email, name: sender.name, organization: null
   unless contact.valid
+    comment
+      The address parsed and then would not validate, or the write
+      failed. Either way this is ours to fix, not the sender's, so answer
+      5xx and let the provider bring the email back for three days while
+      someone does.
+    endcomment
     log contact.errors, type: 'ERROR: modules/support/commands/inbound/receive could not record the contact'
-    assign result = { "ok": false, "error": "contact_invalid", "status": 422 }
+    assign result = { "ok": false, "error": "contact_invalid", "status": 500 }
     return result
   endunless
 
@@ -97,8 +146,6 @@
     assign result = { "ok": true, "status": 200, "suspected_loop": true, "recent_messages": recent }
     return result
   endif
-
-  function headers = 'modules/support/helpers/email/parse_headers', raw: params.headers
 
   comment
     Whether anything may be sent back. Worked out here, where the headers
@@ -136,12 +183,28 @@
     comment
       The fallback for clients that drop In-Reply-To and References: the
       [#18022] token outbound replies carry in their subject.
+
+      Unlike a Message-ID, a ticket number is short, sequential and
+      printed in every email we send, so anyone who has ever been copied
+      on one can guess the rest. Matching on it alone would let a stranger
+      post into any conversation by putting the right number in a subject
+      line, and the message would appear in the thread looking exactly
+      like the customer wrote it. So the number is only honoured for
+      someone already on that ticket: the requester, at any of their
+      addresses, or an address already copied in. Everyone else opens a
+      new ticket, which is the safe outcome and a visible one.
     endcomment
     function number = 'modules/support/helpers/email/ticket_number_from_subject', subject: params.subject
     if number
-      function ticket = 'modules/support/queries/tickets/find', id: null, number: number
-      if ticket
-        assign matched_by = "subject"
+      function candidate = 'modules/support/queries/tickets/find', id: null, number: number
+      if candidate
+        function belongs = 'modules/support/helpers/email/is_on_ticket', ticket: candidate, email: sender.email
+        if belongs
+          assign ticket = candidate
+          assign matched_by = "subject"
+        else
+          log sender.email, type: 'modules/support/commands/inbound/receive: subject named a ticket this sender is not on, opening a new one'
+        endif
       endif
     endif
   endif
@@ -233,6 +296,26 @@
           assign attachments_saved = attachments_saved | plus: 1
         endif
       endfor
+    endif
+
+    comment
+      Who else is on this conversation now. The sender goes in along with
+      the addresses they copied, and the helper drops them again if they
+      are the requester, which they are on every ticket but one: a reply
+      that threaded by header from an address we do not know. That is a
+      colleague joining the thread, not the customer changing address, so
+      they become a CC and the ticket keeps its requester.
+    endcomment
+    assign joining = []
+    for address in cc_addresses
+      assign joining = joining | array_add: address
+    endfor
+    assign joining = joining | array_add: sender.email
+    function thread_cc = 'modules/support/helpers/email/thread_ccs', existing: ticket.cc_addresses, department: department, contact: contact, incoming: joining
+    assign previous_cc = ticket.cc_addresses | join: ','
+    assign merged_cc = thread_cc | join: ','
+    if merged_cc != previous_cc
+      graphql _ = 'modules/support/tickets/set_cc', id: ticket.id, cc_addresses: thread_cc
     endif
 
     unless is_new

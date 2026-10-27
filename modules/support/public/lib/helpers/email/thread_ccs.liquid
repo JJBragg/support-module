@@ -1,0 +1,69 @@
+{% doc %}
+  Everyone on this thread besides the customer and ourselves.
+
+  A colleague copied on the third email stays copied on the tenth reply,
+  which is what the customer expects and what every mail client does by
+  default.
+
+  Three kinds of address are left out. The requester's own, because they
+  are already the To. Any of the department's own, because copying
+  ourselves on our own reply is how a mail loop starts. And anything
+  blank.
+
+  Takes the list so far rather than the ticket, because the two callers
+  want different things from it. Inbound mail adds to what is there. An
+  agent's reply replaces it, since the box they edited was prefilled with
+  it and anything they took out, they took out on purpose.
+
+  @param {array} [existing] - The list so far. Omit to replace rather than add
+  @param {object} department - The department, whose own addresses are excluded
+  @param {object} contact - The requester, whose own addresses are excluded
+  @param {array} [incoming] - Addresses to add, from an email or an agent
+{% enddoc %}
+{% liquid
+  assign excluded = ''
+  if contact.email != blank
+    assign excluded = excluded | append: ' <' | append: contact.email | downcase | append: '>'
+  endif
+  for address in contact.emails
+    assign excluded = excluded | append: ' <' | append: address | downcase | append: '>'
+  endfor
+  if department.inbound_address != blank
+    assign excluded = excluded | append: ' <' | append: department.inbound_address | downcase | append: '>'
+  endif
+  if department.from_address != blank
+    assign excluded = excluded | append: ' <' | append: department.from_address | downcase | append: '>'
+  endif
+
+  comment
+    One pass over what we had and then what arrived, so the order is the
+    order people joined the conversation.
+  endcomment
+  assign candidates = []
+  for address in existing
+    assign candidates = candidates | array_add: address
+  endfor
+  for address in incoming
+    assign candidates = candidates | array_add: address
+  endfor
+
+  assign kept = []
+  assign seen = ''
+  for candidate in candidates
+    assign address = candidate | strip | downcase
+    if address == blank
+      continue
+    endif
+    assign token = '<' | append: address | append: '>'
+    if excluded contains token
+      continue
+    endif
+    if seen contains token
+      continue
+    endif
+    assign seen = seen | append: ' ' | append: token
+    assign kept = kept | array_add: address
+  endfor
+
+  return kept
+%}

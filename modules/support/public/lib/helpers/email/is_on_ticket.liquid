@@ -1,0 +1,42 @@
+{% doc %}
+  Whether this address is already part of this conversation.
+
+  True for the requester, at any address they are known by, and for
+  anyone already copied in. Used to decide whether a ticket number in a
+  subject line can be trusted, so it answers no when it cannot tell.
+
+  @param {object} ticket - The ticket named in the subject
+  @param {string} [email] - The sender of the incoming email
+{% enddoc %}
+{% liquid
+  assign needle = email | default: '' | strip | downcase
+  if needle == blank or ticket == blank
+    return false
+  endif
+
+  for address in ticket.cc_addresses
+    assign known = address | strip | downcase
+    if known == needle
+      return true
+    endif
+  endfor
+
+  function contact = 'modules/support/queries/contacts/find', id: ticket.contact_id
+  if contact == blank
+    return false
+  endif
+
+  assign primary = contact.email | default: '' | strip | downcase
+  if primary == needle
+    return true
+  endif
+
+  for address in contact.emails
+    assign known = address | strip | downcase
+    if known == needle
+      return true
+    endif
+  endfor
+
+  return false
+%}

@@ -6,6 +6,6 @@
     return nil
   endif
 
-  graphql result = 'modules/support/contacts/search', id: id, ids: null, email: null, limit: 1, page: 1
+  graphql result = 'modules/support/contacts/search', id: id, ids: null, email: null, email_token: null, limit: 1, page: 1
   return result.records.results.first
 %}

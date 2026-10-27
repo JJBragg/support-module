@@ -11,6 +11,22 @@
   endcomment
   assign names = name | append: ' ' | append: organization | append: ' ' | append: email | downcase | strip
 
-  assign data = { "email": email, "name": object.name, "organization": object.organization, "c__names": names }
+  comment
+    A new contact knows one address. The array and its lookup mirror are
+    written anyway, so that every contact has them and only the ones that
+    predate the column need the fallback lookup.
+  endcomment
+  assign emails = object.emails
+  if emails == blank
+    assign emails = email | split: ','
+  endif
+
+  assign tokens = ''
+  for address in emails
+    assign tokens = tokens | append: ' <' | append: address | append: '>'
+  endfor
+  assign tokens = tokens | strip
+
+  assign data = { "email": email, "name": object.name, "organization": object.organization, "c__names": names, "emails": emails, "c__emails": tokens }
   return data
 %}

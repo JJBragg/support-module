@@ -1,0 +1,20 @@
+# Narrow: it names one property, so it cannot clear another by omission.
+mutation (
+  $id: ID!
+  $cc_addresses: [String!]
+) {
+  record: record_update(
+    id: $id
+    record: {
+      table: "modules/support/ticket"
+      properties: [
+        { name: "cc_addresses", value_array: $cc_addresses }
+      ]
+    }
+  ) {
+    id
+    type: table
+
+    cc_addresses: property_array(name: "cc_addresses")
+  }
+}

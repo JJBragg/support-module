@@ -18,3 +18,16 @@ properties:
   # hundreds of times an hour.
   - name: last_acknowledged_at
     type: datetime
+
+  # Every address this person writes in from. The one above is the primary
+  # and is always in here too. Someone who mails from their phone and then
+  # their laptop is one customer, not two, and which address each client
+  # uses is not something they chose.
+  - name: emails
+    type: array
+
+  # The addresses as <one@x.test> <two@y.test>, for the contains lookup
+  # that finds a contact by any of them. Angle brackets so that searching
+  # ob@x.test cannot match bob@x.test.
+  - name: c__emails
+    type: string

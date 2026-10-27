@@ -66,7 +66,7 @@
         </div>
         <div class="pos-support-composer-row">
           <label for="pos-support-cc">{{ 'modules/support/composer.cc' | t }}</label>
-          <input id="pos-support-cc" type="text" name="cc" value="" placeholder="{{ 'modules/support/composer.cc_placeholder' | t }}">
+          <input id="pos-support-cc" type="text" name="cc" value="{{ ticket.cc_addresses | join: ', ' }}" placeholder="{{ 'modules/support/composer.cc_placeholder' | t }}">
         </div>
       </div>
 

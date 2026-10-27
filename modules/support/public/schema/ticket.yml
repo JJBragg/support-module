@@ -89,3 +89,9 @@ properties:
     type: datetime
   - name: sla_state
     type: string
+
+  # Everyone else on the thread, accumulated from inbound mail and from
+  # what an agent actually sent. A reply that does not carry these drops
+  # the customer's colleagues out of their own conversation, silently.
+  - name: cc_addresses
+    type: array

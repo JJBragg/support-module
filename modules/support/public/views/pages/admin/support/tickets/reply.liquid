@@ -51,7 +51,21 @@ method: post
   assign department = department_result.records.results.first
   function messages = 'modules/support/queries/messages/for_ticket', ticket_id: ticket.id
 
-  function cc = 'modules/support/helpers/email/parse_address_list', raw: context.params.cc
+  comment
+    The CC box was prefilled with the thread's own list, so what came
+    back is the whole intended list: anything missing from it, the agent
+    removed deliberately. Hence no existing, and hence writing the result
+    back to the ticket, which is how a CC an agent adds here survives to
+    the next reply.
+  endcomment
+  function typed_cc = 'modules/support/helpers/email/parse_address_list', raw: context.params.cc
+  function cc = 'modules/support/helpers/email/thread_ccs', existing: null, department: department, contact: contact, incoming: typed_cc
+  assign previous_cc = ticket.cc_addresses | join: ','
+  assign chosen_cc = cc | join: ','
+  if chosen_cc != previous_cc
+    graphql _ = 'modules/support/tickets/set_cc', id: ticket.id, cc_addresses: cc
+  endif
+
   function email = 'modules/support/helpers/email/build_reply', ticket: ticket, department: department, contact: contact, messages: messages, body: body, cc: cc
 
   assign outbound = { "ticket_id": ticket.id, "kind": "outbound", "user_id": current_profile.user.id, "from_address": email.from_address, "to_addresses": null, "cc_addresses": cc, "subject": email.subject, "body_text": email.body, "message_id_header": email.message_id, "in_reply_to": email.in_reply_to, "references": email.references, "delivery_status": "sending" }

@@ -10,7 +10,7 @@
     return keyed
   endif
 
-  graphql result = 'modules/support/contacts/search', ids: ids, id: null, email: null, limit: 500, page: 1
+  graphql result = 'modules/support/contacts/search', ids: ids, id: null, email: null, email_token: null, limit: 500, page: 1
   for contact in result.records.results
     assign keyed[contact.id] = contact
   endfor
