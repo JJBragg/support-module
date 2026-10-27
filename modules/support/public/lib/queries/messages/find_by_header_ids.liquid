@@ -10,6 +10,6 @@
   endif
 
   assign sort = { "created_at": { "order": "DESC" } }
-  graphql result = 'modules/support/messages/search', message_id_headers: message_ids, message_id_header: null, ticket_id: null, contact_id: null, created_at_gte: null, id: null, sort: sort, limit: 1, page: 1
+  graphql result = 'modules/support/messages/search', body: null, message_id_headers: message_ids, message_id_header: null, ticket_id: null, contact_id: null, created_at_gte: null, id: null, sort: sort, limit: 1, page: 1
   return result.records.results.first
 %}

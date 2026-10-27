@@ -8,6 +8,6 @@
 {% enddoc %}
 {% liquid
   assign newest_first = { "created_at": { "order": "DESC" } }
-  graphql result = 'modules/support/messages/search', limit: 1, page: 1, id: null, ticket_id: null, contact_id: null, created_at_gte: null, kind: 'inbound', message_id_header: null, message_id_headers: null, sort: newest_first
+  graphql result = 'modules/support/messages/search', body: null, limit: 1, page: 1, id: null, ticket_id: null, contact_id: null, created_at_gte: null, kind: 'inbound', message_id_header: null, message_id_headers: null, sort: newest_first
   return result.records.results.first
 %}

@@ -1,0 +1,26 @@
+{% doc %}
+  The heading for a view, used by both screens.
+
+  @param {string} [view] - The view key from the query string
+{% enddoc %}
+{% liquid
+  case view
+    when 'mine'
+      assign key = 'modules/support/list.nav.my_tickets'
+    when 'unassigned'
+      assign key = 'modules/support/list.nav.unassigned'
+    when 'needs_reply'
+      assign key = 'modules/support/list.nav.needs_reply'
+    when 'waiting'
+      assign key = 'modules/support/list.nav.waiting'
+    when 'on_hold'
+      assign key = 'modules/support/list.nav.on_hold'
+    when 'solved'
+      assign key = 'modules/support/list.nav.solved'
+    else
+      assign key = 'modules/support/list.nav.all_open'
+  endcase
+
+  assign label = key | t
+  return label
+%}

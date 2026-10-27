@@ -27,25 +27,28 @@ week or more.
 
 ## Build, agreed
 
-- [ ] 1. The two inbound bugs. A couple of refusals answer in a way
+Items 1 to 7 were built, deployed and verified against staging on
+2026-10-27. Item 8 is the phase that follows.
+
+- [x] 1. The two inbound bugs. A couple of refusals answer in a way
       SendGrid may treat as permanent, so the email is deleted with no
       bounce and no alert, and nothing stops the same email being
       processed twice if SendGrid sends it twice. Small.
-- [ ] 2. Carry CCs forward on a reply. Today the CC box starts empty every
+- [x] 2. Carry CCs forward on a reply. Today the CC box starts empty every
       time, so a reply quietly drops everyone else on the thread. Needs a
       place to keep a ticket's CC list, which is the one thing here that
       cannot be reconstructed later. Small.
-- [ ] 3. Only accept a ticket number in a subject line from someone
+- [x] 3. Only accept a ticket number in a subject line from someone
       already on that ticket. Today anyone who learns a ticket number can
       post into it. Small.
-- [ ] 4. Let a contact have more than one email address. People write in
+- [x] 4. Let a contact have more than one email address. People write in
       from a second address and become a second person. Cheap now, a data
       clean-up later. Small.
-- [ ] 5. The missing queue views: Needs reply, Waiting, On hold, Recently
+- [x] 5. The missing queue views: Needs reply, Waiting, On hold, Recently
       solved. The flag they read is already written. Small.
-- [ ] 6. Search message bodies, not just the number, subject and sender.
+- [x] 6. Search message bodies, not just the number, subject and sender.
       Small.
-- [ ] 7. Close a ticket seven days after it is marked resolved, unless the
+- [x] 7. Close a ticket seven days after it is marked resolved, unless the
       customer replies. Needs the module's first scheduled job. Small.
 - [ ] 8. Phone and tablet layout, which is the next phase either way. The
       sidebar is a fixed column at every width today. Medium.

@@ -1,0 +1,41 @@
+{% doc %}
+  The tickets whose conversation contains this text, as a lookup keyed on
+  ticket id.
+
+  Searching bodies cannot be done the way the rest of the search box
+  works. A ticket carries a haystack of its own number, subject and
+  requester, kept current on every message, but putting message bodies in
+  it would grow one column without limit and rewrite it on every reply.
+  So bodies are searched where they live and the answer is joined in
+  memory.
+
+  Only the ids come back. The caller already holds the tickets, and it
+  only has to mark the ones that matched.
+
+  Capped, like every other query here. A search matching more than the
+  cap still finds the most recent matches, which is the half an agent
+  typing into a search box wants.
+
+  Private notes are searched too. They can only ever mark a ticket the
+  viewer was already being shown, because the queue is scoped to their
+  departments before this runs.
+
+  @param {string} [query] - Text to look for, already lowercased
+  @param {number} [limit] - How many matching messages to consider
+{% enddoc %}
+{% liquid
+  assign hits = {}
+  if query == blank
+    return hits
+  endif
+
+  assign fetch = limit | default: 300
+  assign sort = { "created_at": { "order": "DESC" } }
+  graphql result = 'modules/support/messages/search', body: query, sort: sort, limit: fetch, page: 1, id: null, ticket_id: null, contact_id: null, created_at_gte: null, kind: null, message_id_header: null, message_id_headers: null
+
+  for message in result.records.results
+    assign hits[message.ticket_id] = true
+  endfor
+
+  return hits
+%}

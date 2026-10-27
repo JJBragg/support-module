@@ -8,6 +8,7 @@ query (
   $kind: String
   $message_id_header: String
   $message_id_headers: [String!]
+  $body: String
   $sort: RecordsSortInput = { created_at: { order: ASC } }
 ) {
   records(
@@ -22,6 +23,7 @@ query (
         { name: "contact_id", value: $contact_id }
         { name: "kind", value: $kind }
         { name: "message_id_header", value: $message_id_header, value_in: $message_id_headers }
+        { name: "body_text", contains: $body }
       ]
     }
     sort: [$sort]

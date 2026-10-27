@@ -1,0 +1,53 @@
+{% doc %}
+  Whether a ticket belongs in one of the sidebar's views.
+
+  One definition for both screens. The list and the board each decide
+  their own columns and counts, but a view has to mean the same thing on
+  both or the same ticket appears in Needs reply on one and not the
+  other.
+
+  Four of the six read the status category rather than the status, which
+  is what the categories are for: an instance that renames Waiting on
+  customer, or adds a second pending status, gets the right answer here
+  without anyone editing this file.
+
+  @param {string} [view] - mine, unassigned, needs_reply, waiting, on_hold, solved, or all
+  @param {object} row - A ticket, decorated with its status
+  @param {string} [current_user_id] - The viewer, for the mine view
+{% enddoc %}
+{% liquid
+  case view
+    when 'mine'
+      if current_user_id != blank and row.assignee_id == current_user_id
+        return true
+      endif
+      return false
+    when 'unassigned'
+      if row.assignee_id == blank
+        return true
+      endif
+      return false
+    when 'needs_reply'
+      if row.needs_reply
+        return true
+      endif
+      return false
+    when 'waiting'
+      if row.status.kind == 'pending'
+        return true
+      endif
+      return false
+    when 'on_hold'
+      if row.status.kind == 'on_hold'
+        return true
+      endif
+      return false
+    when 'solved'
+      if row.status.kind == 'solved'
+        return true
+      endif
+      return false
+    else
+      return true
+  endcase
+%}

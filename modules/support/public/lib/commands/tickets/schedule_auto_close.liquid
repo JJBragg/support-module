@@ -1,0 +1,23 @@
+{% doc %}
+  Starts the seven day clock on a ticket an agent has marked resolved.
+
+  Called by every endpoint that can set a status, right after it does.
+  One file so that "which statuses start the clock" is answered once: it
+  is the solved category, not a named status, so an instance that renames
+  Confirmation or adds a second resolved status gets this for free.
+
+  Does nothing for any other category, so callers can call it
+  unconditionally and not repeat the test.
+
+  @param {object} ticket - The ticket, after the change
+  @param {object} status - The status it was just moved to
+{% enddoc %}
+{% liquid
+  unless status.kind == 'solved'
+    return false
+  endunless
+
+  assign payload = { "ticket_id": ticket.id, "status_id": status.id }
+  function _ = 'modules/core/commands/events/publish', type: 'ticket_solved', object: payload, delay: null, max_attempts: null
+  return true
+%}

@@ -130,8 +130,19 @@ metadata:
   assign search_query = context.params.q | default: '' | strip | downcase | remove_first: '#'
   assign current_user_id = current_profile.user.id
 
+  comment
+    Which tickets have the search text somewhere in their conversation.
+    One query before the loop rather than one per row, and empty unless
+    something was typed.
+  endcomment
+  function body_matches = 'modules/support/queries/messages/search_bodies', query: search_query, limit: null
+
   assign count_mine = 0
   assign count_unassigned = 0
+  assign count_needs_reply = 0
+  assign count_waiting = 0
+  assign count_on_hold = 0
+  assign count_solved = 0
   assign count_all = 0
   assign department_counts = {}
   assign priority_counts = {}
@@ -152,18 +163,24 @@ metadata:
       if row.assignee_id == blank
         assign count_unassigned = count_unassigned | plus: 1
       endif
+      if row.needs_reply
+        assign count_needs_reply = count_needs_reply | plus: 1
+      endif
+      if row.status.kind == 'pending'
+        assign count_waiting = count_waiting | plus: 1
+      endif
+      if row.status.kind == 'on_hold'
+        assign count_on_hold = count_on_hold | plus: 1
+      endif
+      if row.status.kind == 'solved'
+        assign count_solved = count_solved | plus: 1
+      endif
       assign department_key = row.department.slug
       assign previous = department_counts[department_key] | default: 0
       assign department_counts[department_key] = previous | plus: 1
     endunless
 
-    assign passes = true
-    if view == 'mine' and row.assignee_id != current_user_id
-      assign passes = false
-    endif
-    if view == 'unassigned' and row.assignee_id != blank
-      assign passes = false
-    endif
+    function passes = 'modules/support/helpers/ui/in_view', view: view, row: row, current_user_id: current_user_id
     if department_filter != blank and row.department.slug != department_filter
       assign passes = false
     endif
@@ -173,7 +190,13 @@ metadata:
     if search_query != blank
       assign haystack = row.c__search | default: '' | downcase
       unless haystack contains search_query
-        assign passes = false
+        comment
+          Only ever sets false. Every filter above this one shares the
+          variable, so assigning a true here would undo one of them.
+        endcomment
+        unless body_matches[row.id]
+          assign passes = false
+        endunless
       endunless
     endif
 
@@ -412,12 +435,7 @@ metadata:
     endif
   endfor
 
-  assign view_label = 'modules/support/list.nav.all_open' | t
-  if view == 'mine'
-    assign view_label = 'modules/support/list.nav.my_tickets' | t
-  elsif view == 'unassigned'
-    assign view_label = 'modules/support/list.nav.unassigned' | t
-  endif
+  function view_label = 'modules/support/helpers/ui/view_label', view: view
 
   assign heading = view_label
   if department_filter != blank
@@ -443,6 +461,10 @@ metadata:
   department_counts: department_counts,
   count_mine: count_mine,
   count_unassigned: count_unassigned,
+  count_needs_reply: count_needs_reply,
+  count_waiting: count_waiting,
+  count_on_hold: count_on_hold,
+  count_solved: count_solved,
   count_all: count_all,
   view: view,
   status_filter: null,

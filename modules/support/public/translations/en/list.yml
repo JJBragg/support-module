@@ -6,13 +6,17 @@ en:
       my_tickets: My tickets
       unassigned: Unassigned
       all_open: All open
+      needs_reply: Needs reply
+      waiting: Waiting on customer
+      on_hold: On hold
+      solved: Recently solved
       status: Status
       departments: Departments
       settings: Settings
       signed_in_as: Signed in as %{name}
     search:
       label: Search tickets
-      placeholder: 'Search ticket #, subject or email'
+      placeholder: 'Search ticket #, subject, email or message'
     toolbar:
       priority: Priority
       all_priorities: All priorities

@@ -305,13 +305,24 @@
       that threaded by header from an address we do not know. That is a
       colleague joining the thread, not the customer changing address, so
       they become a CC and the ticket keeps its requester.
+
+      The requester is the person who opened the ticket, who is only the
+      sender of this particular email on a new ticket. Passing the sender
+      instead excludes whoever just wrote in, which drops the colleague
+      this is meant to add and leaves the actual requester free to end up
+      copied on their own conversation.
     endcomment
+    assign requester = contact
+    unless is_new
+      function requester = 'modules/support/queries/contacts/find', id: ticket.contact_id
+    endunless
+
     assign joining = []
     for address in cc_addresses
       assign joining = joining | array_add: address
     endfor
     assign joining = joining | array_add: sender.email
-    function thread_cc = 'modules/support/helpers/email/thread_ccs', existing: ticket.cc_addresses, department: department, contact: contact, incoming: joining
+    function thread_cc = 'modules/support/helpers/email/thread_ccs', existing: ticket.cc_addresses, department: department, contact: requester, incoming: joining
     assign previous_cc = ticket.cc_addresses | join: ','
     assign merged_cc = thread_cc | join: ','
     if merged_cc != previous_cc

@@ -1,0 +1,21 @@
+---
+metadata:
+  priority: low
+  max_attempts: 3
+  delay: 10080
+---
+{% doc %}
+  Seven days after a ticket was marked resolved, close it.
+
+  Why a delayed event and not a nightly sweep: a module cannot install a
+  scheduled job on its host, so the only clock available is the one a
+  consumer carries. Each resolved ticket schedules its own.
+
+  Thin on purpose. The decision lives in the command, where it can be
+  exercised without waiting a week.
+
+  @param {object} event - The ticket_solved payload
+{% enddoc %}
+{% liquid
+  function _ = 'modules/support/commands/tickets/close_if_due', ticket_id: event.ticket_id
+%}

@@ -117,6 +117,7 @@ method: post
     function stamps = 'modules/support/helpers/status/stamps', status: target
 
     graphql _ = 'modules/support/tickets/set_status', id: ticket.id, status_id: context.params.then_status_id, closed_at: stamps.closed_at, solved_at: stamps.solved_at
+    function _ = 'modules/support/commands/tickets/schedule_auto_close', ticket: ticket, status: target
     assign activity = { "ticket_id": ticket.id, "actor_id": current_profile.user.id, "action": "status_changed", "from_value": previous_name, "to_value": new_name }
     function _ = 'modules/support/commands/activities/create', object: activity
   endif

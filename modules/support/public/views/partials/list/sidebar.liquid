@@ -17,6 +17,16 @@
   function url_mine = 'modules/support/helpers/ui/queue_url', overrides: { "view": "mine", "status": "", "department": "", "expand": "", "collapsed": "" }
   function url_unassigned = 'modules/support/helpers/ui/queue_url', overrides: { "view": "unassigned", "status": "", "department": "", "expand": "", "collapsed": "" }
   function url_all = 'modules/support/helpers/ui/queue_url', overrides: { "view": "all", "status": "", "department": "", "expand": "", "collapsed": "" }
+  function url_needs_reply = 'modules/support/helpers/ui/queue_url', overrides: { "view": "needs_reply", "status": "", "department": "", "expand": "", "collapsed": "" }
+  function url_waiting = 'modules/support/helpers/ui/queue_url', overrides: { "view": "waiting", "status": "", "department": "", "expand": "", "collapsed": "" }
+  function url_on_hold = 'modules/support/helpers/ui/queue_url', overrides: { "view": "on_hold", "status": "", "department": "", "expand": "", "collapsed": "" }
+  function url_solved = 'modules/support/helpers/ui/queue_url', overrides: { "view": "solved", "status": "", "department": "", "expand": "", "collapsed": "" }
+
+  comment
+    The three category views borrow the icon and colour of the status
+    category they stand for, so Waiting in the view list looks like a
+    waiting status looks everywhere else on the screen.
+  endcomment
 -%}
 <nav class="pos-support-nav" aria-label="{{ 'modules/support/list.nav.queues' | t }}">
   <div class="pos-support-brand">
@@ -37,10 +47,30 @@
       <span class="pos-support-navitem-label">{{ 'modules/support/list.nav.unassigned' | t }}</span>
       <span class="pos-support-count">{{ count_unassigned }}</span>
     </a>
+    <a class="pos-support-navitem" href="{{ url_needs_reply }}" {% if view == 'needs_reply' and status_filter == blank and department_filter == blank %}aria-current="true"{% endif %}>
+      {% render 'modules/support/ui/icon', path: tokens.icons.needs_reply, size: 15, stroke: 2 %}
+      <span class="pos-support-navitem-label">{{ 'modules/support/list.nav.needs_reply' | t }}</span>
+      <span class="pos-support-count">{{ count_needs_reply }}</span>
+    </a>
     <a class="pos-support-navitem" href="{{ url_all }}" {% if view == 'all' and status_filter == blank and department_filter == blank %}aria-current="true"{% endif %}>
       {% render 'modules/support/ui/icon', path: tokens.icons.all, size: 15, stroke: 2 %}
       <span class="pos-support-navitem-label">{{ 'modules/support/list.nav.all_open' | t }}</span>
       <span class="pos-support-count">{{ count_all }}</span>
+    </a>
+    <a class="pos-support-navitem" href="{{ url_waiting }}" {% if view == 'waiting' and status_filter == blank and department_filter == blank %}aria-current="true"{% endif %}>
+      <span style="color: {{ tokens.statuses.waiting_customer.fg }}; display: flex">{% render 'modules/support/ui/icon', path: tokens.statuses.waiting_customer.icon, size: 15, stroke: 2 %}</span>
+      <span class="pos-support-navitem-label">{{ 'modules/support/list.nav.waiting' | t }}</span>
+      <span class="pos-support-count">{{ count_waiting }}</span>
+    </a>
+    <a class="pos-support-navitem" href="{{ url_on_hold }}" {% if view == 'on_hold' and status_filter == blank and department_filter == blank %}aria-current="true"{% endif %}>
+      <span style="color: {{ tokens.statuses.on_hold.fg }}; display: flex">{% render 'modules/support/ui/icon', path: tokens.statuses.on_hold.icon, size: 15, stroke: 2 %}</span>
+      <span class="pos-support-navitem-label">{{ 'modules/support/list.nav.on_hold' | t }}</span>
+      <span class="pos-support-count">{{ count_on_hold }}</span>
+    </a>
+    <a class="pos-support-navitem" href="{{ url_solved }}" {% if view == 'solved' and status_filter == blank and department_filter == blank %}aria-current="true"{% endif %}>
+      <span style="color: {{ tokens.statuses.confirmation.fg }}; display: flex">{% render 'modules/support/ui/icon', path: tokens.statuses.confirmation.icon, size: 15, stroke: 2 %}</span>
+      <span class="pos-support-navitem-label">{{ 'modules/support/list.nav.solved' | t }}</span>
+      <span class="pos-support-count">{{ count_solved }}</span>
     </a>
   </div>
 

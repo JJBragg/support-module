@@ -112,6 +112,22 @@ hour before the rest is dropped and logged. A blocklist refuses addresses
 and domains at the door. Spam is a ninth status, closed, and the one
 closed status a customer reply does not reopen.
 
+**Seven items from the PRD comparison** (2026-10-27), all deployed and
+verified against staging. The inbound endpoint answers the provider
+correctly: SendGrid retries a 5xx for three days and treats a 4xx as
+final, so the two 422s were destroying mail silently. A stored Message-ID
+is now proof an email has been seen, so a provider retry cannot open a
+second ticket. A ticket keeps the thread's CC list, the composer is
+prefilled from it, and what an agent sends back becomes the new list; a
+reply that threads by header from an unknown address joins that list
+rather than vanishing. A ticket number in a subject is only honoured for
+someone already on the ticket. A contact can hold several addresses. The
+sidebar has four more views, defined once in `helpers/ui/in_view` and
+read by both screens off the status category. Search reaches message
+bodies through a second query joined in memory, because a per-ticket
+haystack of every message would grow without limit. And a ticket marked
+resolved closes itself seven days later.
+
 **Phase 5, settings.** `/admin/support/settings`, Admins only. Departments with
 inline edit, statuses with reorder and an Open / On hold / Closed switch,
 agents with role and per-department access, and the email provider with its
@@ -131,11 +147,12 @@ publish. Every interface string is in `translations/en/`.
 
 ## Next
 
-**Phase 6, responsive layout and theming**, per build spec section 8.
-Nothing started. The sidebar is the first thing: it is a fixed column at every
-width, which is what makes both the list and the board unusable on a phone.
-The board's own phone pieces are already built and waiting on it. One codebase with CSS breakpoints: the phone list and the
-phone detail with its details sheet are designed in
+**Phase 6, responsive layout and theming**, per build spec section 8, and
+item 8 on the checklist. Nothing started. The sidebar is the first thing:
+it is a fixed column at every width, which is what makes both the list
+and the board unusable on a phone. The board's own phone pieces are
+already built and waiting on it. One codebase with CSS breakpoints: the
+phone list and the phone detail with its details sheet are designed in
 `Phone-List.dc.html` and `Phone-Detail.dc.html`.
 
 **Phase 7** is hardening, tests, the README and release wiring.
@@ -145,15 +162,17 @@ allowed status transitions (answered 2026-10-25 as free movement, so
 nothing to build) and whether the latest-message ring stays orange-red or
 switches to the primary colour.
 
-**From the PRD comparison** in `docs/prd-comparison-2026-10-26.md`, which
-is written for Artur and holds the full list with his requirement IDs. In
-rough order of how much they hurt: the GitHub link, which has no
-groundwork at all; merge
-and split; CCs carried forward, which is a correctness bug today since a
-reply drops everyone who was on the thread; the Needs reply view, now
-that the field exists; the SLA engine; organizations as a table; saved
-replies; search over message bodies. One decision is still open: work
-order or SLA as the default sort once there is an SLA to sort by.
+**From the checklist**, `docs/prd-gap-checklist.md`, which is the live
+list: thirty one differences from Artur's PRDs, judged on whether this
+team needs them rather than on what the documents say, since those turned
+out to be an AI's answer to a prompt rather than a spec. Items 1 to 7 are
+done. Seven things wait on a decision from JJ, the largest being the
+GitHub issue link, which has no groundwork at all and which Artur's whole
+roadmap is built on. Eight more are worth doing later: saved replies,
+merge and split, a read path for the activity log, delivery and bounce
+state, attachments keeping their files, an editable subject, reply
+templates per department, and tests. Ten are dropped, with reasons, in
+that file.
 
 **Opening the provider seam.** Ticket logic already knows nothing about
 the provider: outbound goes through `commands/outbound/send`, inbound
@@ -287,3 +306,18 @@ and in commit messages. The short list:
 - A missing query parameter and an empty one are not worth telling apart.
   Where the difference matters, send a sentinel: the board's column forms post
   the word `none` rather than an empty field.
+- A consumer's `metadata.delay` is a number, and the documentation does
+  not say of what. It looks like minutes. Anything scheduled that far out
+  should re-check the elapsed time itself and reschedule if it is early,
+  so a wrong unit costs wake-ups rather than correctness.
+- `helpers/status/stamps` writes both `solved_at` and `closed_at` when a
+  ticket is closed, which is right for an agent closing something that
+  was never resolved and wrong for anything closing a ticket that was.
+  Pass the original `solved_at` through in that case.
+- Filters that share one `passes` variable can only ever assign false. A
+  later filter that assigns a true undoes an earlier one, silently. The
+  board's loop is built that way; the list gives each filter its own
+  verdict.
+- `contains` on a joined string of values matches across value
+  boundaries, so a search for `ob@x.test` finds `bob@x.test`. Wrap each
+  value in delimiters and search for the delimited form.

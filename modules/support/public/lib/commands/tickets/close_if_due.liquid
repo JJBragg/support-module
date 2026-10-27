@@ -1,0 +1,74 @@
+{% doc %}
+  Closes a ticket that has sat resolved for seven days, if it is due.
+
+  Checks the elapsed time itself rather than trusting the consumer's
+  delay to be exactly seven days, and reschedules when it is early. That
+  is deliberate: the delay looks like a number of minutes, but nothing in
+  the platform documentation says so outright, and the failure we refuse
+  to ship is a ticket closing on a customer hours after it was resolved.
+  Under this shape a wrong unit costs extra wake-ups and nothing else.
+
+  A ticket that has moved on is left alone, which covers the case that
+  matters most: the customer replied, the reply reopened it, and the
+  event that scheduled this is now stale.
+
+  Separate from its consumer so the decision can be exercised without
+  waiting a week for an event to fire.
+
+  @param {string} [ticket_id] - The ticket that was marked resolved
+{% enddoc %}
+{% liquid
+  assign hold_days = 7
+
+  function ticket = 'modules/support/queries/tickets/find', id: ticket_id, number: null
+  if ticket == blank
+    return null
+  endif
+
+  function status = 'modules/support/queries/statuses/find', id: ticket.status_id
+  unless status.kind == 'solved'
+    return null
+  endunless
+
+  if ticket.solved_at == blank
+    log ticket_id, type: 'modules/support/commands/tickets/close_if_due: resolved with no solved_at, leaving it open'
+    return null
+  endif
+
+  assign now_seconds = 'now' | date: '%s' | plus: 0
+  assign solved_seconds = ticket.solved_at | date: '%s' | plus: 0
+  assign elapsed_days = now_seconds | minus: solved_seconds | divided_by: 86400
+
+  if elapsed_days < hold_days
+    log ticket.number, type: 'modules/support/commands/tickets/close_if_due: too early to close, rescheduling'
+    assign payload = { "ticket_id": ticket.id, "status_id": ticket.status_id }
+    function _ = 'modules/core/commands/events/publish', type: 'ticket_solved', object: payload, delay: null, max_attempts: null
+    return null
+  endif
+
+  function closed = 'modules/support/queries/statuses/find_by_key', key: 'closed'
+  if closed == blank
+    log 'ERROR: modules/support/commands/tickets/close_if_due found no closed status to move to'
+    return null
+  endif
+
+  comment
+    Keep the original solved_at rather than taking the one the stamps
+    helper offers. It stamps both fields with now, which is right for an
+    agent closing a ticket that was never resolved first, and wrong here:
+    this ticket was resolved a week ago and that is when it was resolved.
+    Overwriting it would quietly turn every resolution time into seven
+    days once anything reads the field.
+  endcomment
+  function stamps = 'modules/support/helpers/status/stamps', status: closed
+  graphql _ = 'modules/support/tickets/set_status', id: ticket.id, status_id: closed.id, closed_at: stamps.closed_at, solved_at: ticket.solved_at
+
+  comment
+    No actor. Nobody did this, the clock did, and the activity log already
+    reads a blank actor as "not a person".
+  endcomment
+  assign activity = { "ticket_id": ticket.id, "actor_id": null, "action": "status_changed", "from_value": status.name, "to_value": closed.name }
+  function _ = 'modules/support/commands/activities/create', object: activity
+
+  return true
+%}
