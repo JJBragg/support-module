@@ -1,0 +1,72 @@
+{% doc %}
+  Removes every record the write tests create.
+
+  Called at the start of each test as well as at the end. Liquid has no
+  ensure, and the runner catches a raise per test, so a test that fails
+  part way through never reaches its own clean up. Sweeping on the way in
+  means a crashed run is tidied by the next one rather than leaving
+  records to accumulate.
+
+  Everything it removes is identified by the tests.invalid domain, which
+  RFC 2606 reserves so that it can never belong to anyone. Nothing on a
+  real instance can match.
+
+  Tickets are swept before contacts and by their own search column, so an
+  orphan left by a half finished run is found even though its contact is
+  already gone.
+{% enddoc %}
+{% liquid
+  # One delete per record, because platformOS has no bulk delete mutation
+  # and a sweep of a handful of test records is not worth a query budget.
+  # platformos-check-disable NestedGraphQLQuery
+  assign domain = 'tests.invalid'
+  assign removed = { "tickets": 0, "messages": 0, "attachments": 0, "activities": 0, "contacts": 0, "blocked": 0 }
+
+  graphql found = 'maintenance/records_by_property', table: 'modules/support/ticket', name: 'c__search', contains: domain, value: null
+  for row in found.records.results
+    function messages = 'modules/support/queries/messages/for_ticket', ticket_id: row.id
+    assign message_ids = []
+    for message in messages
+      assign message_ids = message_ids | array_add: message.id
+    endfor
+
+    if message_ids != empty
+      function attachments = 'modules/support/queries/attachments/for_messages', message_ids: message_ids
+      for message in messages
+        for attachment in attachments[message.id]
+          graphql _ = 'maintenance/record_delete', table: 'modules/support/attachment', id: attachment.id
+          assign removed.attachments = removed.attachments | plus: 1
+        endfor
+      endfor
+    endif
+
+    for message in messages
+      graphql _ = 'maintenance/record_delete', table: 'modules/support/message', id: message.id
+      assign removed.messages = removed.messages | plus: 1
+    endfor
+
+    graphql activities = 'maintenance/records_by_property', table: 'modules/support/activity', name: 'ticket_id', value: row.id, contains: null
+    for activity in activities.records.results
+      graphql _ = 'maintenance/record_delete', table: 'modules/support/activity', id: activity.id
+      assign removed.activities = removed.activities | plus: 1
+    endfor
+
+    graphql _ = 'maintenance/record_delete', table: 'modules/support/ticket', id: row.id
+    assign removed.tickets = removed.tickets | plus: 1
+  endfor
+
+  graphql contacts = 'maintenance/records_by_property', table: 'modules/support/contact', name: 'c__names', contains: domain, value: null
+  for row in contacts.records.results
+    graphql _ = 'maintenance/record_delete', table: 'modules/support/contact', id: row.id
+    assign removed.contacts = removed.contacts | plus: 1
+  endfor
+
+  graphql blocked = 'maintenance/records_by_property', table: 'modules/support/blocked_sender', name: 'value', contains: domain, value: null
+  for row in blocked.records.results
+    graphql _ = 'maintenance/record_delete', table: 'modules/support/blocked_sender', id: row.id
+    assign removed.blocked = removed.blocked | plus: 1
+  endfor
+
+  # platformos-check-enable NestedGraphQLQuery
+  return removed
+%}

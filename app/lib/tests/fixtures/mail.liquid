@@ -1,0 +1,69 @@
+{%- comment -%}
+  Header blocks for the end to end tests, built around one conversation
+  so the ids line up.
+
+  Every address is on tests.invalid, which RFC 2606 reserves so that it
+  can never belong to anyone. That is also what the sweep matches on, so
+  a record created here is always identifiable as ours.
+
+  Excluded from the linter in .platformos-check.yml, like the module's own
+  fixtures: a real Message-ID is not parseable as HTML.
+{%- endcomment -%}
+{%- capture opening -%}
+Return-Path: <rita@tests.invalid>
+From: Rita Alvarez <rita@tests.invalid>
+To: general@inbound.example.com
+Cc: colleague@tests.invalid
+Subject: Lift is stuck between floors
+Message-ID: <rita-001@tests.invalid>
+{%- endcapture -%}
+{%- capture reply_by_header -%}
+Return-Path: <rita@tests.invalid>
+From: Rita Alvarez <rita@tests.invalid>
+To: general@inbound.example.com
+Subject: Re: Lift is stuck between floors
+Message-ID: <rita-002@tests.invalid>
+In-Reply-To: <rita-001@tests.invalid>
+References: <rita-001@tests.invalid>
+{%- endcapture -%}
+{%- capture reply_by_subject -%}
+Return-Path: <rita@tests.invalid>
+From: Rita Alvarez <rita@tests.invalid>
+To: general@inbound.example.com
+Subject: RE: Lift is stuck between floors
+Message-ID: <rita-003@tests.invalid>
+{%- endcapture -%}
+{%- capture stranger_with_token -%}
+Return-Path: <stranger@tests.invalid>
+From: A Stranger <stranger@tests.invalid>
+To: general@inbound.example.com
+Subject: RE: Lift is stuck between floors
+Message-ID: <stranger-001@tests.invalid>
+{%- endcapture -%}
+{%- capture colleague_in_thread -%}
+Return-Path: <newcomer@tests.invalid>
+From: A Newcomer <newcomer@tests.invalid>
+To: general@inbound.example.com
+Subject: Re: Lift is stuck between floors
+Message-ID: <newcomer-001@tests.invalid>
+In-Reply-To: <rita-001@tests.invalid>
+{%- endcapture -%}
+{%- capture out_of_office -%}
+Return-Path: <away@tests.invalid>
+From: Someone Away <away@tests.invalid>
+To: general@inbound.example.com
+Subject: Automatic reply: Lift is stuck between floors
+Message-ID: <away-001@tests.invalid>
+Auto-Submitted: auto-replied
+{%- endcapture -%}
+{%- capture a_forward -%}
+Return-Path: <rita@tests.invalid>
+From: Rita Alvarez <rita@tests.invalid>
+To: general@inbound.example.com
+Subject: Fwd: something else entirely
+Message-ID: <rita-fwd-001@tests.invalid>
+{%- endcapture -%}
+{% liquid
+  assign blocks = { "opening": opening, "reply_by_header": reply_by_header, "reply_by_subject": reply_by_subject, "stranger_with_token": stranger_with_token, "colleague_in_thread": colleague_in_thread, "out_of_office": out_of_office, "a_forward": a_forward }
+  return blocks
+%}

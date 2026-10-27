@@ -9,3 +9,4 @@
 # tests that read them.
 ignore:
   - modules/support/public/lib/tests/fixtures/*
+  - app/lib/tests/fixtures/*

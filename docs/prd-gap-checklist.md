@@ -92,8 +92,9 @@ All eight were built, deployed and checked against staging on
       Small.
 - [x] 23. Tests. Done 2026-10-27 for everything that decides where an
       email goes, 127 assertions over 8 files, run with `npm test`. Not
-      done for anything that writes a record: that needs a teardown story
-      first, and the module ships no delete.
+      Extended the same day to the tests that write records, which live
+      in `app/` with the delete they clean up with, so nothing of that
+      reaches a partner. 163 assertions over 11 files.
 
 ## Dropped
 

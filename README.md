@@ -59,10 +59,27 @@ client, automation detection by RFC 3834, the thread's CC list, the sidebar
 views and the status timestamps. None of it writes a record, so there is
 nothing to clean up and the suite is safe to run against any instance.
 
-What is not covered is anything that writes: opening a ticket, threading a
-reply onto one, the reply endpoint. Those need fixtures created and torn
-down, and the module deliberately ships no delete, so that needs a decision
-before it needs code.
+The tests that write records live in `app/lib/tests/` instead, outside the
+module. They open tickets, thread replies onto them, reopen a closed one and
+exercise the three refusals, then destroy what they made. The delete they
+clean up with is in `app/graphql/maintenance/`, which is the whole point:
+only `modules/support` is published, so a partner installing this module
+receives one that still ships no delete at all. The gate is which files are
+published rather than a check on the environment, and a published file list
+cannot be misconfigured.
+
+Everything those tests touch is on the `tests.invalid` domain, which RFC 2606
+reserves so it can never belong to anyone. The sweep runs on the way in as
+well as the way out: Liquid has no `ensure` and the runner catches a raise
+per test, so a test that fails part way never reaches its own clean up and
+the next run tidies instead.
+
+`bin/test` makes one request per suite because the runner is synchronous and
+the gateway allows it twenty seconds, which the writing tests go past if they
+all run together. A suite is a path prefix; add a line to the array when you
+add a file that writes. The refusals suite is the closest to the ceiling at
+around fifteen seconds, so if it starts timing out, split it rather than
+trimming it.
 
 Mail bodies and header blocks live in `lib/tests/fixtures/` and are excluded
 from the linter in `.platformos-check.yml`. They hold real mail, which is

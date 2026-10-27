@@ -1,0 +1,74 @@
+{%- comment -%}
+  The three times the inbound endpoint refuses to do the obvious thing:
+  mail a machine sent, a sender on the blocklist, and a sender in a loop.
+
+  Refusals deserve more test than features. Nobody notices when one stops
+  working until the consequence arrives by itself, and one of these
+  knowingly loses email.
+{%- endcomment -%}
+{% liquid
+  function _ = 'tests/support/purge'
+  function fx = 'tests/fixtures/mail'
+
+  comment
+    Mail a machine sent opens a ticket, because somebody wrote in and
+    something is happening, and is flagged so the consumer never answers
+    it. Answering it is how two auto responders talk all night.
+  endcomment
+  function auto = 'tests/support/post', from: 'Someone Away <away@tests.invalid>', subject: 'Automatic reply: Lift is stuck between floors', headers: fx.out_of_office, cc: null, text: 'I am away until Monday.', to: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: auto.new_ticket, expected: true, field_name: 'an out of office still opens a ticket'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: auto.automated, expected: true, field_name: 'and is marked as sent by a machine'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: auto.automated_reason, expected: 'auto-submitted', field_name: 'with the rule that caught it'
+
+  comment
+    A blocked sender is refused at the door: nothing written, and a 200
+    rather than an error, because the refusal is permanent and a 5xx
+    would have the provider deliver the same mail every few hours for
+    three days.
+  endcomment
+  assign block = { "value": "nuisance@tests.invalid", "scope": "email", "reason": "test", "blocked_by": null }
+  function blocked = 'modules/support/commands/blocked_senders/create', object: block
+  function refused = 'tests/support/post', from: 'A Nuisance <nuisance@tests.invalid>', subject: 'Lift is stuck between floors', headers: fx.opening, cc: null, text: 'Again.', to: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: refused.blocked, expected: true, field_name: 'a blocked sender is refused'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: refused.status, expected: 200, field_name: 'with a 200, so the provider does not retry for three days'
+  function nobody = 'modules/support/queries/contacts/find_by_email', email: 'nuisance@tests.invalid'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: nobody, expected: null, field_name: 'and not even a contact is written'
+
+  comment
+    Twenty emails an hour from one sender is a loop, a broken
+    integration or an attack, and all three want the same answer. This
+    is the one place the module knowingly loses email, so it is the one
+    that most deserves a test saying so out loud.
+  endcomment
+  comment
+    Twenty messages are seeded straight onto one ticket rather than
+    posted through the door. Posting twenty one real emails took the
+    whole run past the twenty second gateway timeout and the suite
+    started answering 504 instead of a result.
+
+    What is under test is the guard at the boundary, not the counting of
+    its own writes: the limit reads how many inbound messages this
+    sender has in the last hour, and it does not care which code path
+    wrote them. The twenty first email is a real one, posted through the
+    door like any other.
+
+    The first draft of this test posted twenty copies of one Message-ID
+    and counted one message, because the duplicate guard caught the other
+    nineteen. That is worth knowing if anyone widens this later.
+  endcomment
+  function first = 'tests/support/post', from: 'A Loop <loop@tests.invalid>', subject: 'Loop', headers: null, cc: null, text: 'Again.', to: null
+  function loop_ticket = 'modules/support/queries/tickets/find', id: first.ticket_id, number: null
+  function loop_contact = 'modules/support/queries/contacts/find_by_email', email: 'loop@tests.invalid'
+
+  for i in (2..20)
+    assign seeded = { "ticket_id": loop_ticket.id, "kind": "inbound", "contact_id": loop_contact.id, "user_id": null, "from_address": "loop@tests.invalid", "to_addresses": null, "cc_addresses": null, "subject": "Loop", "body_html": "", "body_text": "Again.", "quoted_html": "", "message_id_header": null, "in_reply_to": null, "references": null, "provider_message_id": null, "delivery_status": null, "match_reason": "seeded", "raw_headers": null }
+    function _ = 'modules/support/commands/messages/create', object: seeded
+  endfor
+
+  assign loop_subject = 'Re: Loop [#' | append: loop_ticket.number | append: ']'
+  function over = 'tests/support/post', from: 'A Loop <loop@tests.invalid>', subject: loop_subject, headers: null, cc: null, text: 'Again.', to: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: over.suspected_loop, expected: true, field_name: 'the twenty first email in an hour is dropped'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: over.status, expected: 200, field_name: 'and answered 200, because a retry would bring it straight back'
+
+  function _ = 'tests/support/purge'
+%}

@@ -1,0 +1,25 @@
+{% doc %}
+  Posts one email at the inbound command, the way the provider's endpoint
+  page does.
+
+  The endpoint maps a provider's field names onto these neutral ones and
+  does nothing else, so going through this exercises everything that
+  matters and keeps the tests free of SendGrid's spelling.
+
+  @param {string} from - The sender, as a From header writes it
+  @param {string} subject - The subject line
+  @param {string} headers - The raw header block
+  @param {string} [text] - The body
+  @param {string} [cc] - A Cc header value
+  @param {string} [to] - The recipient. Defaults to the General department
+{% enddoc %}
+{% liquid
+  function settings = 'modules/support/queries/settings/get'
+
+  assign recipient = to | default: 'general@inbound.example.com'
+  assign body = text | default: 'Sent by the test suite.'
+  assign params = { "from": from, "to": recipient, "cc": cc, "subject": subject, "text": body, "html": "", "headers": headers, "token": settings.webhook_secret, "attachments": 0 }
+
+  function result = 'modules/support/commands/inbound/receive', params: params
+  return result
+%}

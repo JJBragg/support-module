@@ -1,0 +1,55 @@
+{%- comment -%}
+  Reopening, and the one closed status that must stay shut.
+
+  A customer replying to a ticket we closed reopens it rather than
+  opening a follow up. That was decided on 2026-10-26 and it is a
+  deliberate divergence from Artur's PRD, so it is worth a test that
+  would notice if it quietly changed back.
+
+  These write records, which is why they are in the host app and not in
+  the module: only modules/support is published, so the delete they
+  clean up with never reaches anyone who installs this.
+{%- endcomment -%}
+{% liquid
+  function _ = 'tests/support/purge'
+  function fx = 'tests/fixtures/mail'
+
+  function closed = 'modules/support/queries/statuses/find_by_key', key: 'closed'
+  function spam = 'modules/support/queries/statuses/find_by_key', key: 'spam'
+  function reopen_target = 'modules/support/queries/statuses/flagged', flag: 'is_reopen_target'
+
+  comment
+    A customer replying to a ticket we closed reopens it rather than
+    opening a follow up. The decision of 2026-10-26, and a deliberate
+    divergence from Artur's PRD, so it is worth a test that would notice
+    if it quietly changed back.
+  endcomment
+  function opened = 'tests/support/post', from: 'Rita Alvarez <rita@tests.invalid>', subject: 'Lift is stuck between floors', headers: fx.opening, cc: null, text: 'It is stuck.', to: null
+  function ticket = 'modules/support/queries/tickets/find', id: opened.ticket_id, number: null
+
+  function stamps = 'modules/support/helpers/status/stamps', status: closed
+  graphql _ = 'modules/support/tickets/set_status', id: ticket.id, status_id: closed.id, closed_at: stamps.closed_at, solved_at: stamps.solved_at
+
+  function reply = 'tests/support/post', from: 'Rita Alvarez <rita@tests.invalid>', subject: 'Re: Lift is stuck between floors', headers: fx.reply_by_header, cc: null, text: 'It is still stuck.', to: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: reply.reopened, expected: true, field_name: 'a reply to a closed ticket reopens it'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: reply.new_ticket, expected: false, field_name: 'rather than opening a follow up'
+
+  function ticket = 'modules/support/queries/tickets/find', id: opened.ticket_id, number: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ticket.status_id, expected: reopen_target.id, field_name: 'and lands in the reopen status'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ticket.closed_at, expected: null, field_name: 'with closed_at cleared'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ticket.solved_at, expected: null, field_name: 'and solved_at cleared, which is the one a reopen used to leave behind'
+
+  comment
+    Spam is closed like any other finished status and is the one that
+    must stay shut. Reopening it would let one unblocked address walk a
+    spam thread back into the queue by replying to it.
+  endcomment
+  function stamps = 'modules/support/helpers/status/stamps', status: spam
+  graphql _ = 'modules/support/tickets/set_status', id: ticket.id, status_id: spam.id, closed_at: stamps.closed_at, solved_at: stamps.solved_at
+
+  function spam_reply = 'tests/support/post', from: 'Rita Alvarez <rita@tests.invalid>', subject: 'Re: Lift is stuck between floors', headers: fx.colleague_in_thread, cc: null, text: 'Hello again.', to: null
+  function ticket = 'modules/support/queries/tickets/find', id: opened.ticket_id, number: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ticket.status_id, expected: spam.id, field_name: 'a reply to a spam ticket leaves it spam'
+
+  function _ = 'tests/support/purge'
+%}

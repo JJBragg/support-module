@@ -172,8 +172,13 @@ bug: a Cc header with a quoted display name, which is how Outlook writes
 every recipient, was split on the comma inside the quotes and put a
 fragment of a name on the ticket's CC list.
 
-What is left of Phase 7: tests for anything that writes, which need a
-teardown story first; the README's known limits section; and release
+The tests that write records followed on the same day, in `app/` rather
+than in the module, with the delete they tear down with. Only
+`modules/support` is published, so a partner still receives a module that
+ships no delete: the gate is which files are published rather than a
+runtime check on the environment. 163 assertions over 11 files.
+
+What is left of Phase 7: the README's known limits section, and release
 wiring, meaning a postInstall message, a version script and CI.
 
 Two spec questions are still open: the exact
@@ -363,3 +368,12 @@ and in commit messages. The short list:
   `object[field_name]`, which suits checking a record. For a computed
   value use `equal`, whose `field_name` is free text and becomes the
   label in the report.
+- The test runner is synchronous and the gateway cuts a request off at
+  twenty seconds, after which the suite answers 504 rather than a
+  result. `bin/test` runs one request per suite for that reason. The
+  tests module ships a `run_async` page that puts the run in a
+  background job and reports through the logs, which is the way out if
+  the suites keep growing.
+- The duplicate guard catches test fixtures too. Twenty posts sharing
+  one Message-ID write one message, which is correct and is not what a
+  test seeding a rate limit expects.

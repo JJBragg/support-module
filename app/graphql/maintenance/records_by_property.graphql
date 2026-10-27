@@ -1,0 +1,22 @@
+# Finds records by one property, for the sweep that cleans up after the
+# write tests. Host app only, for the same reason as record_delete.
+#
+# contains rather than an exact value, because what identifies a test
+# record is that its address is on the tests.invalid domain, and that
+# domain appears inside a longer search column.
+query ($table: String!, $name: String!, $contains: String, $value: String, $per_page: Int = 500) {
+  records(
+    per_page: $per_page
+    filter: {
+      table: { value: $table }
+      properties: [
+        { name: $name, contains: $contains, value: $value }
+      ]
+    }
+  ) {
+    total_entries
+    results {
+      id
+    }
+  }
+}

@@ -24,10 +24,22 @@ url=$(node -e "
 echo "Deploying to ${env_name}"
 pos-cli deploy "${env_name}" >/dev/null
 
-echo "Running tests on ${url}"
-body=$(curl -s "${url}/_tests/run?formatter=text&name=modules/support")
+# One request per suite. The runner is synchronous and the gateway gives it
+# twenty seconds, which the tests that write records go past if they all run
+# together. A suite here is just a path prefix; add a line when you add a file
+# that writes.
+suites=(
+  "modules/support"
+  "tests/inbound_threading"
+  "tests/inbound_reopen"
+  "tests/inbound_refusals"
+)
 
-node -e '
+echo "Running tests on ${url}"
+failed=0
+for suite in "${suites[@]}"; do
+  body=$(curl -s --max-time 120 "${url}/_tests/run?formatter=text&name=${suite}")
+  node -e '
   const d = JSON.parse(require("fs").readFileSync(0, "utf8"));
   for (const t of d.tests) {
     console.log((t.success ? "  ok   " : "  FAIL ") + t.name + "  " + t.assertions);
@@ -38,9 +50,15 @@ node -e '
     }
   }
   console.log(
-    (d.success ? "Passed" : "Failed") + ": " + d.total_assertions +
-    " assertions in " + d.total_tests + " files, " + d.total_errors +
-    " errors, " + d.duration_ms + "ms"
+    "  " + (d.success ? "passed" : "FAILED") + ": " + d.total_assertions +
+    " assertions in " + d.total_tests + " files, " + d.duration_ms + "ms"
   );
   process.exit(d.success ? 0 : 1);
-' <<<"${body}"
+' <<<"${body}" || failed=1
+done
+
+if [ "${failed}" -ne 0 ]; then
+  echo "Failed"
+  exit 1
+fi
+echo "Passed"

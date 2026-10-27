@@ -1,0 +1,18 @@
+# Deletes one record, by table and id.
+#
+# This lives in the host app and not in modules/support, which is the whole
+# point of it. Only modules/support is published to the module library, so
+# a partner who installs this module gets a module that still ships no
+# delete at all. The gate is which files are published rather than a check
+# on the environment at runtime, and a published file list cannot be
+# misconfigured.
+#
+# It exists so the write tests can destroy the records they create.
+# app/config.yml sets require_table_for_record_delete_mutation, so the
+# table has to be named here and a wrong id cannot take a record from
+# another table with it.
+mutation ($table: String!, $id: ID!) {
+  record_delete(table: $table, id: $id) {
+    id
+  }
+}

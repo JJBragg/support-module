@@ -1,0 +1,105 @@
+{%- comment -%}
+  Where an email lands, end to end.
+
+  The helpers that read a header are tested inside the module. This tests
+  the cascade that uses them: an email becomes a ticket, a reply joins it,
+  and the rules that decide between those two hold for the shapes real
+  mail arrives in. These are the promises the PRD makes in words, written
+  down as something that fails when they stop being true.
+
+  These write records, which is why they are here and not in the module:
+  only modules/support is published, so the delete they clean up with
+  never reaches anyone who installs this.
+
+  Every address is on tests.invalid. The sweep runs on the way in as well
+  as the way out, because a test that raises never reaches its own clean
+  up and the next run should not inherit the mess.
+{%- endcomment -%}
+{% liquid
+  function _ = 'tests/support/purge'
+  function fx = 'tests/fixtures/mail'
+
+  comment
+    A first email. Opens a ticket, creates the contact, keeps the Cc, and
+    says it is waiting on us.
+  endcomment
+  function opened = 'tests/support/post', from: 'Rita Alvarez <rita@tests.invalid>', subject: 'Lift is stuck between floors', headers: fx.opening, cc: 'colleague@tests.invalid', text: 'It has been stuck since nine.', to: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: opened.ok, expected: true, field_name: 'a first email is accepted'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: opened.new_ticket, expected: true, field_name: 'and opens a ticket'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: opened.matched_by, expected: 'new', field_name: 'recorded as new rather than matched'
+
+  function ticket = 'modules/support/queries/tickets/find', id: opened.ticket_id, number: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ticket.needs_reply, expected: true, field_name: 'a new ticket owes the customer an answer'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ticket.cc_addresses.size, expected: 1, field_name: 'the colleague they copied is on the ticket'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ticket.cc_addresses.first, expected: 'colleague@tests.invalid', field_name: 'and it is the right address'
+
+  function rita = 'modules/support/queries/contacts/find_by_email', email: 'rita@tests.invalid'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: rita.id, expected: ticket.contact_id, field_name: 'the sender became the requester'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: rita.emails.first, expected: 'rita@tests.invalid', field_name: 'and knows one address so far'
+
+  comment
+    The same email again, as a provider retry sends it. Nothing is
+    written and the ticket it already made comes back.
+  endcomment
+  function again = 'tests/support/post', from: 'Rita Alvarez <rita@tests.invalid>', subject: 'Lift is stuck between floors', headers: fx.opening, cc: 'colleague@tests.invalid', text: 'It has been stuck since nine.', to: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: again.duplicate, expected: true, field_name: 'the same Message-ID twice is a duplicate'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: again.ticket_number, expected: ticket.number, field_name: 'and returns the ticket it already opened'
+  comment
+    One message, not two. The customer's receipt is sent by a consumer,
+    so it is not written inside this request and nothing here waits for
+    it. What this asserts is the point: the retry added nothing.
+  endcomment
+  function messages = 'modules/support/queries/messages/for_ticket', ticket_id: ticket.id
+  assign after_duplicate = messages | size
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: after_duplicate, expected: 1, field_name: 'the retry wrote no second message'
+
+  comment
+    A reply with threading headers. The first rule in the cascade.
+  endcomment
+  function header_reply = 'tests/support/post', from: 'Rita Alvarez <rita@tests.invalid>', subject: 'Re: Lift is stuck between floors', headers: fx.reply_by_header, cc: null, text: 'Still stuck.', to: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: header_reply.new_ticket, expected: false, field_name: 'a reply with In-Reply-To joins its ticket'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: header_reply.matched_by, expected: 'headers', field_name: 'and says it matched on headers'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: header_reply.ticket_number, expected: ticket.number, field_name: 'on the right ticket'
+
+  comment
+    A reply from a client that dropped the headers, carrying only the
+    number our own reply put in the subject. The second rule.
+  endcomment
+  assign token = ' [#' | append: ticket.number | append: ']'
+  assign subject_with_token = 'RE: Lift is stuck between floors' | append: token
+  function subject_reply = 'tests/support/post', from: 'Rita Alvarez <rita@tests.invalid>', subject: subject_with_token, headers: fx.reply_by_subject, cc: null, text: 'Any news?', to: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: subject_reply.matched_by, expected: 'subject', field_name: 'the subject number is the fallback'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: subject_reply.ticket_number, expected: ticket.number, field_name: 'and lands on the same ticket'
+
+  comment
+    The same subject number from somebody who was never on the ticket.
+    Numbers are printed in every email we send, so this is the rule that
+    stops a stranger posting into a conversation.
+  endcomment
+  function stranger = 'tests/support/post', from: 'A Stranger <stranger@tests.invalid>', subject: subject_with_token, headers: fx.stranger_with_token, cc: null, text: 'Let me in.', to: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: stranger.new_ticket, expected: true, field_name: 'a stranger quoting the number opens their own ticket'
+  assign not_the_same = false
+  if stranger.ticket_number != ticket.number
+    assign not_the_same = true
+  endif
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: not_the_same, expected: true, field_name: 'and never the one they named'
+
+  comment
+    Someone we have never seen replying in thread. They join the
+    conversation as a Cc; the requester does not change.
+  endcomment
+  function newcomer = 'tests/support/post', from: 'A Newcomer <newcomer@tests.invalid>', subject: 'Re: Lift is stuck between floors', headers: fx.colleague_in_thread, cc: null, text: 'Adding myself.', to: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: newcomer.ticket_number, expected: ticket.number, field_name: 'an unknown address replying in thread still threads'
+  function ticket = 'modules/support/queries/tickets/find', id: opened.ticket_id, number: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ticket.cc_addresses.size, expected: 2, field_name: 'and joins the Cc list'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ticket.contact_id, expected: rita.id, field_name: 'while the requester stays who it was'
+
+  comment
+    A forward with a new subject and no references is a new
+    conversation, not this one.
+  endcomment
+  function forwarded = 'tests/support/post', from: 'Rita Alvarez <rita@tests.invalid>', subject: 'Fwd: something else entirely', headers: fx.a_forward, cc: null, text: 'Separate problem.', to: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: forwarded.new_ticket, expected: true, field_name: 'a forward about something else opens its own ticket'
+
+  function _ = 'tests/support/purge'
+%}
