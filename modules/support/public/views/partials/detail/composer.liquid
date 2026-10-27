@@ -7,6 +7,15 @@
   assign ticket_path = '/admin/support/tickets/' | append: ticket.number
   assign note_path = ticket_path | append: '?composer=note'
 
+  comment
+    Both mode links carry the composer's own id. On a phone the composer
+    is collapsed to these two buttons until one of them is tapped, which
+    is a :target and needs no script. Above that width the hash changes
+    nothing: the composer is open either way.
+  endcomment
+  assign reply_open = ticket_path | append: '#pos-support-composer'
+  assign note_open = note_path | append: '#pos-support-composer'
+
   assign classes = 'pos-support-composer'
   if is_note
     assign classes = classes | append: ' is-note'
@@ -20,15 +29,15 @@
 -%}
 <div class="pos-support-dock">
   {%- if is_note -%}
-    <form class="{{ classes }}" method="post" action="/admin/support/tickets/note" aria-label="{{ 'modules/support/composer.note_label' | t }}">
+    <form id="pos-support-composer" class="{{ classes }}" method="post" action="/admin/support/tickets/note" aria-label="{{ 'modules/support/composer.note_label' | t }}">
       <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
       <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
       <input type="hidden" name="return_to" value="{{ ticket_path }}">
 
       <div class="pos-support-composer-head">
         <div class="pos-support-modes" role="group" aria-label="{{ 'modules/support/composer.mode' | t }}">
-          <a href="{{ ticket_path }}" aria-pressed="false">{{ 'modules/support/composer.reply' | t }}</a>
-          <a href="{{ note_path }}" aria-pressed="true">{{ 'modules/support/composer.note' | t }}</a>
+          <a href="{{ reply_open }}" aria-pressed="false">{{ 'modules/support/composer.reply' | t }}</a>
+          <a href="{{ note_open }}" aria-pressed="true">{{ 'modules/support/composer.note' | t }}</a>
         </div>
         <span class="pos-support-composer-hint">{{ hint }}</span>
       </div>
@@ -42,15 +51,15 @@
       </div>
     </form>
   {%- else -%}
-    <form class="{{ classes }}" method="post" action="/admin/support/tickets/reply" aria-label="{{ 'modules/support/composer.reply_label' | t }}">
+    <form id="pos-support-composer" class="{{ classes }}" method="post" action="/admin/support/tickets/reply" aria-label="{{ 'modules/support/composer.reply_label' | t }}">
       <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
       <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
       <input type="hidden" name="return_to" value="{{ ticket_path }}">
 
       <div class="pos-support-composer-head">
         <div class="pos-support-modes" role="group" aria-label="{{ 'modules/support/composer.mode' | t }}">
-          <a href="{{ ticket_path }}" aria-pressed="true">{{ 'modules/support/composer.reply' | t }}</a>
-          <a href="{{ note_path }}" aria-pressed="false">{{ 'modules/support/composer.note' | t }}</a>
+          <a href="{{ reply_open }}" aria-pressed="true">{{ 'modules/support/composer.reply' | t }}</a>
+          <a href="{{ note_open }}" aria-pressed="false">{{ 'modules/support/composer.note' | t }}</a>
         </div>
         <span class="pos-support-composer-hint">{{ hint }}</span>
       </div>

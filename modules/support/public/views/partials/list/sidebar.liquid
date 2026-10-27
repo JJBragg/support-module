@@ -14,6 +14,13 @@
     assign viewer_initials = profile_name | slice: 0, 2 | upcase
   endif
 
+  comment
+    Where Close goes: this screen without the drawer hash. Built rather
+    than written as '#', which would leave the hash in place and the
+    drawer open.
+  endcomment
+  function url_close = 'modules/support/helpers/ui/queue_url', overrides: {}
+
   function url_mine = 'modules/support/helpers/ui/queue_url', overrides: { "view": "mine", "status": "", "department": "", "expand": "", "collapsed": "" }
   function url_unassigned = 'modules/support/helpers/ui/queue_url', overrides: { "view": "unassigned", "status": "", "department": "", "expand": "", "collapsed": "" }
   function url_all = 'modules/support/helpers/ui/queue_url', overrides: { "view": "all", "status": "", "department": "", "expand": "", "collapsed": "" }
@@ -28,7 +35,11 @@
     waiting status looks everywhere else on the screen.
   endcomment
 -%}
-<nav class="pos-support-nav" aria-label="{{ 'modules/support/list.nav.queues' | t }}">
+<nav id="pos-support-queues" class="pos-support-nav" aria-label="{{ 'modules/support/list.nav.queues' | t }}">
+  <a class="pos-support-drawer-close" href="{{ url_close }}">
+    {% render 'modules/support/ui/icon', path: tokens.icons.close, size: 18, stroke: 2.4 %}
+    {{ 'modules/support/list.nav.close_queues' | t }}
+  </a>
   <div class="pos-support-brand">
     <div class="pos-support-brand-mark" aria-hidden="true">{{ brand | slice: 0, 1 | upcase }}</div>
     <div class="pos-support-brand-name">{{ brand }}</div>

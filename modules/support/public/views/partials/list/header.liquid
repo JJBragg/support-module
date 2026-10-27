@@ -9,6 +9,16 @@
   @param {string} screen - list or board
 {%- endcomment -%}
 <header class="pos-support-head">
+  {%- comment -%}
+    Opens the queues drawer below 1024px, and is hidden above it where the
+    sidebar is simply there. A link to the sidebar's id rather than a
+    button, so it works with no JavaScript: CSS slides the panel in on
+    :target, and the back button closes it. Every link inside the drawer
+    navigates away from the hash, so it closes itself on the way out.
+  {%- endcomment -%}
+  <a class="pos-support-menu" href="#pos-support-queues" aria-label="{{ 'modules/support/list.nav.open_queues' | t }}">
+    {% render 'modules/support/ui/icon', path: tokens.icons.menu, size: 20, stroke: 2.2 %}
+  </a>
   <h1 class="pos-support-title">{{ heading }}<span class="pos-support-subtitle">{{ subtitle }}</span></h1>
   {% render 'modules/support/ui/view_switch', tokens: tokens, current: screen %}
   <form class="pos-support-search" method="get" action="{{ base }}" role="search">

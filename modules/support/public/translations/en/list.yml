@@ -2,6 +2,8 @@ en:
   list:
     nav:
       queues: Queues
+      open_queues: Open queues menu
+      close_queues: Close
       views: Views
       my_tickets: My tickets
       unassigned: Unassigned

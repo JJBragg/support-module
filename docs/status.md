@@ -6,9 +6,10 @@ Last updated 2026-10-26, after a full QA pass.
 
 ## The short version
 
-Phases 1 to 5 of seven are built, deployed and working on staging, and so is
-3b, the board view, which was added to the spec afterwards. Phase 6,
-responsive layout and theming, is next and has not been started. Four of the
+Phases 1 to 6 of seven are built, deployed and working on staging, and so is
+3b, the board view, which was added to the spec afterwards. Phase 6 covers
+phone and tablet; the theming half of that section is still open. Phase 7,
+hardening and tests, has not been started. Four of the
 larger items from the internal review are closed; a second tier remains.
 
 One thing to know before looking at staging: the instance currently renders
@@ -128,6 +129,15 @@ bodies through a second query joined in memory, because a per-ticket
 haystack of every message would grow without limit. And a ticket marked
 resolved closes itself seven days later.
 
+**Phase 6, phone and tablet.** One set of templates, breakpoints in the
+stylesheet, nothing duplicated. Below 1024 the sidebar becomes a drawer
+and the table folds its department and contact columns onto a second
+line under the subject. Below 640 each row becomes a card and the
+composer collapses to its Reply and Private note buttons until one is
+tapped. All three are `:target`, so the drawer, the composer and the
+board's column tabs work with no JavaScript and the back button closes
+them.
+
 **Phase 5, settings.** `/admin/support/settings`, Admins only. Departments with
 inline edit, statuses with reorder and an Open / On hold / Closed switch,
 agents with role and per-department access, and the email provider with its
@@ -147,17 +157,14 @@ publish. Every interface string is in `translations/en/`.
 
 ## Next
 
-**Phase 6, responsive layout and theming**, per build spec section 8, and
-item 8 on the checklist. Nothing started. The sidebar is the first thing:
-it is a fixed column at every width, which is what makes both the list
-and the board unusable on a phone. The board's own phone pieces are
-already built and waiting on it. One codebase with CSS breakpoints: the
-phone list and the phone detail with its details sheet are designed in
-`Phone-List.dc.html` and `Phone-Detail.dc.html`.
+**Theming** is the half of build spec section 8 that is not done. The
+four colour tokens and the brand name are in Settings and read by the
+layout; what is missing is a dark scheme and anything that reads the
+viewer's preference.
 
 **Phase 7** is hardening, tests, the README and release wiring.
 
-Two spec questions are still open and neither blocks Phase 6: the exact
+Two spec questions are still open: the exact
 allowed status transitions (answered 2026-10-25 as free movement, so
 nothing to build) and whether the latest-message ring stays orange-red or
 switches to the primary colour.
@@ -235,7 +242,7 @@ Recorded here so the next person, and Artur, do not reopen them.
   on it needs a reassignment flow, which is its own screen rather than a
   menu item.
 - **No drag reorder on the statuses list.** The arrows do the job and work
-  without JavaScript. Drag is a Phase 6 nicety.
+  without JavaScript.
 - **Inbound attachments keep their name and type and lose the file**,
   pending the question with the engineers.
 - **The list has no route to closed tickets.** The sidebar used to list
@@ -253,11 +260,16 @@ Recorded here so the next person, and Artur, do not reopen them.
   each. Worth a decision rather than a quiet fix.
 - **The Closed column counts what it loaded**, and says 50+ at the cap.
   Counting every closed ticket a team has ever had is not a page load query.
-- **The board's phone layout is done and cannot be judged yet.** The status
-  tab row, the single full width column and the always visible Move to menu
-  are all in and correct, but the sidebar is still a fixed 232px column at
-  every width, so it eats a phone screen. That is Phase 6, and the list has
-  the same problem today.
+- **Bulk actions are desktop only.** Below 640 the checkbox column and the
+  bulk bar are hidden: there is no room for a column of checkboxes and
+  nowhere to put the bar they feed.
+- **The phone drawer takes the whole screen and has no backdrop.** A
+  backdrop that closes on tap is the one part of it that cannot be done
+  without a script, so the drawer is a menu with a Close instead of a
+  slide-over.
+- **No status chip row on tablet**, which the build spec asks for. The
+  drawer already lists the statuses, and a second status control in the
+  main column would be two controls for one thing.
 
 ## Things that will bite you again
 
@@ -321,3 +333,12 @@ and in commit messages. The short list:
 - `contains` on a joined string of values matches across value
   boundaries, so a search for `ob@x.test` finds `bob@x.test`. Wrap each
   value in delimiters and search for the delimited form.
+- A `<details>` cannot be forced open from CSS, so it is no use as a
+  drawer that must be open at one width and closed at another. `:target`
+  can: a link to the panel's id, a rule on `:target`, and the back button
+  closes it. The drawer, the phone composer and the board's columns all
+  work that way.
+- Grid areas move table cells around at a breakpoint without duplicating
+  markup, but a cell sharing an auto column with a wide one inherits its
+  width. The phone card's status chip spans three columns for that reason,
+  so the flexible one absorbs it instead of the ticket number.

@@ -27,8 +27,8 @@ week or more.
 
 ## Build, agreed
 
-Items 1 to 7 were built, deployed and verified against staging on
-2026-10-27. Item 8 is the phase that follows.
+All eight were built, deployed and checked against staging on
+2026-10-27.
 
 - [x] 1. The two inbound bugs. A couple of refusals answer in a way
       SendGrid may treat as permanent, so the email is deleted with no
@@ -50,7 +50,7 @@ Items 1 to 7 were built, deployed and verified against staging on
       Small.
 - [x] 7. Close a ticket seven days after it is marked resolved, unless the
       customer replies. Needs the module's first scheduled job. Small.
-- [ ] 8. Phone and tablet layout, which is the next phase either way. The
+- [x] 8. Phone and tablet layout, which is the next phase either way. The
       sidebar is a fixed column at every width today. Medium.
 
 ## Needs your decision
