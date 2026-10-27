@@ -1,0 +1,11 @@
+# platformos-check configuration.
+#
+# The only entry here is an exclusion, and it is deliberate. A test
+# fixture that holds a real Outlook Message-ID, which begins
+# <001a01dc... , is not parseable as HTML: the linter reads an angle
+# bracket followed by a digit and stops. Fixtures hold mail exactly as
+# clients send it, so the choice is to exclude them or to test mail
+# nobody sends. They contain no logic, only captured text returned to the
+# tests that read them.
+ignore:
+  - modules/support/public/lib/tests/fixtures/*

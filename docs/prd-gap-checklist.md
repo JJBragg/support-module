@@ -90,9 +90,10 @@ All eight were built, deployed and checked against staging on
 - [ ] 21. An editable subject, because customers write bad ones. Small.
 - [ ] 22. Reply templates per department, with a signature and a preview.
       Small.
-- [ ] 23. Tests, before anyone else installs this. The ones that matter
-      are replies from Gmail, Outlook, Apple Mail and forwarded mail
-      landing on the right ticket. Medium.
+- [x] 23. Tests. Done 2026-10-27 for everything that decides where an
+      email goes, 127 assertions over 8 files, run with `npm test`. Not
+      done for anything that writes a record: that needs a teardown story
+      first, and the module ships no delete.
 
 ## Dropped
 

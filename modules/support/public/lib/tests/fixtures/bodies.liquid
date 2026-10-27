@@ -1,0 +1,72 @@
+{%- comment -%}
+  Message bodies as the clients that matter actually write them, for the
+  quote splitter.
+
+  Here rather than in the test for the same reason as the headers: an
+  HTML fixture holds unbalanced markup on purpose, which is what a real
+  email body is, and the linter cannot parse it. Excluded in
+  .platformos-check.yml.
+{%- endcomment -%}
+{%- capture gmail_text -%}
+That worked, thank you.
+
+On Mon, 27 Oct 2026 at 15:06, DOB Support <dob@support.platformos.com> wrote:
+> We have cleared the cached rule. Could you try again?
+>
+> DOB Support Team
+{%- endcapture -%}
+{%- capture outlook_desktop_text -%}
+Still happening this morning.
+
+Dana
+
+-----Original Message-----
+From: DOB Support <dob@support.platformos.com>
+Sent: Monday, October 27, 2026 9:02 AM
+Subject: RE: Inspection report file deletion error
+
+Could you send the file name?
+{%- endcapture -%}
+{%- capture outlook_web_text -%}
+Here is the screenshot.
+
+Ken
+
+________________________________
+From: Accela Support <accela@support.platformos.com>
+Sent: 27 October 2026 09:14
+To: Ken Ito
+Subject: RE: Bulk permit import stuck at 40%
+
+Which permit type is it on?
+{%- endcapture -%}
+{%- capture apple_text -%}
+Confirmed fixed on my side.
+
+> On 27 Oct 2026, at 16:40, DesksNearMe Support <desks@support.platformos.com> wrote:
+>
+> The time zone is now read from the workspace rather than the browser.
+{%- endcapture -%}
+{%- capture gmail_html -%}
+<div dir="ltr">That worked, thank you.</div><div class="gmail_quote"><div dir="ltr" class="gmail_attr">On Mon, 27 Oct 2026 at 15:06, DOB Support wrote:</div><blockquote class="gmail_quote">We have cleared the cached rule.</blockquote></div>
+{%- endcapture -%}
+{%- capture plain_html -%}
+<div dir="ltr">Nothing quoted here at all, just a first email.</div>
+{%- endcapture -%}
+{%- comment -%}
+  Two expected values live here as well, because they run to more than
+  one line and a literal newline inside a liquid block is a syntax error.
+{%- endcomment -%}
+{%- capture outlook_web_expected -%}
+Here is the screenshot.
+
+Ken
+{%- endcapture -%}
+{%- capture first_email -%}
+Our reviewers cannot add HPRB requirements.
+It started this morning.
+{%- endcapture -%}
+{% liquid
+  assign blocks = { "outlook_web_expected": outlook_web_expected, "first_email": first_email, "gmail_text": gmail_text, "outlook_desktop_text": outlook_desktop_text, "outlook_web_text": outlook_web_text, "apple_text": apple_text, "gmail_html": gmail_html, "plain_html": plain_html }
+  return blocks
+%}

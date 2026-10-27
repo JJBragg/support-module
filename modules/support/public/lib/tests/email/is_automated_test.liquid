@@ -1,0 +1,79 @@
+{%- comment -%}
+  Whether a machine sent this, by RFC 3834's rules.
+
+  The cost of getting it wrong runs both ways, which is why each rule has
+  a case here. Answer a machine and two auto responders talk to each
+  other until someone notices. Refuse to answer a person and a customer
+  who wrote in gets silence.
+{%- endcomment -%}
+{% liquid
+  assign person = { "auto_submitted": "", "precedence": "", "return_path": "maria@citypermits.example", "list_id": "", "present": true }
+
+  function human = 'modules/support/helpers/email/is_automated', headers: person, address: 'maria.lopez@citypermits.example'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: human.automated, expected: false, field_name: 'a person writing in gets an answer'
+
+  comment
+    RFC 3834: any value other than no means a machine made it.
+  endcomment
+  assign out_of_office = { "auto_submitted": "auto-replied", "precedence": "", "return_path": "ken@countyrecords.example", "list_id": "", "present": true }
+  function ooo = 'modules/support/helpers/email/is_automated', headers: out_of_office, address: 'ken.ito@countyrecords.example'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ooo.automated, expected: true, field_name: 'an out of office reply'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ooo.reason, expected: 'auto-submitted', field_name: 'and says which rule caught it'
+
+  assign generated = { "auto_submitted": "auto-generated", "precedence": "", "return_path": "noreply@vendor.example", "list_id": "", "present": true }
+  function gen = 'modules/support/helpers/email/is_automated', headers: generated, address: 'alerts@vendor.example'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: gen.automated, expected: true, field_name: 'auto-generated counts too'
+
+  assign says_no = { "auto_submitted": "no", "precedence": "", "return_path": "dana@inspections.example", "list_id": "", "present": true }
+  function no = 'modules/support/helpers/email/is_automated', headers: says_no, address: 'dana.brooks@inspections.example'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: no.automated, expected: false, field_name: 'Auto-Submitted: no is the one value that means a person'
+
+  assign bulk = { "auto_submitted": "", "precedence": "bulk", "return_path": "news@vendor.example", "list_id": "", "present": true }
+  function b = 'modules/support/helpers/email/is_automated', headers: bulk, address: 'news@vendor.example'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: b.reason, expected: 'precedence', field_name: 'Precedence: bulk'
+
+  assign junk = { "auto_submitted": "", "precedence": "junk", "return_path": "x@vendor.example", "list_id": "", "present": true }
+  function j = 'modules/support/helpers/email/is_automated', headers: junk, address: 'x@vendor.example'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: j.automated, expected: true, field_name: 'Precedence: junk'
+
+  comment
+    An empty envelope sender is how a bounce says there is nobody here.
+    Empty headers are a different thing and must not be read as one.
+  endcomment
+  assign bounce = { "auto_submitted": "", "precedence": "", "return_path": "", "list_id": "", "present": true }
+  function bo = 'modules/support/helpers/email/is_automated', headers: bounce, address: 'mailer-daemon@mail.example'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: bo.reason, expected: 'empty-return-path', field_name: 'an empty Return-Path on headers that did arrive'
+
+  assign absent = { "auto_submitted": "", "precedence": "", "return_path": "", "list_id": "", "present": false }
+  function ab = 'modules/support/helpers/email/is_automated', headers: absent, address: 'maria.lopez@citypermits.example'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ab.automated, expected: false, field_name: 'no headers at all is not a bounce'
+
+  assign list = { "auto_submitted": "", "precedence": "", "return_path": "list@vendor.example", "list_id": "<announce.vendor.example>", "present": true }
+  function li = 'modules/support/helpers/email/is_automated', headers: list, address: 'announce@vendor.example'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: li.reason, expected: 'list-id', field_name: 'a mailing list'
+
+  comment
+    The local parts that mean nobody reads this mailbox, matched before
+    the @ so that noreply at any domain is caught.
+  endcomment
+  assign robots = 'noreply,no-reply,donotreply,do-not-reply,mailer-daemon,postmaster,bounce,bounces,notifications,notification' | split: ','
+  for local in robots
+    assign address = local | append: '@vendor.example'
+    function r = 'modules/support/helpers/email/is_automated', headers: person, address: address
+    assign label = 'never answers ' | append: address
+    function contract = 'modules/tests/assertions/equal', contract: contract, given: r.reason, expected: 'sender-address', field_name: label
+  endfor
+
+  comment
+    And the other way round. These are people.
+  endcomment
+  assign people = 'noreply.jones@citypermits.example,bouncer@citypermits.example,postmaster.general@citypermits.example,notification-team@citypermits.example' | split: ','
+  for address in people
+    function r = 'modules/support/helpers/email/is_automated', headers: person, address: address
+    assign label = 'answers ' | append: address
+    function contract = 'modules/tests/assertions/equal', contract: contract, given: r.automated, expected: false, field_name: label
+  endfor
+
+  function upper = 'modules/support/helpers/email/is_automated', headers: person, address: 'NoReply@Vendor.Example'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: upper.automated, expected: true, field_name: 'the case a client chose does not matter'
+%}

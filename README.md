@@ -33,6 +33,43 @@ pos-cli deploy staging
 `pos-cli sync` watches the tree and pushes changes live, which is the normal
 inner loop. Never deploy this to a production instance.
 
+Run `pos-cli check run` before a commit. It must be clean.
+
+## Tests
+
+```
+npm test
+```
+
+That deploys and then asks the instance to run the suite, because the tests
+run on the platform rather than here. It exits non-zero when anything fails,
+so it works in CI as it stands.
+
+A test is a Liquid partial under `modules/support/public/lib/tests/` whose
+name ends in `_test`. The tests module finds them by that suffix, runs each
+one with a `contract` to record results in, and reports at
+`/_tests/run?formatter=text`. Assertions come from
+`modules/tests/assertions/*`; `equal` covers almost everything, because it
+takes a computed value and lets the field name say what was being checked.
+
+What is covered is the logic that decides where an email goes: header
+parsing for Gmail, Outlook web, Outlook desktop, Apple Mail, iOS Mail and
+forwarded mail, the subject token and its rejections, the quote splitter per
+client, automation detection by RFC 3834, the thread's CC list, the sidebar
+views and the status timestamps. None of it writes a record, so there is
+nothing to clean up and the suite is safe to run against any instance.
+
+What is not covered is anything that writes: opening a ticket, threading a
+reply onto one, the reply endpoint. Those need fixtures created and torn
+down, and the module deliberately ships no delete, so that needs a decision
+before it needs code.
+
+Mail bodies and header blocks live in `lib/tests/fixtures/` and are excluded
+from the linter in `.platformos-check.yml`. They hold real mail, which is
+not parseable as HTML: a Message-ID like `<001a01dc...>` reads as an angle
+bracket followed by a digit and stops the parser. Weakening the fixtures to
+please the linter would mean testing mail nobody sends.
+
 ## Conventions
 
 - Everything is namespaced. Tables become `modules/support/<table>`, and

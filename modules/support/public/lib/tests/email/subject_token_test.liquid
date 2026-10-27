@@ -1,0 +1,52 @@
+{%- comment -%}
+  The [#18022] token in a subject line, which is the cascade's fallback
+  when a client drops the threading headers.
+
+  Clients prefix a reply in their own language and their own case, and
+  some of them do it twice. Every shape below arrives in real mail, and
+  the token has to survive all of them or a reply opens a second ticket
+  for a conversation that already exists.
+
+  The rejections matter as much as the matches. Anything that is not a
+  plain number between the brackets has to come back empty rather than
+  as a half read number, because the value is used to look up a ticket
+  and the wrong ticket is worse than none.
+{%- endcomment -%}
+{% liquid
+  assign cases = '[#18022],Re: a thing [#18022],RE: a thing [#18022],Re: RE: Fwd: a thing [#18022],AW: a thing [#18022],Antwort: a thing [#18022],R: a thing [#18022],a thing [#18022] trailing words' | split: ','
+  for subject in cases
+    function number = 'modules/support/helpers/email/ticket_number_from_subject', subject: subject
+    assign label = 'finds the number in: ' | append: subject
+    function contract = 'modules/tests/assertions/equal', contract: contract, given: number, expected: 18022, field_name: label
+  endfor
+
+  comment
+    Two tokens. The last one wins, which is the one our own reply put
+    there: a customer forwarding an old thread into a new one carries the
+    older token further up the subject.
+  endcomment
+  function two = 'modules/support/helpers/email/ticket_number_from_subject', subject: 'Re: Fwd: old thing [#17001] new thing [#18022]'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: two, expected: 18022, field_name: 'two tokens, the last one wins'
+
+  comment
+    Not a number, no token, or nothing between the brackets. All of these
+    must be nothing rather than a guess.
+  endcomment
+  assign rejected = 'a thing with no token,[#],[# ],[#abc],[#18022x],[#18-022],[#1.5],Re: [#] a thing' | split: ','
+  for subject in rejected
+    function number = 'modules/support/helpers/email/ticket_number_from_subject', subject: subject
+    assign label = 'refuses: ' | append: subject
+    function contract = 'modules/tests/assertions/equal', contract: contract, given: number, expected: null, field_name: label
+  endfor
+
+  function no_subject = 'modules/support/helpers/email/ticket_number_from_subject', subject: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: no_subject, expected: null, field_name: 'no subject at all'
+
+  comment
+    A number is only ever honoured for someone already on that ticket,
+    which is checked elsewhere. This helper's job is to read it, and it
+    reads a large one as readily as a small one.
+  endcomment
+  function large = 'modules/support/helpers/email/ticket_number_from_subject', subject: 'Re: a thing [#1048576]'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: large, expected: 1048576, field_name: 'a six figure number'
+%}

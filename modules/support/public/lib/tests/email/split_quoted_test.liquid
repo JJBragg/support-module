@@ -1,0 +1,74 @@
+{%- comment -%}
+  Telling what the customer just wrote from the history their client
+  quoted underneath it.
+
+  Heuristics, not parsing, so the test is about the markers real clients
+  emit: Gmail's "On ... wrote:", Outlook desktop's -----Original
+  Message-----, Outlook web's rule of underscores, and the plain angle
+  bracket. Getting one wrong costs a timeline entry that repeats the
+  whole thread back at the agent, which is how a help desk becomes
+  unreadable by the fourth reply.
+
+  Nothing is ever thrown away: both halves are stored, so the worst case
+  is a collapsed section holding a line too many.
+{%- endcomment -%}
+{% liquid
+  function fx = 'modules/support/tests/fixtures/bodies'
+
+  function gmail = 'modules/support/helpers/email/split_quoted', text: fx.gmail_text, html: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: gmail.body_text, expected: 'That worked, thank you.', field_name: 'gmail, what they wrote'
+  assign gmail_keeps = false
+  if gmail.quoted_text contains 'cleared the cached rule'
+    assign gmail_keeps = true
+  endif
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: gmail_keeps, expected: true, field_name: 'gmail, the history is kept rather than dropped'
+
+  function desktop = 'modules/support/helpers/email/split_quoted', text: fx.outlook_desktop_text, html: null
+  assign desktop_clean = false
+  unless desktop.body_text contains 'Original Message'
+    assign desktop_clean = true
+  endunless
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: desktop_clean, expected: true, field_name: 'outlook desktop, the divider starts the quote'
+  assign desktop_signed = false
+  if desktop.body_text contains 'Dana'
+    assign desktop_signed = true
+  endif
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: desktop_signed, expected: true, field_name: 'outlook desktop, their sign off stays with what they wrote'
+
+  function owa = 'modules/support/helpers/email/split_quoted', text: fx.outlook_web_text, html: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: owa.body_text, expected: fx.outlook_web_expected, field_name: 'outlook web, the rule of underscores starts the quote'
+
+  function apple = 'modules/support/helpers/email/split_quoted', text: fx.apple_text, html: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: apple.body_text, expected: 'Confirmed fixed on my side.', field_name: 'apple mail, an angle bracket starts the quote'
+
+  comment
+    A first email has no history at all, and must not lose its last line
+    to a marker that is not there.
+  endcomment
+  function first = 'modules/support/helpers/email/split_quoted', text: fx.first_email, html: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: first.body_text, expected: fx.first_email, field_name: 'a first email keeps every line'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: first.quoted_text, expected: '', field_name: 'a first email quotes nothing'
+
+  comment
+    HTML. Gmail wraps the history in its own class and everyone wraps it
+    in a blockquote, and the split has to leave the first half as valid
+    standalone markup.
+  endcomment
+  function html = 'modules/support/helpers/email/split_quoted', text: null, html: fx.gmail_html
+  assign html_clean = false
+  unless html.body_html contains 'cleared the cached rule'
+    assign html_clean = true
+  endunless
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: html_clean, expected: true, field_name: 'gmail html, the quote comes out of the body'
+  assign html_kept = false
+  if html.quoted_html contains 'cleared the cached rule'
+    assign html_kept = true
+  endif
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: html_kept, expected: true, field_name: 'gmail html, and is kept behind the disclosure'
+
+  function plain = 'modules/support/helpers/email/split_quoted', text: null, html: fx.plain_html
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: plain.quoted_html, expected: '', field_name: 'html with no quote at all'
+
+  function nothing = 'modules/support/helpers/email/split_quoted', text: null, html: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: nothing.body_text, expected: '', field_name: 'an empty email is empty, not an error'
+%}

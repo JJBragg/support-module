@@ -1,0 +1,47 @@
+{%- comment -%}
+  The two timestamps a status change writes.
+
+  Nothing reads them yet, which is exactly why they are worth a test: by
+  the time the service level work starts reading them, every ticket that
+  has moved between now and then will carry whatever this wrote. A
+  resolution time that is wrong is not recoverable after the fact.
+{%- endcomment -%}
+{% liquid
+  function s = 'modules/support/helpers/status/stamps', status: { "kind": "new" }
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: s.closed_at, expected: null, field_name: 'new stamps nothing'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: s.solved_at, expected: null, field_name: 'new leaves solved_at alone'
+
+  function s = 'modules/support/helpers/status/stamps', status: { "kind": "open" }
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: s.solved_at, expected: null, field_name: 'open stamps nothing'
+
+  function s = 'modules/support/helpers/status/stamps', status: { "kind": "pending" }
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: s.solved_at, expected: null, field_name: 'pending stamps nothing'
+
+  function s = 'modules/support/helpers/status/stamps', status: { "kind": "on_hold" }
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: s.solved_at, expected: null, field_name: 'on hold stamps nothing'
+
+  comment
+    Resolved is resolved and not closed. The seven day clock reads
+    solved_at, and a closed_at here would stop it before it started.
+  endcomment
+  function s = 'modules/support/helpers/status/stamps', status: { "kind": "solved" }
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: s.closed_at, expected: null, field_name: 'solved is not closed'
+  assign solved_stamped = false
+  if s.solved_at != blank
+    assign solved_stamped = true
+  endif
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: solved_stamped, expected: true, field_name: 'solved stamps solved_at'
+
+  comment
+    Closing stamps both, because a ticket an agent closes outright was
+    never marked resolved and still has a resolution time. The auto close
+    is the exception and passes the original solved_at itself.
+  endcomment
+  function s = 'modules/support/helpers/status/stamps', status: { "kind": "closed" }
+  assign both = false
+  if s.closed_at != blank and s.solved_at != blank
+    assign both = true
+  endif
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: both, expected: true, field_name: 'closed stamps both'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: s.closed_at, expected: s.solved_at, field_name: 'and stamps them with the same moment'
+%}

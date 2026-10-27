@@ -1,0 +1,103 @@
+{%- comment -%}
+  Header blocks as the clients that matter actually write them, with the
+  addresses changed. Shared by the tests that read headers.
+
+  Kept apart from the tests themselves, and excluded from the linter in
+  .platformos-check.yml, because a header value like
+  Message-ID: <001a01dc...> is a real Outlook id and not parseable as
+  HTML: the linter reads an angle bracket followed by a digit and stops.
+  Weakening the fixture to please it would mean testing mail no client
+  sends.
+{%- endcomment -%}
+{%- capture gmail -%}
+Return-Path: <maria.lopez@citypermits.example>
+Received: from mail-wr1-f52.google.com (mail-wr1-f52.google.com [209.85.221.52])
+ by mx.sendgrid.net with ESMTPS id d9-20020a05600c3ac9
+ for <general@inbound.example.com>; Mon, 27 Oct 2026 08:14:11 -0700 (PDT)
+MIME-Version: 1.0
+From: Maria Lopez <maria.lopez@citypermits.example>
+Date: Mon, 27 Oct 2026 16:14:00 +0100
+Message-ID: <CADm_=85nYc1vQ3xT+bLm9pK0rWd7JhFgA2Zq@mail.gmail.com>
+Subject: Re: HPRB requirements cannot be added
+To: DOB Support <dob@support.platformos.com>
+In-Reply-To: <support-18022-20261023150612-ab12cd34@support.platformos.com>
+References: <CADm_=85aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@mail.gmail.com>
+ <support-18022-20261023150612-ab12cd34@support.platformos.com>
+Content-Type: multipart/alternative; boundary="000000000000a1b2c3"
+{%- endcapture -%}
+{%- capture outlook_web -%}
+Return-Path: <ken.ito@countyrecords.example>
+Authentication-Results: spf=pass (sender IP is 40.107.22.52)
+From: Ken Ito <ken.ito@countyrecords.example>
+To: "accela@support.platformos.com" <accela@support.platformos.com>
+Subject: RE: Bulk permit import stuck at 40% [#18017]
+Thread-Topic: Bulk permit import stuck at 40% [#18017]
+Thread-Index: AQHbKk2mN0pQrSt1UvWxYz2345678==
+Date: Mon, 27 Oct 2026 15:02:44 +0000
+Message-ID:
+ <AM0PR04MB5561C7D9E1F4A3B2@AM0PR04MB5561.eurprd04.prod.outlook.com>
+References:
+ <support-18017-20261020091500-ff00aa11@support.platformos.com>
+ <AM0PR04MB5561AAAA@AM0PR04MB5561.eurprd04.prod.outlook.com>
+In-Reply-To:
+ <support-18017-20261020091500-ff00aa11@support.platformos.com>
+Content-Language: en-GB
+{%- endcapture -%}
+{%- capture outlook_desktop -%}
+Return-Path: <dana.brooks@inspections.example>
+From: Dana Brooks <dana.brooks@inspections.example>
+Sent: Monday, October 27, 2026 9:41 AM
+To: dob@support.platformos.com
+Subject: RE: Inspection report file deletion error
+Message-ID: <001a01dc2f9e$8b3c40a0$a1b4c1e0$@inspections.example>
+In-Reply-To: <support-17896-20261019113000-7c7c7c7c@support.platformos.com>
+References: <support-17896-20261019113000-7c7c7c7c@support.platformos.com>
+X-Mailer: Microsoft Outlook 16.0
+{%- endcapture -%}
+{%- capture apple_mail -%}
+Return-Path: <lena.fischer@workhub.example>
+Content-Type: text/plain; charset=utf-8
+Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3776.700.51\))
+Subject: Re: Booking calendar shows wrong time zone
+From: Lena Fischer <lena.fischer@workhub.example>
+In-Reply-To: <support-18009-20261024084500-55aa55aa@support.platformos.com>
+Date: Mon, 27 Oct 2026 17:20:03 +0100
+Message-Id: <9F3B1C7A-2E64-4D18-9A77-1B2C3D4E5F60@workhub.example>
+References: <support-18009-20261024084500-55aa55aa@support.platformos.com>
+	<4A1B2C3D-0000-1111-2222-333344445555@workhub.example>
+To: DesksNearMe Support <desks@support.platformos.com>
+X-Mailer: Apple Mail (2.3776.700.51)
+{%- endcapture -%}
+{%- capture ios_mail -%}
+Return-Path: <sam.patel@citypermits.example>
+Content-Type: text/plain; charset=us-ascii
+Mime-Version: 1.0 (1.0)
+Subject: Re: Admin cannot access dashboard
+From: Sam Patel <sam.patel@citypermits.example>
+Message-Id: <0C1D2E3F-4A5B-6C7D-8E9F-A0B1C2D3E4F5@citypermits.example>
+Date: Mon, 27 Oct 2026 10:05:22 -0400
+In-Reply-To: <support-17905-20261022140000-99ff99ff@support.platformos.com>
+To: dob@support.platformos.com
+X-Mailer: iPhone Mail (21G93)
+{%- endcapture -%}
+{%- capture forwarded -%}
+Return-Path: <priya.shah@citypermits.example>
+From: Priya Shah <priya.shah@citypermits.example>
+Date: Mon, 27 Oct 2026 11:00:00 -0500
+Subject: Fwd: Payment receipt emails not sending
+To: dob@support.platformos.com
+Message-ID: <CAFwd0001newthread@mail.gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+{%- endcapture -%}
+{%- capture folded_long_chain -%}
+Message-ID: <last@example.test>
+References: <one@example.test>
+ <two@example.test>
+	<three@example.test>
+ <four@example.test> <five@example.test>
+Subject: Re: a long thread
+{%- endcapture -%}
+{% liquid
+  assign blocks = { "gmail": gmail, "outlook_web": outlook_web, "outlook_desktop": outlook_desktop, "apple_mail": apple_mail, "ios_mail": ios_mail, "forwarded": forwarded, "folded_long_chain": folded_long_chain }
+  return blocks
+%}

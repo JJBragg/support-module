@@ -1,0 +1,38 @@
+{%- comment -%}
+  From and To as clients write them: a display name in quotes, a display
+  name without, a bare address, and the mixed case that a customer's
+  phone decides to use on a Tuesday.
+
+  The address is the only identity a customer has, so it is lowercased
+  everywhere and compared lowercased. A single failure here makes one
+  person into two contacts.
+{%- endcomment -%}
+{% liquid
+  function quoted = 'modules/support/helpers/email/parse_address', raw: '"Lopez, Maria" <Maria.Lopez@CityPermits.example>'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: quoted.email, expected: 'maria.lopez@citypermits.example', field_name: 'a quoted display name, address lowercased'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: quoted.name, expected: 'Lopez, Maria', field_name: 'a quoted display name keeps its comma and its case'
+
+  function plain = 'modules/support/helpers/email/parse_address', raw: 'Ken Ito <ken.ito@countyrecords.example>'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: plain.email, expected: 'ken.ito@countyrecords.example', field_name: 'an unquoted display name'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: plain.name, expected: 'Ken Ito', field_name: 'the name beside it'
+
+  function bare = 'modules/support/helpers/email/parse_address', raw: '  SAM.PATEL@citypermits.example  '
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: bare.email, expected: 'sam.patel@citypermits.example', field_name: 'a bare address, trimmed and lowercased'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: bare.name, expected: '', field_name: 'a bare address has no name'
+
+  function nothing = 'modules/support/helpers/email/parse_address', raw: ''
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: nothing.email, expected: '', field_name: 'nothing in gives nothing out, and the webhook refuses it'
+
+  comment
+    A list, as a Cc header arrives. Order is kept because the CC list is
+    shown to an agent, and a plus address is not split on its plus.
+  endcomment
+  function list = 'modules/support/helpers/email/parse_address_list', raw: 'Jordan Reyes <jordan@citypermits.example>, ops+support@citypermits.example, "Shah, Priya" <Priya@CityPermits.example>'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: list.size, expected: 3, field_name: 'three addresses out of one Cc header'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: list.first, expected: 'jordan@citypermits.example', field_name: 'first in the list'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: list[1], expected: 'ops+support@citypermits.example', field_name: 'a plus address survives intact'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: list.last, expected: 'priya@citypermits.example', field_name: 'last in the list, lowercased'
+
+  function no_list = 'modules/support/helpers/email/parse_address_list', raw: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: no_list.size, expected: 0, field_name: 'no Cc header at all'
+%}

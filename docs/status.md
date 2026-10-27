@@ -162,7 +162,19 @@ four colour tokens and the brand name are in Settings and read by the
 layout; what is missing is a dark scheme and anything that reads the
 viewer's preference.
 
-**Phase 7** is hardening, tests, the README and release wiring.
+**Phase 7, tests.** Started. The logic that decides where an email goes
+is covered: header parsing per client, the subject token, the quote
+splitter, automation detection, the thread's CC list, the sidebar views
+and the status stamps. 127 assertions over 8 files, none of which writes
+a record. `npm test` deploys and runs them on the instance and exits
+non-zero on a failure, so it is ready for CI. The first run found a real
+bug: a Cc header with a quoted display name, which is how Outlook writes
+every recipient, was split on the comma inside the quotes and put a
+fragment of a name on the ticket's CC list.
+
+What is left of Phase 7: tests for anything that writes, which need a
+teardown story first; the README's known limits section; and release
+wiring, meaning a postInstall message, a version script and CI.
 
 Two spec questions are still open: the exact
 allowed status transitions (answered 2026-10-25 as free movement, so
@@ -342,3 +354,12 @@ and in commit messages. The short list:
   markup, but a cell sharing an auto column with a wide one inherits its
   width. The phone card's status chip spans three columns for that reason,
   so the flexible one absorbs it instead of the ticket number.
+- The test runner finds any partial whose path ends in `_test`, so a
+  fixture partial must not be named that way or it runs as a test with
+  no assertions in it.
+- `empty` is a reserved Liquid literal. Assigning to it silently gives
+  back the literal, and the linter is the only thing that says so.
+- The assertions that take `object` and `field_name` read
+  `object[field_name]`, which suits checking a record. For a computed
+  value use `equal`, whose `field_name` is free text and becomes the
+  label in the report.

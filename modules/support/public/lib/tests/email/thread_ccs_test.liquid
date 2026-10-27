@@ -1,0 +1,72 @@
+{%- comment -%}
+  Who stays on a conversation.
+
+  This list becomes the Cc of every reply we send, so a mistake here is
+  visible to the customer and to everyone they copied. Two failures
+  matter most: dropping a colleague, which takes them out of a thread
+  they were part of, and copying one of our own addresses, which is how
+  a mail loop starts.
+{%- endcomment -%}
+{% liquid
+  assign department = { "inbound_address": "dob@inbound.example.com", "from_address": "dob@support.platformos.com" }
+  assign requester = { "email": "maria.lopez@citypermits.example", "emails": null }
+
+  comment
+    A first email. The requester is the To, so they are not a Cc, and our
+    own inbound address was on the Cc line because the customer wrote to
+    it.
+  endcomment
+  assign first_cc = 'jordan@citypermits.example,dob@inbound.example.com,maria.lopez@citypermits.example' | split: ','
+  function one = 'modules/support/helpers/email/thread_ccs', existing: null, department: department, contact: requester, incoming: first_cc
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: one.size, expected: 1, field_name: 'the requester and our own address come out'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: one.first, expected: 'jordan@citypermits.example', field_name: 'the colleague stays'
+
+  comment
+    A later email adds someone. The list grows rather than being
+    replaced, which is what every mail client does and what the customer
+    expects.
+  endcomment
+  assign second_cc = 'priya@citypermits.example' | split: ','
+  function two = 'modules/support/helpers/email/thread_ccs', existing: one, department: department, contact: requester, incoming: second_cc
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: two.size, expected: 2, field_name: 'a new name joins the thread'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: two.first, expected: 'jordan@citypermits.example', field_name: 'in the order people joined'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: two.last, expected: 'priya@citypermits.example', field_name: 'the newest last'
+
+  comment
+    The same person again, in the case their phone felt like using.
+  endcomment
+  assign again = 'JORDAN@CityPermits.example' | split: ','
+  function three = 'modules/support/helpers/email/thread_ccs', existing: two, department: department, contact: requester, incoming: again
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: three.size, expected: 2, field_name: 'nobody is added twice for writing in uppercase'
+
+  comment
+    Our from address, which is not the inbound one. Both have to be
+    excluded or a reply copies us on our own reply.
+  endcomment
+  assign ourselves = 'dob@support.platformos.com' | split: ','
+  function four = 'modules/support/helpers/email/thread_ccs', existing: two, department: department, contact: requester, incoming: ourselves
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: four.size, expected: 2, field_name: 'we are never copied on our own reply'
+
+  comment
+    A requester with a second address. Writing from either one must not
+    put them in their own Cc list.
+  endcomment
+  assign two_addresses = 'maria.lopez@citypermits.example,m.lopez@citypermits.example' | split: ','
+  assign requester_two = { "email": "maria.lopez@citypermits.example", "emails": two_addresses }
+  assign from_second = 'm.lopez@citypermits.example' | split: ','
+  function five = 'modules/support/helpers/email/thread_ccs', existing: two, department: department, contact: requester_two, incoming: from_second
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: five.size, expected: 2, field_name: 'a requester writing from their other address is still the requester'
+
+  comment
+    An agent's reply replaces rather than adds, because the box they
+    edited was prefilled with the list and what they removed, they
+    removed on purpose.
+  endcomment
+  assign kept = 'priya@citypermits.example' | split: ','
+  function six = 'modules/support/helpers/email/thread_ccs', existing: null, department: department, contact: requester, incoming: kept
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: six.size, expected: 1, field_name: 'an agent removing a name makes it stay removed'
+
+  assign blanks = ',, ,' | split: ','
+  function seven = 'modules/support/helpers/email/thread_ccs', existing: null, department: department, contact: requester, incoming: blanks
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: seven.size, expected: 0, field_name: 'empty entries are not addresses'
+%}

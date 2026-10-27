@@ -1,7 +1,17 @@
 {% doc %}
-  Splits a To or Cc header into addresses. Commas inside a quoted display
-  name would split wrongly here, which costs at most a malformed name on a
-  Cc chip, never a misrouted ticket: routing matches on the address.
+  Splits a To or Cc header into addresses.
+
+  Quoted display names come off before the split. Outlook writes a
+  recipient as "Shah, Priya" <priya@example.test>, and splitting that on
+  commas gives a fragment of a name where an address should be. The
+  comment that used to sit here said the cost was a malformed name on a
+  chip and never a misrouted ticket, because routing matches on the
+  address. That stopped being true when a ticket started keeping its CC
+  list: the fragment is now carried onto the ticket and put in the Cc of
+  every reply, where it is not an address at all.
+
+  Display names are dropped rather than parsed, because this returns
+  addresses and nothing else wants them.
 
   @param {string} [raw] - A To or Cc header value
 {% enddoc %}
@@ -12,7 +22,21 @@
     return addresses
   endif
 
-  assign parts = raw | split: ','
+  comment
+    Split on the quote character and keep the even numbered pieces: those
+    are the parts outside quotes. An unbalanced quote drops its tail,
+    which loses a malformed address rather than inventing one.
+  endcomment
+  assign unquoted = ''
+  assign pieces = raw | split: '"'
+  for piece in pieces
+    assign inside = forloop.index0 | modulo: 2
+    if inside == 0
+      assign unquoted = unquoted | append: piece
+    endif
+  endfor
+
+  assign parts = unquoted | split: ','
   for part in parts
     function parsed = 'modules/support/helpers/email/parse_address', raw: part
     if parsed.email != blank

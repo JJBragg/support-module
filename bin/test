@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Runs the module's Liquid tests against an instance and prints a summary.
+#
+# The tests run on the platform, not here: they are Liquid partials ending
+# in _test, discovered and executed by the tests module at /_tests/run.
+# So this deploys first, then asks the instance to run them.
+#
+# Usage: bin/test [environment]        default: staging
+set -euo pipefail
+
+env_name="${1:-staging}"
+# .pos has no extension, so it has to be read and parsed rather than required.
+url=$(node -e "
+  const fs = require('fs');
+  const envs = JSON.parse(fs.readFileSync('.pos', 'utf8'));
+  const env = envs['${env_name}'];
+  if (!env || !env.url) process.exit(1);
+  process.stdout.write(env.url.replace(/\/$/, ''));
+" 2>/dev/null) || {
+  echo "No '${env_name}' in .pos. Add it with: pos-cli env add ${env_name}" >&2
+  exit 2
+}
+
+echo "Deploying to ${env_name}"
+pos-cli deploy "${env_name}" >/dev/null
+
+echo "Running tests on ${url}"
+body=$(curl -s "${url}/_tests/run?formatter=text&name=modules/support")
+
+node -e '
+  const d = JSON.parse(require("fs").readFileSync(0, "utf8"));
+  for (const t of d.tests) {
+    console.log((t.success ? "  ok   " : "  FAIL ") + t.name + "  " + t.assertions);
+    if (!t.success) {
+      for (const [field, errors] of Object.entries(t.errors)) {
+        for (const e of errors) console.log("         " + field + ": " + e);
+      }
+    }
+  }
+  console.log(
+    (d.success ? "Passed" : "Failed") + ": " + d.total_assertions +
+    " assertions in " + d.total_tests + " files, " + d.total_errors +
+    " errors, " + d.duration_ms + "ms"
+  );
+  process.exit(d.success ? 0 : 1);
+' <<<"${body}"

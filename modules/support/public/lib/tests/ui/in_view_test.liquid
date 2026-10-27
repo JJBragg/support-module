@@ -1,0 +1,64 @@
+{%- comment -%}
+  What each sidebar view means.
+
+  One definition, read by the list and by the board, so that the same
+  ticket cannot be in Needs reply on one screen and not the other. Four
+  of the six read the status category rather than a status name, which is
+  what lets an instance rename Waiting on customer without breaking them.
+{%- endcomment -%}
+{% liquid
+  assign pending = { "kind": "pending" }
+  assign open_kind = { "kind": "open" }
+  assign on_hold = { "kind": "on_hold" }
+  assign solved = { "kind": "solved" }
+
+  assign mine_unanswered = { "assignee_id": "7", "needs_reply": true, "status": open_kind }
+  assign nobodys = { "assignee_id": null, "needs_reply": false, "status": open_kind }
+  assign waiting = { "assignee_id": "9", "needs_reply": false, "status": pending }
+  assign held = { "assignee_id": "9", "needs_reply": false, "status": on_hold }
+  assign resolved = { "assignee_id": "9", "needs_reply": false, "status": solved }
+
+  function v = 'modules/support/helpers/ui/in_view', view: 'mine', row: mine_unanswered, current_user_id: '7'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: true, field_name: 'mine, assigned to the viewer'
+  function v = 'modules/support/helpers/ui/in_view', view: 'mine', row: mine_unanswered, current_user_id: '9'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: false, field_name: 'mine, assigned to somebody else'
+  comment
+    An unassigned ticket and a viewer with no id are both blank. Without
+    the guard they would match each other and Unassigned would turn into
+    My tickets.
+  endcomment
+  function v = 'modules/support/helpers/ui/in_view', view: 'mine', row: nobodys, current_user_id: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: false, field_name: 'mine, with no viewer, is not every unassigned ticket'
+
+  function v = 'modules/support/helpers/ui/in_view', view: 'unassigned', row: nobodys, current_user_id: '7'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: true, field_name: 'unassigned'
+  function v = 'modules/support/helpers/ui/in_view', view: 'unassigned', row: mine_unanswered, current_user_id: '7'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: false, field_name: 'unassigned excludes an assigned ticket'
+
+  function v = 'modules/support/helpers/ui/in_view', view: 'needs_reply', row: mine_unanswered, current_user_id: '7'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: true, field_name: 'needs reply'
+  function v = 'modules/support/helpers/ui/in_view', view: 'needs_reply', row: waiting, current_user_id: '7'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: false, field_name: 'needs reply excludes one we have answered'
+
+  function v = 'modules/support/helpers/ui/in_view', view: 'waiting', row: waiting, current_user_id: '7'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: true, field_name: 'waiting reads the pending category'
+  function v = 'modules/support/helpers/ui/in_view', view: 'waiting', row: held, current_user_id: '7'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: false, field_name: 'waiting is not on hold'
+
+  function v = 'modules/support/helpers/ui/in_view', view: 'on_hold', row: held, current_user_id: '7'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: true, field_name: 'on hold'
+  function v = 'modules/support/helpers/ui/in_view', view: 'solved', row: resolved, current_user_id: '7'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: true, field_name: 'recently solved'
+  function v = 'modules/support/helpers/ui/in_view', view: 'solved', row: held, current_user_id: '7'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: false, field_name: 'recently solved is not on hold'
+
+  comment
+    All open, and anything the query string invents, show everything.
+  endcomment
+  function v = 'modules/support/helpers/ui/in_view', view: 'all', row: held, current_user_id: '7'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: true, field_name: 'all open'
+  function v = 'modules/support/helpers/ui/in_view', view: 'nonsense', row: held, current_user_id: '7'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: true, field_name: 'a made up view shows everything rather than nothing'
+  function v = 'modules/support/helpers/ui/in_view', view: null, row: held, current_user_id: '7'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: v, expected: true, field_name: 'no view at all'
+%}

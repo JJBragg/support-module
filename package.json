@@ -5,6 +5,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
+    "test": "bin/test",
     "changelog": "auto-changelog -p"
   },
   "devDependencies": {

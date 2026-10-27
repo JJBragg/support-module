@@ -1,0 +1,75 @@
+{%- comment -%}
+  Header blocks as the clients that matter actually write them.
+
+  This is the test the module needs most. Threading is the feature a
+  customer judges a help desk on, the cascade starts by reading these
+  three headers, and every client writes them slightly differently: Apple
+  Mail capitalises Message-Id its own way, every one of them folds a long
+  References chain onto continuation lines, and Outlook adds headers of
+  its own in between. A parser that works on one client's mail and not
+  another's looks fine until the day it forks a conversation.
+
+  The blocks below are shapes taken from real mail, with the addresses
+  changed. Nothing here writes, so there is nothing to clean up.
+{%- endcomment -%}
+{% liquid
+  function fx = 'modules/support/tests/fixtures/client_headers'
+
+  function gmail_h = 'modules/support/helpers/email/parse_headers', raw: fx.gmail
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: gmail_h.message_id, expected: 'CADm_=85nYc1vQ3xT+bLm9pK0rWd7JhFgA2Zq@mail.gmail.com', field_name: 'gmail message_id'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: gmail_h.in_reply_to, expected: 'support-18022-20261023150612-ab12cd34@support.platformos.com', field_name: 'gmail in_reply_to'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: gmail_h.references.size, expected: 2, field_name: 'gmail references, folded onto a second line'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: gmail_h.references.last, expected: 'support-18022-20261023150612-ab12cd34@support.platformos.com', field_name: 'gmail references, our id kept'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: gmail_h.present, expected: true, field_name: 'gmail headers present'
+
+  comment
+    Outlook web puts nothing on the Message-ID line at all and folds the
+    value underneath it. A parser that reads the rest of the line and
+    stops gets an empty id here, and an empty id threads nothing.
+  endcomment
+  function owa = 'modules/support/helpers/email/parse_headers', raw: fx.outlook_web
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: owa.message_id, expected: 'AM0PR04MB5561C7D9E1F4A3B2@AM0PR04MB5561.eurprd04.prod.outlook.com', field_name: 'outlook web message_id, folded onto its own line'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: owa.in_reply_to, expected: 'support-18017-20261020091500-ff00aa11@support.platformos.com', field_name: 'outlook web in_reply_to, folded'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: owa.references.size, expected: 2, field_name: 'outlook web references'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: owa.references.first, expected: 'support-18017-20261020091500-ff00aa11@support.platformos.com', field_name: 'outlook web references, ours first'
+
+  function desktop = 'modules/support/helpers/email/parse_headers', raw: fx.outlook_desktop
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: desktop.message_id, expected: '001a01dc2f9e$8b3c40a0$a1b4c1e0$@inspections.example', field_name: 'outlook desktop message_id'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: desktop.in_reply_to, expected: 'support-17896-20261019113000-7c7c7c7c@support.platformos.com', field_name: 'outlook desktop in_reply_to'
+
+  comment
+    Apple Mail writes Message-Id, not Message-ID, and folds References
+    with a tab rather than a space.
+  endcomment
+  function apple = 'modules/support/helpers/email/parse_headers', raw: fx.apple_mail
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: apple.message_id, expected: '9F3B1C7A-2E64-4D18-9A77-1B2C3D4E5F60@workhub.example', field_name: 'apple mail Message-Id, capitalised its own way'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: apple.in_reply_to, expected: 'support-18009-20261024084500-55aa55aa@support.platformos.com', field_name: 'apple mail in_reply_to'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: apple.references.size, expected: 2, field_name: 'apple mail references, folded with a tab'
+
+  function ios = 'modules/support/helpers/email/parse_headers', raw: fx.ios_mail
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ios.message_id, expected: '0C1D2E3F-4A5B-6C7D-8E9F-A0B1C2D3E4F5@citypermits.example', field_name: 'ios mail message_id'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ios.in_reply_to, expected: 'support-17905-20261022140000-99ff99ff@support.platformos.com', field_name: 'ios mail in_reply_to, with no References at all'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: ios.references.size, expected: 0, field_name: 'ios mail has no references'
+
+  comment
+    A forward is a new conversation. It carries no In-Reply-To and no
+    References, so the cascade must fall through to the subject token and
+    then to opening a ticket, and this is where that starts.
+  endcomment
+  function fwd = 'modules/support/helpers/email/parse_headers', raw: fx.forwarded
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: fwd.message_id, expected: 'CAFwd0001newthread@mail.gmail.com', field_name: 'a forward still has its own message_id'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: fwd.in_reply_to, expected: '', field_name: 'a forward has no in_reply_to'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: fwd.references.size, expected: 0, field_name: 'a forward has no references'
+
+  function chain = 'modules/support/helpers/email/parse_headers', raw: fx.folded_long_chain
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: chain.references.size, expected: 5, field_name: 'five ids across four lines, folded with spaces and tabs'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: chain.references.first, expected: 'one@example.test', field_name: 'chain keeps its order, first'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: chain.references.last, expected: 'five@example.test', field_name: 'chain keeps its order, last'
+
+  comment
+    No headers at all. SendGrid has posted this, so it is not theoretical.
+  endcomment
+  function none = 'modules/support/helpers/email/parse_headers', raw: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: none.present, expected: false, field_name: 'nothing posted reports absent'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: none.message_id, expected: '', field_name: 'nothing posted has no message_id'
+%}
