@@ -14,6 +14,19 @@ layout: ''
   this page keeps answering straight away.
 {%- endcomment -%}
 {%- liquid
+  comment
+    Every arrival is logged before the secret is checked, and that is the
+    point of it: a refused post writes nothing anywhere else, so without
+    this line "the provider never called us" and "the provider called us
+    and we said no" look identical from the outside. Inbound Parse keeps
+    no log of its own at the provider, so this is the only record that an
+    email reached the door.
+
+    The sender and the subject only. Not the token, which would put the
+    endpoint's whole authentication in the log, and not the body.
+  endcomment
+  log context.params.from, type: 'modules/support/inbound: a post arrived'
+
   function result = 'modules/support/commands/inbound/receive', params: context.params
 
   assign status = result.status | default: 200

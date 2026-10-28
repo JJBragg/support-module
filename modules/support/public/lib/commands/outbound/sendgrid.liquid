@@ -59,7 +59,19 @@
 
   assign data = { "request_type": "POST", "to": "https://api.sendgrid.com/v3/mail/send", "headers": headers, "payload": body }
 
-  graphql response = 'modules/core/api_calls/send', template: 'modules/core/api_calls/generic', data: data, options: null
+  comment
+    The template is named modules/core/generic, not
+    modules/core/api_calls/generic. An api_call template is addressed by
+    the module and the file, with no api_calls segment, unlike every
+    other kind of partial in this codebase. Written the other way it
+    raises "Could not find Api Call with name", and it raises at send
+    time rather than at deploy or lint time.
+
+    This went unnoticed because the line above returns not_configured
+    while there is no API key, so nothing ever reached here until one
+    was set.
+  endcomment
+  graphql response = 'modules/core/api_calls/send', template: 'modules/core/generic', data: data, options: null
 
   assign status = response.api_call.response.status
   if status == 202
