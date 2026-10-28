@@ -91,7 +91,45 @@ Every layer either side is identical or proven working, except the two things
 only SendGrid can see: whether the dispatcher ever picks up mail for our
 hostname, and whether our stored URL is reachable from their workers.
 
-## The two tests that end it
+## Added later on 2026-10-28
+
+A third Parse host, `in.support.platformos.com`, was created with the
+`/api/` path matching the working host exactly, raw mode on, same instance,
+same secret. One email to `test@in.support.platformos.com` at 12:22. Nothing
+delivered, nothing logged.
+
+Two further things were ruled out:
+
+**Recipient acceptance is meaningful.** SendGrid's MX answers `250` for all
+three of our Parse hostnames and `550 Mailbox not found` for a hostname on
+the same parent domain with no rule, and for an unrelated domain. So the
+rules exist and are recognised at the moment mail is accepted.
+
+**TLS is identical.** Both instances serve the same certificate, the same
+chain and the same protocol and cipher. The certificate is a wildcard
+covering `*.staging.oregon.platform-os.com`, so it covers both equally.
+
+That leaves one difference between every failing host and the working one:
+the destination instance. Both of ours point at
+`support-module.staging.oregon.platform-os.com`, the working one at
+`support-development.staging.oregon.platform-os.com`.
+
+## The test that splits what is left
+
+Point `in.support.platformos.com` at a URL that has nothing to do with
+platformOS, such as a throwaway inspector from webhook.site, and send one
+test email to it.
+
+- A post arrives there: SendGrid dispatches our mail correctly and the
+  failure is in reaching our instance. That becomes a platformOS question.
+- Nothing arrives there either: SendGrid is not dispatching for our
+  hostnames at all, whatever its settings say, and the ticket stands with
+  much stronger evidence.
+
+Use a throwaway message. The inspector is a third party and will hold
+whatever is sent to it.
+
+## Earlier tests, now overtaken
 
 Both change exactly one variable.
 
