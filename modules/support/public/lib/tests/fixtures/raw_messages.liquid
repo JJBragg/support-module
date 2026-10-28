@@ -1,0 +1,95 @@
+{%- comment -%}
+  Whole raw messages, as Inbound Parse posts them in raw mode.
+
+  Excluded from the linter with the other fixtures: these hold real
+  header syntax and base64, neither of which parses as HTML.
+{%- endcomment -%}
+{%- capture plain -%}
+From: Rita Alvarez <rita@tests.invalid>
+To: support@support.platformos.com
+Subject: Lift is stuck
+Message-ID: <plain-1@tests.invalid>
+Content-Type: text/plain; charset=utf-8
+
+It has been stuck since nine.
+{%- endcapture -%}
+{%- capture alternative -%}
+From: Rita Alvarez <rita@tests.invalid>
+To: support@support.platformos.com
+Subject: Lift is stuck
+Message-ID: <alt-1@tests.invalid>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="----=_Part_9_1"
+
+------=_Part_9_1
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+Caf=C3=A9 on the ground floor, 100% stuck, cost =E2=82=AC5 =
+to call out.
+------=_Part_9_1
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<p>Caf=C3=A9 on the ground floor</p>
+------=_Part_9_1--
+{%- endcapture -%}
+{%- capture mixed -%}
+From: Dana Brooks <dana@tests.invalid>
+To: support@support.platformos.com
+Subject: Report attached
+Message-ID: <mixed-1@tests.invalid>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="outer-boundary"
+
+--outer-boundary
+Content-Type: multipart/alternative; boundary="inner-boundary"
+
+--inner-boundary
+Content-Type: text/plain; charset=utf-8
+
+The report is attached.
+--inner-boundary
+Content-Type: text/html; charset=utf-8
+
+<p>The report is attached.</p>
+--inner-boundary--
+--outer-boundary
+Content-Type: application/pdf; name="report.pdf"
+Content-Disposition: attachment; filename="report.pdf"
+Content-Transfer-Encoding: base64
+
+JVBERi0xLjQgZmFrZSBwZGYgYnl0ZXMgZm9yIHRoZSB0ZXN0IHN1aXRl
+--outer-boundary
+Content-Type: image/png
+Content-Disposition: inline; filename="shot.png"
+Content-ID: <shot-cid-1>
+Content-Transfer-Encoding: base64
+
+iVBORw0KGgogZmFrZSBpbWFnZSBieXRlcw==
+--outer-boundary--
+{%- endcapture -%}
+{%- capture crlf -%}
+From: Rita Alvarez <rita@tests.invalid>
+To: support@support.platformos.com
+Subject: Sent with CRLF
+Message-ID: <crlf-1@tests.invalid>
+Content-Type: text/plain; charset=utf-8
+
+It has been stuck since nine.
+{%- endcapture -%}
+{%- capture folded -%}
+From: Ken Ito <ken@tests.invalid>
+To: support@support.platformos.com
+Subject: A folded header and no body type
+Message-ID:
+ <folded-1@tests.invalid>
+References: <one@tests.invalid>
+	<two@tests.invalid>
+
+Body with no Content-Type at all.
+{%- endcapture -%}
+{% liquid
+  assign blocks = { "plain": plain, "alternative": alternative, "mixed": mixed, "crlf": crlf, "folded": folded }
+  return blocks
+%}

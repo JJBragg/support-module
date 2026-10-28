@@ -62,12 +62,19 @@ host superadmin counts as a support Admin even with no agent record, so an
 install cannot lock itself out. Seeds are idempotent and run from a migration
 the install generator writes.
 
-**Phase 2, inbound email.** `POST /support/inbound/sendgrid/:token`. Routes on
+**Phase 2, inbound email.** `POST /support/inbound/sendgrid/:token`, in
+raw mode: the whole message arrives as one text field and the module
+takes it apart itself, because in the provider's parsed mode an
+attachment reaches Liquid as a Rails object that cannot be touched, and
+touching the params hash at all once one is present raises before
+anything runs. `helpers/email/parse_raw` walks two levels of multipart,
+decodes base64 and quoted-printable, and returns the header block, both
+bodies and one entry per attachment with its bytes. Routes on
 the recipient, falls back to the first department rather than dropping mail,
 threads on In-Reply-To and References then on the `[#18022]` subject token,
 reopens closed tickets, splits quoted history. All the writes are in one
-transaction. Attachments keep their name and type and lose the file, pending
-the question with the engineers.
+transaction. Attachments keep their name, type and size; storing the bytes is the
+presigned upload, which is the one piece left.
 
 **Phase 3, ticket list.** `/admin/support`, on the module's own layout and
 stylesheet. Filters, counts, grouping, top three per group, bulk actions, and
@@ -377,3 +384,13 @@ and in commit messages. The short list:
 - The duplicate guard catches test fixtures too. Twenty posts sharing
   one Message-ID write one message, which is correct and is not what a
   test seeding a rate limit expects.
+- A literal line break inside a quoted string is a Liquid syntax error,
+  which makes a carriage return hard to write. `'%0D' | url_decode`
+  produces one.
+- Quoted-printable has no filter. Turning `=` into `%` and using
+  `url_decode` decodes it correctly, provided literal `%` is escaped to
+  `%25` first and `+` to `%2B`, because `url_decode` reads a bare plus
+  as a space.
+- The line break before a MIME boundary belongs to the boundary, not to
+  the part before it, so a part's body wants `rstrip` before it is
+  compared with anything.

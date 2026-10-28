@@ -1,0 +1,50 @@
+{% doc %}
+  Decodes one MIME part's body according to its Content-Transfer-Encoding.
+
+  Quoted-printable has no filter of its own, so it is turned into
+  percent-encoding and handed to url_decode: `=C3=A9` becomes `%C3%A9`,
+  which decodes to the right character. Three things have to happen
+  before that substitution or it corrupts the text. Soft line breaks, an
+  `=` at the end of a line, come out first because they mean "no break
+  here" rather than an escape. Any literal percent sign is escaped to
+  `%25`, or url_decode would read the text after it as an escape of its
+  own. And any plus sign is escaped to `%2B`, because url_decode reads a
+  bare plus as a space.
+
+  Anything else, 7bit, 8bit, binary or no encoding at all, is already
+  text and comes back untouched.
+
+  @param {string} [body] - The part's body
+  @param {string} [encoding] - Its Content-Transfer-Encoding, lowercased
+{% enddoc %}
+{% capture nl %}
+{% endcapture %}
+{% liquid
+  assign body = body | default: ''
+  assign encoding = encoding | default: '' | downcase | strip
+
+  if body == blank
+    return ''
+  endif
+
+  if encoding == 'base64'
+    comment
+      base64_decode wants the payload without the line breaks the
+      transfer encoding wraps it in.
+    endcomment
+    assign packed = body | replace: nl, '' | replace: ' ', '' | strip
+    assign decoded = packed | base64_decode
+    return decoded
+  endif
+
+  if encoding == 'quoted-printable'
+    assign soft = '=' | append: nl
+    assign unwrapped = body | replace: soft, ''
+    assign escaped = unwrapped | replace: '%', '%25' | replace: '+', '%2B'
+    assign percent = escaped | replace: '=', '%'
+    assign decoded = percent | url_decode
+    return decoded
+  endif
+
+  return body
+%}

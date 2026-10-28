@@ -1,0 +1,28 @@
+{% doc %}
+  The boundary string out of a Content-Type header, or blank when the
+  part is not multipart.
+
+  Written as `boundary="----=_Part_1"` or bare as `boundary=----=_Part_1`,
+  and the quoted form is the one that matters: a boundary may contain an
+  equals sign, so splitting on `=` and taking the last piece loses half
+  of it.
+
+  @param {string} [content_type] - A Content-Type header value
+{% enddoc %}
+{% liquid
+  assign content_type = content_type | default: ''
+  unless content_type contains 'boundary='
+    return ''
+  endunless
+
+  assign after = content_type | split: 'boundary=' | last | strip
+
+  if after contains '"'
+    assign value = after | split: '"' | slice: 1
+    assign boundary = value | first
+  else
+    assign boundary = after | split: ';' | first | strip
+  endif
+
+  return boundary
+%}

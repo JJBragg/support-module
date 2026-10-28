@@ -18,7 +18,7 @@
 
   assign recipient = to | default: 'general@inbound.example.com'
   assign body = text | default: 'Sent by the test suite.'
-  assign params = { "from": from, "to": recipient, "cc": cc, "subject": subject, "text": body, "html": "", "headers": headers, "token": settings.webhook_secret, "attachments": 0 }
+  assign params = { "from": from, "to": recipient, "cc": cc, "subject": subject, "text": body, "html": "", "headers": headers, "token": settings.webhook_secret, "attachments_list": null }
 
   function result = 'modules/support/commands/inbound/receive', params: params
   return result

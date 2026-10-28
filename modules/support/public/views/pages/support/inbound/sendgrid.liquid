@@ -5,9 +5,14 @@ format: json
 layout: ''
 ---
 {%- comment -%}
-  SendGrid Inbound Parse posts here. The secret is part of the URL, either
-  as the trailing path segment or as ?token=, because Inbound Parse does
-  not sign its requests.
+  SendGrid Inbound Parse posts here, in raw mode: the whole message
+  arrives as the text field `email`, with the delivery `envelope` beside
+  it. The secret is part of the URL, either as the trailing path segment
+  or as ?token=, because Inbound Parse does not sign its requests.
+
+  Raw mode is not a preference. In the provider's parsed mode attachments
+  arrive as Rails upload objects that Liquid cannot touch, and the
+  message cannot be read at all once one is present.
 
   The work is done inline. SendGrid wants a prompt 2xx, and if this ever
   grows slow enough to matter the body of it moves to a background job and
@@ -22,12 +27,24 @@ layout: ''
     no log of its own at the provider, so this is the only record that an
     email reached the door.
 
-    The sender and the subject only. Not the token, which would put the
-    endpoint's whole authentication in the log, and not the body.
+    The delivery envelope only: who sent it and where it was addressed,
+    both small and both already known to the provider. Not the token,
+    which would put the endpoint's whole authentication in the log, and
+    not the message, which is the customer's.
   endcomment
-  log context.params.from, type: 'modules/support/inbound: a post arrived'
+  log context.params.envelope, type: 'modules/support/inbound: a post arrived'
 
-  function result = 'modules/support/commands/inbound/receive', params: context.params
+  comment
+    Named keys only, never the params hash itself. In the provider's
+    parsed mode a posted file arrives as a Rails object with no Liquid
+    representation, and touching the hash as a whole, passing it on
+    included, raises before anything can run. Raw mode avoids the file
+    parts entirely, and reading one key at a time keeps it safe either
+    way.
+  endcomment
+  function neutral = 'modules/support/helpers/email/from_raw', raw: context.params.email, envelope: context.params.envelope, token: context.params.token
+
+  function result = 'modules/support/commands/inbound/receive', params: neutral
 
   assign status = result.status | default: 200
   if status != 200

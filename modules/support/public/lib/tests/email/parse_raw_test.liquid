@@ -1,0 +1,100 @@
+{%- comment -%}
+  Taking a whole email apart, which is what raw mode leaves the module to
+  do.
+
+  These matter more than they look. In the provider's parsed mode a wrong
+  answer here shows up as a scruffy ticket; in raw mode it is the
+  difference between a ticket and nothing at all, because every field the
+  rest of the module reads now comes out of this one helper.
+{%- endcomment -%}
+{% liquid
+  function fx = 'modules/support/tests/fixtures/raw_messages'
+
+  comment
+    A plain message with no MIME structure at all. The body is the body.
+  endcomment
+  function one = 'modules/support/helpers/email/parse_raw', raw: fx.plain
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: one.text, expected: 'It has been stuck since nine.', field_name: 'a single part message is all body'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: one.html, expected: '', field_name: 'and has no html'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: one.attachments.size, expected: 0, field_name: 'and nothing attached'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: one.headers.message_id, expected: 'plain-1@tests.invalid', field_name: 'the headers come back parsed'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: one.headers.subject, expected: 'Lift is stuck', field_name: 'including the subject'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: one.headers.from, expected: 'Rita Alvarez <rita@tests.invalid>', field_name: 'and the From, which raw mode no longer gives us separately'
+
+  comment
+    Text and HTML side by side, both quoted-printable. The accented
+    characters and the euro sign are the point: a decoder that works on
+    ASCII and not on these looks fine until a customer writes in German.
+  endcomment
+  function two = 'modules/support/helpers/email/parse_raw', raw: fx.alternative
+  assign has_cafe = false
+  if two.text contains 'Café on the ground floor'
+    assign has_cafe = true
+  endif
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: has_cafe, expected: true, field_name: 'quoted-printable decodes an accented word'
+  assign has_euro = false
+  if two.text contains '€5'
+    assign has_euro = true
+  endif
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: has_euro, expected: true, field_name: 'and a three byte character'
+  assign kept_percent = false
+  if two.text contains '100% stuck'
+    assign kept_percent = true
+  endif
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: kept_percent, expected: true, field_name: 'a literal percent sign survives the percent decoding trick'
+  assign joined = false
+  if two.text contains 'cost €5 to call out'
+    assign joined = true
+  endif
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: joined, expected: true, field_name: 'a soft line break joins the line rather than leaving an equals sign'
+  assign html_ok = false
+  if two.html contains '<p>Café on the ground floor</p>'
+    assign html_ok = true
+  endif
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: html_ok, expected: true, field_name: 'the html part comes out separately'
+
+  comment
+    The shape nearly every real email with an attachment has: mixed
+    wrapping alternative, with the files beside it. Two levels of
+    boundary, which is as deep as this goes.
+  endcomment
+  function three = 'modules/support/helpers/email/parse_raw', raw: fx.mixed
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: three.text, expected: 'The report is attached.', field_name: 'nested multipart still finds the text'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: three.html, expected: '<p>The report is attached.</p>', field_name: 'and the html beside it'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: three.attachments.size, expected: 2, field_name: 'and both files'
+
+  assign first_file = three.attachments.first
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: first_file.filename, expected: 'report.pdf', field_name: 'the filename off Content-Disposition'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: first_file.content_type, expected: 'application/pdf', field_name: 'the media type without its parameters'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: first_file.inline, expected: false, field_name: 'an ordinary attachment is not inline'
+  assign has_content = false
+  if first_file.content_base64 != blank
+    assign has_content = true
+  endif
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: has_content, expected: true, field_name: 'and its bytes are carried out, ready to be stored'
+
+  assign second_file = three.attachments.last
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: second_file.filename, expected: 'shot.png', field_name: 'the inline image keeps its name'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: second_file.content_id, expected: 'shot-cid-1', field_name: 'and its Content-ID, stripped of the angle brackets'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: second_file.inline, expected: true, field_name: 'and is marked inline, so the html can point at it later'
+
+  comment
+    Real mail uses CRLF. A carriage return left on the end of a boundary
+    line stops it matching, and then the whole message is one blob.
+  endcomment
+  function four = 'modules/support/helpers/email/parse_raw', raw: fx.crlf
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: four.text, expected: 'It has been stuck since nine.', field_name: 'CRLF line endings parse the same as LF'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: four.headers.subject, expected: 'Sent with CRLF', field_name: 'and the headers with them'
+
+  comment
+    A folded Message-ID and a References chain folded with a tab, on a
+    message with no Content-Type at all.
+  endcomment
+  function five = 'modules/support/helpers/email/parse_raw', raw: fx.folded
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: five.headers.message_id, expected: 'folded-1@tests.invalid', field_name: 'a folded Message-ID still reads'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: five.headers.references.size, expected: 2, field_name: 'and a folded References chain'
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: five.text, expected: 'Body with no Content-Type at all.', field_name: 'no Content-Type means text'
+
+  function none = 'modules/support/helpers/email/parse_raw', raw: null
+  function contract = 'modules/tests/assertions/equal', contract: contract, given: none.text, expected: '', field_name: 'nothing posted is empty, not an error'
+%}

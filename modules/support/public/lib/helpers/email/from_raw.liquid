@@ -1,0 +1,38 @@
+{% doc %}
+  Turns a raw inbound post into the neutral shape the inbound command
+  takes.
+
+  This is the whole of what is provider-specific about raw mode: take the
+  message apart, read the envelope, and hand over the same field names
+  the command has always been given. Everything downstream, threading,
+  routing, the loop rules, the blocklist, is untouched by the change.
+
+  The envelope is where the real recipient is. A To header says who the
+  sender addressed; the envelope says where the mail was actually
+  delivered, which is what the department is routed on, and the two
+  differ whenever an address forwards.
+
+  @param {string} [raw] - The full message, from the provider's `email` field
+  @param {string} [envelope] - The provider's `envelope` JSON
+  @param {string} [token] - The shared secret from the URL
+{% enddoc %}
+{% liquid
+  function parsed = 'modules/support/helpers/email/parse_raw', raw: raw
+
+  assign recipients = ''
+  if envelope != blank
+    assign delivery = envelope | parse_json
+    assign recipients = delivery.to | join: ', '
+  endif
+  if recipients == blank
+    assign recipients = parsed.headers.to
+  endif
+
+  assign sender = parsed.headers.from
+  if sender == blank and envelope != blank
+    assign sender = delivery.from
+  endif
+
+  assign neutral = { "from": sender, "to": recipients, "cc": parsed.headers.cc, "subject": parsed.headers.subject, "text": parsed.text, "html": parsed.html, "headers": parsed.header_block, "token": token, "attachments_list": parsed.attachments }
+  return neutral
+%}

@@ -1,7 +1,12 @@
 {% doc %}
-  Pulls the headers the module reads out of the raw block SendGrid posts:
-  Message-ID, In-Reply-To and References for threading, and the four that
-  say an email was sent by a machine rather than a person. Folded headers,
+  Pulls the headers the module reads out of a raw header block: the three
+  for threading, the four that say an email was sent by a machine rather
+  than a person, the addresses and subject, and the two that describe how
+  the body is encoded.
+
+  The last group only matters in raw mode, where the module is handed the
+  whole message and has to take the body apart itself. In the provider's
+  parsed mode they are simply unused. Folded headers,
   where References continues on indented lines, are joined back together
   before they are read.
 
@@ -20,6 +25,14 @@
   assign precedence = ""
   assign return_path = ""
   assign list_id = ""
+  assign from_header = ""
+  assign to_header = ""
+  assign cc_header = ""
+  assign subject = ""
+  assign content_type = ""
+  assign content_encoding = ""
+  assign content_disposition = ""
+  assign content_id = ""
 
   assign raw = raw | default: ""
   if raw == blank
@@ -27,7 +40,7 @@
       No headers at all is itself suspicious, but it is not this helper's
       job to say so. It reports what it found, and found nothing.
     endcomment
-    assign parsed = { "message_id": message_id, "in_reply_to": in_reply_to, "references": references, "auto_submitted": auto_submitted, "precedence": precedence, "return_path": return_path, "list_id": list_id, "present": false }
+    assign parsed = { "message_id": message_id, "in_reply_to": in_reply_to, "references": references, "auto_submitted": auto_submitted, "precedence": precedence, "return_path": return_path, "list_id": list_id, "from": from_header, "to": to_header, "cc": cc_header, "subject": subject, "content_type": content_type, "content_encoding": content_encoding, "content_disposition": content_disposition, "content_id": content_id, "present": false }
     return parsed
   endif
 
@@ -78,9 +91,25 @@
       assign return_path = header.value | replace: "<", "" | replace: ">", "" | strip
     elsif header.key == "list-id" and list_id == blank
       assign list_id = header.value | strip
+    elsif header.key == "from" and from_header == blank
+      assign from_header = header.value | strip
+    elsif header.key == "to" and to_header == blank
+      assign to_header = header.value | strip
+    elsif header.key == "cc" and cc_header == blank
+      assign cc_header = header.value | strip
+    elsif header.key == "subject" and subject == blank
+      assign subject = header.value | strip
+    elsif header.key == "content-type" and content_type == blank
+      assign content_type = header.value | strip
+    elsif header.key == "content-transfer-encoding" and content_encoding == blank
+      assign content_encoding = header.value | strip | downcase
+    elsif header.key == "content-disposition" and content_disposition == blank
+      assign content_disposition = header.value | strip
+    elsif header.key == "content-id" and content_id == blank
+      assign content_id = header.value | replace: "<", "" | replace: ">", "" | strip
     endif
   endfor
 
-  assign parsed = { "message_id": message_id, "in_reply_to": in_reply_to, "references": references, "auto_submitted": auto_submitted, "precedence": precedence, "return_path": return_path, "list_id": list_id, "present": true }
+  assign parsed = { "message_id": message_id, "in_reply_to": in_reply_to, "references": references, "auto_submitted": auto_submitted, "precedence": precedence, "return_path": return_path, "list_id": list_id, "from": from_header, "to": to_header, "cc": cc_header, "subject": subject, "content_type": content_type, "content_encoding": content_encoding, "content_disposition": content_disposition, "content_id": content_id, "present": true }
   return parsed
 %}

@@ -1,0 +1,40 @@
+{% doc %}
+  The filename of an attachment part, from Content-Disposition first and
+  Content-Type's name parameter second, which is where older clients put
+  it.
+
+  @param {string} [content_type] - The part's Content-Type
+  @param {string} [disposition] - The part's Content-Disposition
+{% enddoc %}
+{% liquid
+  assign sources = '' | split: ','
+  assign sources = sources | array_add: disposition
+  assign sources = sources | array_add: content_type
+
+  for source in sources
+    assign value = source | default: ''
+    unless value contains 'filename=' or value contains 'name='
+      continue
+    endunless
+
+    if value contains 'filename='
+      assign after = value | split: 'filename=' | last
+    else
+      assign after = value | split: 'name=' | last
+    endif
+    assign after = after | strip
+
+    if after contains '"'
+      assign quoted = after | split: '"' | slice: 1
+      assign name = quoted | first
+    else
+      assign name = after | split: ';' | first | strip
+    endif
+
+    if name != blank
+      return name
+    endif
+  endfor
+
+  return ''
+%}

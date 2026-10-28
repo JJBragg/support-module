@@ -1,0 +1,180 @@
+{% doc %}
+  Takes the whole RFC 5322 message and gives back the pieces the module
+  works in: the header block, the text and HTML bodies, and one entry per
+  attachment.
+
+  Needed because Inbound Parse runs in raw mode. In the provider's parsed
+  mode a posted file reaches Liquid as a Rails UploadedFile, which has no
+  Liquid representation at all: touching it, or touching the params hash
+  that holds it, raises. Raw mode hands the whole message over as one
+  text field instead, so the file never becomes a Rails object and the
+  work moves here.
+
+  Two levels of multipart, which is every real email: mixed wrapping
+  alternative wrapping text and HTML, with attachments beside them.
+  Deeper nesting keeps its innermost parts as attachments rather than
+  being walked, which loses nothing that a person reads.
+
+  Nothing raises. A message this cannot take apart comes back with the
+  whole body as text, which is worse than parsing it and far better than
+  losing it.
+
+  @param {string} [raw] - The full message, headers and body
+{% enddoc %}
+{% capture nl %}
+{% endcapture %}
+{% liquid
+  assign blank_line = nl | append: nl
+
+  assign raw = raw | default: ''
+  if raw == blank
+    assign nothing = { "header_block": "", "headers": null, "text": "", "html": "", "attachments": [] }
+    return nothing
+  endif
+
+  comment
+    Normalise line endings first. Everything below splits on a single
+    newline, and a stray carriage return left on the end of a boundary
+    line stops it matching.
+  endcomment
+  comment
+    Carriage returns come out first. Everything below splits on a single
+    newline, and a stray return left on the end of a boundary line stops
+    it matching. It cannot be written as a literal here, because a real
+    line break inside a string is a Liquid syntax error, so it is decoded
+    from its escape.
+  endcomment
+  assign cr = '%0D' | url_decode
+  assign message = raw | replace: cr, ''
+
+  comment
+    The first blank line ends the headers. A message with no blank line
+    at all is all headers and no body, which is legal and empty.
+  endcomment
+  assign header_block = message | split: blank_line | first
+  assign body = message | remove_first: header_block | remove_first: blank_line
+
+  function headers = 'modules/support/helpers/email/parse_headers', raw: header_block
+  function boundary = 'modules/support/helpers/email/mime_boundary', content_type: headers.content_type
+
+  assign text = ''
+  assign html = ''
+  assign attachments = []
+
+  if boundary == blank
+    comment
+      One part. Its own Content-Type says which of the two bodies it is.
+    endcomment
+    comment
+      The line break before a boundary belongs to the boundary, not to
+      the part, so it comes off. Leading whitespace stays: an indented
+      first line is something the sender wrote.
+    endcomment
+    function decoded = 'modules/support/helpers/email/decode_body', body: body, encoding: headers.content_encoding
+    assign decoded = decoded | rstrip
+    if headers.content_type contains 'text/html'
+      assign html = decoded
+    else
+      assign text = decoded
+    endif
+
+    assign parsed = { "header_block": header_block, "headers": headers, "text": text, "html": html, "attachments": attachments }
+    return parsed
+  endif
+
+  comment
+    Collect the leaves first, then read them. A part that is itself
+    multipart is opened here rather than in the reading loop, which is
+    what keeps this to one pass per level instead of a recursion Liquid
+    would not give us.
+  endcomment
+  assign marker = '--' | append: boundary
+  assign chunks = body | split: marker
+  assign leaves = []
+
+  for chunk in chunks
+    assign trimmed = chunk | strip
+    if trimmed == blank or trimmed == '--'
+      continue
+    endif
+
+    assign part_headers_block = chunk | split: blank_line | first
+    function part_headers = 'modules/support/helpers/email/parse_headers', raw: part_headers_block
+    assign part_body = chunk | remove_first: part_headers_block | remove_first: blank_line
+
+    function inner_boundary = 'modules/support/helpers/email/mime_boundary', content_type: part_headers.content_type
+    if inner_boundary == blank
+      assign leaf = { "headers": part_headers, "body": part_body }
+      assign leaves = leaves | array_add: leaf
+      continue
+    endif
+
+    assign inner_marker = '--' | append: inner_boundary
+    assign inner_chunks = part_body | split: inner_marker
+    for inner in inner_chunks
+      assign inner_trimmed = inner | strip
+      if inner_trimmed == blank or inner_trimmed == '--'
+        continue
+      endif
+      assign inner_headers_block = inner | split: blank_line | first
+      function inner_headers = 'modules/support/helpers/email/parse_headers', raw: inner_headers_block
+      assign inner_body = inner | remove_first: inner_headers_block | remove_first: blank_line
+      assign leaf = { "headers": inner_headers, "body": inner_body }
+      assign leaves = leaves | array_add: leaf
+    endfor
+  endfor
+
+  for leaf in leaves
+    assign leaf_type = leaf.headers.content_type | downcase
+    assign disposition = leaf.headers.content_disposition | downcase
+
+    comment
+      An attachment is anything the client marked as one, anything
+      carrying a filename, and anything that is not text. Inline images
+      are attachments too; they keep their Content-ID so the HTML can be
+      pointed at them later.
+    endcomment
+    assign is_attachment = false
+    if disposition contains 'attachment'
+      assign is_attachment = true
+    endif
+    if leaf.headers.content_id != blank
+      assign is_attachment = true
+    endif
+    if disposition contains 'filename=' or leaf_type contains 'name='
+      assign is_attachment = true
+    endif
+    unless leaf_type contains 'text/'
+      assign is_attachment = true
+    endunless
+
+    if is_attachment
+      function filename = 'modules/support/helpers/email/mime_filename', content_type: leaf.headers.content_type, disposition: leaf.headers.content_disposition
+      assign media_type = leaf_type | split: ';' | first | strip
+      assign packed = leaf.body | replace: nl, '' | replace: ' ', '' | strip
+      assign size = packed | size | times: 3 | divided_by: 4
+      assign inline = false
+      if disposition contains 'inline' or leaf.headers.content_id != blank
+        assign inline = true
+      endif
+      assign entry = { "filename": filename, "content_type": media_type, "content_id": leaf.headers.content_id, "inline": inline, "size": size, "content_base64": packed }
+      assign attachments = attachments | array_add: entry
+      continue
+    endif
+
+    function decoded = 'modules/support/helpers/email/decode_body', body: leaf.body, encoding: leaf.headers.content_encoding
+    assign decoded = decoded | rstrip
+    if leaf_type contains 'text/html'
+      if html == blank
+        assign html = decoded
+      endif
+    else
+      if text == blank
+        assign text = decoded
+      endif
+    endif
+  endfor
+
+  assign parsed = { "header_block": header_block, "headers": headers, "text": text, "html": html, "attachments": attachments }
+  return parsed
+%}

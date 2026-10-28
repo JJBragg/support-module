@@ -269,34 +269,22 @@
     endunless
 
     comment
-      Attachments arrive as attachment1 .. attachmentN, with their names
-      and types in the attachment-info JSON, and the count in
-      attachments.
+      Attachments now arrive already taken apart, because Inbound Parse
+      runs in raw mode and the endpoint hands the whole message to the
+      MIME parser before anything gets here. Each entry carries its name,
+      type, size, inline flag and its bytes.
 
-      Only the metadata is read. The posted file itself is a Rails
-      UploadedFile with no Liquid representation: touching it in any
-      way, even comparing it to blank, raises "undefined method
-      to_liquid". See commands/attachments/create for what that costs
-      and why.
+      Only the metadata is written for now. Storing the bytes needs the
+      presigned upload dance, which is its own piece of work; the parser
+      already carries them, so that is an addition rather than a rewrite.
     endcomment
-    assign attachment_count = params.attachments | default: 0 | plus: 0
-    if attachment_count > 0
-      assign info = params["attachment-info"] | default: ""
-      assign meta = null
-      if info != blank
-        assign meta = info | parse_json
+    for file in params.attachments_list
+      assign attachment = { "message_id": message.id, "filename": file.filename, "content_type": file.content_type, "size": file.size }
+      function saved = 'modules/support/commands/attachments/create', object: attachment
+      if saved.valid
+        assign attachments_saved = attachments_saved | plus: 1
       endif
-
-      for index in (1..attachment_count)
-        assign key = "attachment" | append: index
-        assign details = meta[key]
-        assign attachment = { "message_id": message.id, "filename": details.filename, "content_type": details.type, "size": null }
-        function saved = 'modules/support/commands/attachments/create', object: attachment
-        if saved.valid
-          assign attachments_saved = attachments_saved | plus: 1
-        endif
-      endfor
-    endif
+    endfor
 
     comment
       Who else is on this conversation now. The sender goes in along with
