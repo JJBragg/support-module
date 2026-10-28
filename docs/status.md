@@ -47,11 +47,11 @@ Module dependencies are not committed. After a fresh clone:
 ```
 pos-cli modules install --dev
 pos-cli env add staging --email jj@near-me.com --url https://support-module.staging.oregon.platform-os.com
-pos-cli deploy staging
+pos-cli deploy -p staging
 ```
 
-Inner loop is `pos-cli sync staging`, or `pos-cli deploy staging` for a full
-push. `pos-cli check run` must be clean before a commit. Node is pinned to 22.
+Inner loop is `pos-cli sync staging`, or `pos-cli deploy -p staging` for a full
+push. `pos-cli check run .` must be clean before a commit. Node is pinned to 22.
 
 ## Built
 

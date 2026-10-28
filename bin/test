@@ -21,8 +21,12 @@ url=$(node -e "
   exit 2
 }
 
+# Partial deploy. A full deploy removes everything the instance has that this
+# project does not contain, and the dependency modules (core, user,
+# common-styling, tests) are not committed. On a fresh clone a full deploy here
+# would delete them from the instance, the tests module included.
 echo "Deploying to ${env_name}"
-pos-cli deploy "${env_name}" >/dev/null
+pos-cli deploy -p "${env_name}" >/dev/null
 
 # One request per suite. The runner is synchronous and the gateway gives it
 # twenty seconds, which the tests that write records go past if they all run

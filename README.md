@@ -51,13 +51,18 @@ There is no local server. Deploy to the staging instance and view it there.
 
 ```
 pos-cli sync staging
-pos-cli deploy staging
+pos-cli deploy -p staging
 ```
 
 `pos-cli sync` watches the tree and pushes changes live, which is the normal
 inner loop. Never deploy this to a production instance.
 
-Run `pos-cli check run` before a commit. It must be clean.
+Deploys are partial (`-p`) on purpose. A full deploy removes everything the
+instance has that this project does not contain, and the dependency modules
+are not committed, so a full deploy from a fresh clone would delete them from
+the instance.
+
+Run `pos-cli check run .` before a commit. It must be clean.
 
 ## Tests
 
