@@ -13,3 +13,4 @@ modules/tests
 
 # Throwaway staging logins
 .dev-test-accounts.txt
+.claude/
