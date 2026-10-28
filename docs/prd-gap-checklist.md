@@ -53,6 +53,21 @@ All eight were built, deployed and checked against staging on
 - [x] 8. Phone and tablet layout, which is the next phase either way. The
       sidebar is a fixed column at every width today. Medium.
 
+## Parked
+
+- [ ] Replies land in the junk folder. The first real test send arrived,
+      from platformOS Support with the right Reply-To, and Gmail put it
+      in Junk. Parked on 2026-10-28, not forgotten: the high-level PRD's
+      first success metric is that our replies do not do this. What I
+      found before parking it: `platformos.com` publishes
+      `p=quarantine`, the sending subdomain `support.platformos.com` has
+      no SPF record and no DMARC record of its own, and SendGrid's DKIM
+      signs as `platformos.com`. So DKIM should align under relaxed
+      rules while SPF cannot, and a brand new sending subdomain has no
+      reputation to fall back on. The first thing to try is a TXT record
+      on `support.platformos.com` reading
+      `v=spf1 include:sendgrid.net -all`.
+
 ## Needs your decision
 
 - [ ] 9. SendGrid or Postmark, and how far we go to let a partner use
