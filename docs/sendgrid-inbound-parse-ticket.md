@@ -54,9 +54,11 @@ Delivered by hand to `mx.sendgrid.net:25`, twice:
 250 Ok: queued as TnL4DP_fQcSo_m26midX6g
 ```
 
-The second is `yd8fyA8oQeyk3fc35MLpxQ`. Two further messages were sent
-through ordinary mail clients. Four in total, all accepted somewhere, none
-delivered to the webhook.
+The others are `yd8fyA8oQeyk3fc35MLpxQ`, `XkeJA2nERt-g5tgYHK_QAQ` (sent
+after the host entry was deleted and recreated) and
+`Z-EKiIeLSH-N04fSaHRx9g` (sent after `send_raw` was turned on). Two
+further messages were sent through ordinary mail clients. Six in total,
+all accepted, none delivered to the webhook.
 
 ## Evidence the destination URL works
 
@@ -76,9 +78,33 @@ Our log contains only our own test requests. There is no request from
 SendGrid at any point, so this is not a case of you posting and us
 rejecting it.
 
+## The decisive comparison (added 2026-10-28)
+
+This account has **two** Inbound Parse hosts. One works. One has never
+delivered a single POST.
+
+| | Works | Does not |
+|---|---|---|
+| Host | `support-dev.platformos.com` | `support.platformos.com` |
+| MX | `10 mx.sendgrid.net` | `10 mx.sendgrid.net` |
+| `send_raw` | true | true (was false, changed to match) |
+| `spam_check` | false | false |
+| Posts to | `support-development.staging.oregon.platform-os.com` | `support-module.staging.oregon.platform-os.com` |
+| Both resolve to | `44.255.141.163` | the same `44.255.141.163` |
+
+Same account, same platform, the same server IP, sibling hostnames on the
+same parent domain, identical settings. Neither host has a CNAME, a TXT
+record or DKIM records of its own, so there is no conflict between a
+sending domain and a receiving host on either.
+
+The working host delivers mail to its webhook. Ours has now been tried
+with two different secrets, with `send_raw` off and on, and after
+deleting and recreating the host entry entirely. Six messages, none
+delivered, no POST ever recorded at our end.
+
 ## What we would like
 
-1. Whether those two queue ids were handed to Inbound Parse, and what
+1. Whether those queue ids were handed to Inbound Parse, and what
    happened to them after you accepted them.
 2. Whether anything on this account blocks Parse from firing for this
    host.
