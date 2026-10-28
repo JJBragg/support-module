@@ -4,7 +4,29 @@ A help desk and ticketing module for platformOS. Customers reach support by
 email only; everything in this module is the agent interface and the email
 plumbing behind it.
 
-Status: in development, Phase 1 of 7. Not published to the module library.
+Status: in development. Phases 1 to 6 of 7 are built and running on staging,
+along with a board view added to the spec afterwards. Phase 7, hardening and
+tests, is part done. Not published to the module library.
+
+Inbound email is the one thing not working end to end, and it is not the
+module: every link either side of SendGrid's Inbound Parse is proven, and
+Parse accepts mail and never posts it. See
+`docs/sendgrid-inbound-parse-ticket.md`. Outbound replies send correctly.
+
+## Start here
+
+If you are reading this to catch up rather than to write code, three
+documents in this order:
+
+| Document | What it answers |
+| --- | --- |
+| `docs/status.md` | Where everything stands: what is built, what is next, what is waiting on someone else, the deliberate gaps, and a list of platformOS traps that have each cost an afternoon. |
+| `docs/prd-comparison-2026-10-26.md` | Artur's two PRDs against what is actually built, keeping his requirement IDs, split into what differs on purpose, what is simply not built, and what was built that the PRDs never asked for. |
+| `docs/prd-gap-checklist.md` | The live list: 31 differences judged on whether this team needs them, with what is done, what needs a decision, what is deferred, and what is dropped and why. |
+
+The PRDs are a useful source of ideas rather than a specification: they were
+an AI's answer to a prompt, so nothing in them is settled, and the checklist
+says plainly where we went our own way.
 
 ## Layout
 
@@ -13,12 +35,14 @@ Status: in development, Phase 1 of 7. Not published to the module library.
 | `modules/support/` | The module. This is the only part that ships. |
 | `app/` | An example host application, used to develop and test the module. Not distributed. |
 | `pos-module.json` | The module manifest: machine name, version, dependencies. |
+| `docs/` | Status, decisions, QA passes and write-ups. The place to start. |
+| `bin/test` | Runs the test suites against an instance. |
 
-Module dependencies (`core`, `user`, and `common-styling` by way of `user`) are
-not committed. Restore them with:
+Module dependencies (`core`, `user`, `common-styling` by way of `user`, and
+`tests` for the test runner) are not committed. Restore them with:
 
 ```
-pos-cli modules install
+pos-cli modules install --dev
 ```
 
 ## Development
