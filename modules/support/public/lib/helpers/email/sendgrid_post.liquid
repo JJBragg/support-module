@@ -1,0 +1,46 @@
+{% doc %}
+  Shared body of the two SendGrid Inbound Parse endpoints.
+
+  @param email [String] the raw MIME message, SendGrid's `email` field
+  @param envelope [String] SendGrid's `envelope` field, JSON
+  @param token [String] the shared secret from the URL
+  @return [Object] the result of commands/inbound/receive
+{% enddoc %}
+{%- comment -%}
+  Both pages that use this are thin: they call it, then set the response
+  status and echo the JSON. The work lives here so the two routes cannot
+  drift apart.
+
+  Two routes exist on purpose. `support/inbound/sendgrid` is the original
+  and the one the current Parse host points at. `api/support/inbound/sendgrid`
+  matches the path used by the only host on this SendGrid account that
+  delivers, so a second Parse host can be pointed at it with nothing else
+  different. Keep both until the inbound delivery problem is settled.
+{%- endcomment -%}
+{%- liquid
+  comment
+    Every arrival is logged before the secret is checked, and that is the
+    point of it: a refused post writes nothing anywhere else, so without
+    this line "the provider never called us" and "the provider called us
+    and we said no" look identical from the outside. Inbound Parse keeps
+    no log of its own at the provider, so this is the only record that an
+    email reached the door.
+
+    The delivery envelope only: who sent it and where it was addressed,
+    both small and both already known to the provider. Not the token,
+    which would put the endpoint's whole authentication in the log, and
+    not the message, which is the customer's.
+  endcomment
+  log envelope, type: 'modules/support/inbound: a post arrived'
+
+  comment
+    The pages read `context.params` one named key at a time and pass the
+    values in. Never the hash itself: in the provider's parsed mode a
+    posted file arrives as a Rails object with no Liquid representation,
+    and touching the hash as a whole, passing it on included, raises
+    before anything can run.
+  endcomment
+  function neutral = 'modules/support/helpers/email/from_raw', raw: email, envelope: envelope, token: token
+  function result = 'modules/support/commands/inbound/receive', params: neutral
+  return result
+-%}

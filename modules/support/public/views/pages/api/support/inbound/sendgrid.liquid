@@ -1,0 +1,36 @@
+---
+slug: api/support/inbound/sendgrid(/:token)
+method: post
+format: json
+layout: ''
+---
+{%- comment -%}
+  The same endpoint as `support/inbound/sendgrid`, under the path that the
+  one Inbound Parse host on this SendGrid account that actually delivers
+  uses: `/api/support/inbound/sendgrid/<secret>`.
+
+  Ours has never received a post. Every other variable has been matched or
+  ruled out, so this route exists to take the path out of the comparison: a
+  second Parse host can point here and differ from the working one in
+  nothing but its hostname and its instance.
+
+  A path prefix should not matter. The original route answers POSTs from
+  the public internet and logs them, which is the only thing a prefix could
+  affect. This is here to prove that rather than assume it. If a post
+  arrives on one route and not the other, the prefix is load bearing and
+  that is a finding worth having.
+{%- endcomment -%}
+{%- liquid
+  comment
+    Named keys only, never the params hash itself. See the partial.
+  endcomment
+  function result = 'modules/support/helpers/email/sendgrid_post', email: context.params.email, envelope: context.params.envelope, token: context.params.token
+
+  assign status = result.status | default: 200
+  if status != 200
+    response_status status
+  endif
+
+  assign body = { "ok": result.ok, "error": result.error, "ticket_number": result.ticket_number, "new_ticket": result.new_ticket, "reopened": result.reopened }
+  echo body | json
+-%}

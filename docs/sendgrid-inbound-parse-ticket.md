@@ -87,15 +87,20 @@ delivered a single POST.
 |---|---|---|
 | Host | `support-dev.platformos.com` | `support.platformos.com` |
 | MX | `10 mx.sendgrid.net` | `10 mx.sendgrid.net` |
-| `send_raw` | true | true (was false, changed to match) |
+| `send_raw` | true | true (tried both ways) |
 | `spam_check` | false | false |
 | Posts to | `support-development.staging.oregon.platform-os.com` | `support-module.staging.oregon.platform-os.com` |
 | Both resolve to | `44.255.141.163` | the same `44.255.141.163` |
 
 Same account, same platform, the same server IP, sibling hostnames on the
-same parent domain, identical settings. Neither host has a CNAME, a TXT
-record or DKIM records of its own, so there is no conflict between a
-sending domain and a receiving host on either.
+same parent domain. Neither host has a CNAME, a TXT record or DKIM records
+of its own, so there is no conflict between a sending domain and a
+receiving host on either.
+
+Note on `send_raw`: ours has been tried in both modes. Three of the six
+messages were sent with it off and the rest with it on. Nothing was
+delivered under either setting, and the endpoint logs every arrival before
+it reads any field, so a post in either mode would have appeared.
 
 The working host delivers mail to its webhook. Ours has now been tried
 with two different secrets, with `send_raw` off and on, and after
